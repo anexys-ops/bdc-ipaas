@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+
+# Generated files
+apps/api/src/generated/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test coverage
+coverage/
+
+# Turbo
+.turbo/
+
+# Temporary files
+tmp/
+temp/
+
+# SSL certificates
+ssl/
+
+# Docker volumes data
+postgres_master_data/
+redis_data/
+grafana_data/

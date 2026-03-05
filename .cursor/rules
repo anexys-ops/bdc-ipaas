@@ -1,0 +1,16 @@
+Tu développes ANEXYS iPaaS — plateforme d'intégration multi-tenant.
+Stack : NestJS 10 + React 18 + TypeScript 5.3 strict + PostgreSQL 16 + BullMQ + Redis 7.
+
+RÈGLES OBLIGATOIRES :
+1. TypeScript strict — jamais de `any`, utiliser `unknown` si nécessaire
+2. Chaque module NestJS = module.ts + service.ts + controller.ts + dto/ + *.spec.ts
+3. Tous credentials via VaultService.encrypt() — jamais en clair
+4. Tous endpoints : @UseGuards(AuthGuard, RolesGuard) + @ApiOperation() Swagger
+5. Multi-tenant : TenantDatabaseService.getClient(tenantId) pour accéder à la DB tenant
+6. Gros fichiers : TOUJOURS streaming Node.js — jamais readFileSync ou tableau complet
+7. Commenter en français les fonctions métier complexes
+8. Tests Jest obligatoires pour chaque service
+9. Routes préfixées : /api/v1/...
+10. Erreurs : toujours utiliser les exceptions NestJS (BadRequestException, etc.)
+11. DTOs : toujours class-validator + class-transformer
+12. Logs : utiliser LoggerService NestJS, jamais console.log

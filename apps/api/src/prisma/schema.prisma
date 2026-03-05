@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/master"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id               String           @id @default(uuid())
+  slug             String           @unique
+  name             String
+  dbName           String           @unique
+  dbConnectionHash String
+  plan             Plan             @default(FREE)
+  isActive         Boolean          @default(true)
+  stripeCustomerId String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  users            User[]
+  usageMetrics     UsageMetric[]
+  billingInvoices  BillingInvoice[]
+}
+
+enum Plan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+model User {
+  id            String         @id @default(uuid())
+  tenantId      String
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  email         String
+  passwordHash  String
+  firstName     String
+  lastName      String
+  role          Role           @default(VIEWER)
+  isActive      Boolean        @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime       @default(now())
+  userGroups    UserGroup[]
+  refreshTokens RefreshToken[]
+
+  @@unique([tenantId, email])
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+model Group {
+  id          String            @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?
+  createdAt   DateTime          @default(now())
+  userGroups  UserGroup[]
+  permissions GroupPermission[]
+}
+
+model GroupPermission {
+  id           String  @id @default(uuid())
+  groupId      String
+  group        Group   @relation(fields: [groupId], references: [id])
+  resourceType String
+  resourceId   String?
+  action       String
+}
+
+model UserGroup {
+  userId  String
+  groupId String
+  user    User   @relation(fields: [userId], references: [id])
+  group   Group  @relation(fields: [groupId], references: [id])
+
+  @@id([userId, groupId])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model UsageMetric {
+  id               String   @id @default(uuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  periodStart      DateTime
+  periodEnd        DateTime
+  flowsExecuted    Int      @default(0)
+  recordsProcessed BigInt   @default(0)
+  apiCallsMade     Int      @default(0)
+  updatedAt        DateTime @updatedAt
+
+  @@unique([tenantId, periodStart])
+}
+
+model BillingInvoice {
+  id              String        @id @default(uuid())
+  tenantId        String
+  tenant          Tenant        @relation(fields: [tenantId], references: [id])
+  stripeInvoiceId String?
+  periodStart     DateTime
+  periodEnd       DateTime
+  plan            Plan
+  baseAmount      Decimal       @db.Decimal(10, 2)
+  usageAmount     Decimal       @db.Decimal(10, 2)
+  totalAmount     Decimal       @db.Decimal(10, 2)
+  status          InvoiceStatus @default(DRAFT)
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  FAILED
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  tenantId   String
+  userId     String?
+  action     String
+  resource   String
+  resourceId String?
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+}

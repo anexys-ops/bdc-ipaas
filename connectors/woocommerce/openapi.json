@@ -1,0 +1,89 @@
+{
+  "connector_meta": {
+    "id": "woocommerce",
+    "name": "WooCommerce",
+    "version": "3.0",
+    "icon": "woocommerce.svg",
+    "category": "E-commerce",
+    "auth_type": "oauth1",
+    "docs_url": "https://woocommerce.github.io/woocommerce-rest-api-docs/"
+  },
+  "auth_config": {
+    "consumer_key_param": "consumer_key",
+    "consumer_secret_param": "consumer_secret",
+    "base_url_param": "shop_url"
+  },
+  "operations": [
+    {
+      "id": "list_customers",
+      "label": "Récupérer les clients",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/customers",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "email": { "type": "string" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "username": { "type": "string" },
+          "billing": {
+            "type": "object",
+            "properties": {
+              "address_1": { "type": "string" },
+              "city": { "type": "string" },
+              "postcode": { "type": "string" },
+              "country": { "type": "string" },
+              "phone": { "type": "string" }
+            }
+          },
+          "date_created": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_products",
+      "label": "Récupérer les produits",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/products",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "sku": { "type": "string" },
+          "price": { "type": "string" },
+          "regular_price": { "type": "string" },
+          "stock_quantity": { "type": "number" },
+          "manage_stock": { "type": "boolean" },
+          "status": { "type": "string" },
+          "categories": { "type": "array" }
+        }
+      }
+    },
+    {
+      "id": "create_product",
+      "label": "Créer un produit",
+      "type": "destination",
+      "method": "POST",
+      "path": "/wp-json/wc/v3/products",
+      "input_schema": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "sku": { "type": "string" },
+          "regular_price": { "type": "string" },
+          "stock_quantity": { "type": "number" },
+          "manage_stock": { "type": "boolean", "default": true },
+          "status": { "type": "string", "default": "publish" },
+          "description": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

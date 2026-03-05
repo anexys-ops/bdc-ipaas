@@ -1,0 +1,84 @@
+{
+  "connector_meta": {
+    "id": "ebp",
+    "name": "EBP",
+    "version": "1.0",
+    "icon": "ebp.svg",
+    "category": "ERP / Comptabilité",
+    "auth_type": "api_key",
+    "modes": ["saas_api", "desktop_csv"],
+    "docs_url": "https://developer.ebp.com/"
+  },
+  "auth_config": {
+    "api_key_header": "X-API-Key",
+    "base_url_param": "base_url"
+  },
+  "operations": [
+    {
+      "id": "list_customers",
+      "label": "Récupérer les clients",
+      "type": "source",
+      "method": "GET",
+      "path": "/customers",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "code": { "type": "string" },
+          "name": { "type": "string" },
+          "address1": { "type": "string" },
+          "address2": { "type": "string" },
+          "zipCode": { "type": "string" },
+          "city": { "type": "string" },
+          "country": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "vatNumber": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_products",
+      "label": "Récupérer les articles",
+      "type": "source",
+      "method": "GET",
+      "path": "/items",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "reference": { "type": "string" },
+          "label": { "type": "string" },
+          "price": { "type": "number" },
+          "vatRate": { "type": "number" },
+          "stock": { "type": "number" },
+          "ean": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "import_csv_epiece",
+      "label": "Importer fichier EPIECE (Desktop)",
+      "type": "destination",
+      "method": "FILE",
+      "file_format": "csv",
+      "file_encoding": "windows-1252",
+      "file_separator": ";",
+      "file_pattern": "EPIECE_{date}.csv",
+      "input_schema": {
+        "type": "object",
+        "required": ["reference", "label", "price"],
+        "properties": {
+          "reference": { "type": "string", "maxLength": 20 },
+          "label": { "type": "string", "maxLength": 60 },
+          "price": { "type": "number" },
+          "vatRate": { "type": "number" },
+          "stock": { "type": "number" },
+          "ean": { "type": "string", "maxLength": 13 }
+        }
+      }
+    }
+  ]
+}

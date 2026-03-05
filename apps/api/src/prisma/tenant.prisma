@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/tenant"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("TENANT_DATABASE_URL")
+}
+
+model Connector {
+  id           String            @id @default(uuid())
+  type         String
+  name         String
+  configHash   String
+  isActive     Boolean           @default(true)
+  lastTestedAt DateTime?
+  lastTestOk   Boolean?
+  createdAt    DateTime          @default(now())
+  flows        Flow[]            @relation("SourceConnector")
+  destinations FlowDestination[]
+}
+
+model Flow {
+  id                String            @id @default(uuid())
+  name              String
+  description       String?
+  sourceConnectorId String
+  sourceConnector   Connector         @relation("SourceConnector", fields: [sourceConnectorId], references: [id])
+  triggerType       TriggerType
+  triggerConfig     Json
+  environment       Environment       @default(STAGING)
+  isActive          Boolean           @default(false)
+  version           Int               @default(1)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  destinations      FlowDestination[]
+  executions        FlowExecution[]
+  versions          FlowVersion[]
+}
+
+enum TriggerType {
+  CRON
+  WEBHOOK
+  MANUAL
+  FILE_WATCH
+  AGENT_WATCH
+}
+
+enum Environment {
+  STAGING
+  PRODUCTION
+}
+
+model FlowVersion {
+  id        String   @id @default(uuid())
+  flowId    String
+  flow      Flow     @relation(fields: [flowId], references: [id])
+  version   Int
+  snapshot  Json
+  createdAt DateTime @default(now())
+}
+
+model FlowDestination {
+  id          String    @id @default(uuid())
+  flowId      String
+  flow        Flow      @relation(fields: [flowId], references: [id])
+  connectorId String
+  connector   Connector @relation(fields: [connectorId], references: [id])
+  mappingId   String?
+  mapping     Mapping?  @relation(fields: [mappingId], references: [id])
+  orderIndex  Int       @default(0)
+  isActive    Boolean   @default(true)
+}
+
+model Mapping {
+  id                String            @id @default(uuid())
+  name              String
+  sourceSchema      Json
+  destinationSchema Json
+  rules             Json
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  destinations      FlowDestination[]
+  lookupTables      LookupTable[]
+}
+
+model LookupTable {
+  id        String   @id @default(uuid())
+  mappingId String
+  mapping   Mapping  @relation(fields: [mappingId], references: [id])
+  name      String
+  data      Json
+  createdAt DateTime @default(now())
+}
+
+model FlowExecution {
+  id            String          @id @default(uuid())
+  flowId        String
+  flow          Flow            @relation(fields: [flowId], references: [id])
+  environment   Environment
+  status        ExecutionStatus @default(PENDING)
+  triggerSource String
+  isDryRun      Boolean         @default(false)
+  startedAt     DateTime        @default(now())
+  finishedAt    DateTime?
+  recordsIn     Int             @default(0)
+  recordsOut    Int             @default(0)
+  recordsFailed Int             @default(0)
+  errorMessage  String?
+  logs          ExecutionLog[]
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+  DRY_RUN_OK
+}
+
+model ExecutionLog {
+  id          String        @id @default(uuid())
+  executionId String
+  execution   FlowExecution @relation(fields: [executionId], references: [id])
+  level       LogLevel
+  message     String
+  recordIndex Int?
+  data        Json?
+  createdAt   DateTime      @default(now())
+}
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+}
+
+model AgentToken {
+  id         String    @id @default(uuid())
+  name       String
+  tokenHash  String    @unique
+  watchPaths Json
+  isActive   Boolean   @default(true)
+  lastSeenAt DateTime?
+  createdAt  DateTime  @default(now())
+}

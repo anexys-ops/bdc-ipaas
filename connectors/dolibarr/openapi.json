@@ -1,0 +1,92 @@
+{
+  "connector_meta": {
+    "id": "dolibarr",
+    "name": "Dolibarr",
+    "version": "1.0",
+    "icon": "dolibarr.svg",
+    "category": "ERP / CRM",
+    "auth_type": "api_key",
+    "docs_url": "https://wiki.dolibarr.org/index.php/API"
+  },
+  "auth_config": {
+    "api_key_header": "DOLAPIKEY",
+    "base_url_param": "base_url"
+  },
+  "operations": [
+    {
+      "id": "list_thirdparties",
+      "label": "Récupérer les tiers (clients/fournisseurs)",
+      "type": "source",
+      "method": "GET",
+      "path": "/thirdparties",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "name": { "type": "string" },
+          "client": { "type": "number", "description": "1=client, 0=non" },
+          "fournisseur": { "type": "number" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "address": { "type": "string" },
+          "zip": { "type": "string" },
+          "town": { "type": "string" },
+          "country_code": { "type": "string" },
+          "tva_intra": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_thirdparty",
+      "label": "Créer un tiers",
+      "type": "destination",
+      "method": "POST",
+      "path": "/thirdparties",
+      "input_schema": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "client": { "type": "number", "default": 1 },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "address": { "type": "string" },
+          "zip": { "type": "string" },
+          "town": { "type": "string" },
+          "country_code": { "type": "string", "default": "FR" },
+          "tva_intra": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_invoice",
+      "label": "Créer une facture",
+      "type": "destination",
+      "method": "POST",
+      "path": "/invoices",
+      "input_schema": {
+        "type": "object",
+        "required": ["socid", "lines"],
+        "properties": {
+          "socid": { "type": "string" },
+          "date": { "type": "number" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fk_product": { "type": "string" },
+                "label": { "type": "string" },
+                "qty": { "type": "number" },
+                "subprice": { "type": "number" },
+                "tva_tx": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

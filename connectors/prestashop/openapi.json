@@ -1,0 +1,102 @@
+{
+  "connector_meta": {
+    "id": "prestashop",
+    "name": "PrestaShop",
+    "version": "1.7",
+    "icon": "prestashop.svg",
+    "category": "E-commerce",
+    "auth_type": "api_key",
+    "docs_url": "https://devdocs.prestashop-project.org/8/webservice/"
+  },
+  "auth_config": {
+    "auth_method": "basic",
+    "username_param": "api_key",
+    "password_value": "",
+    "base_url_param": "shop_url"
+  },
+  "operations": [
+    {
+      "id": "list_customers",
+      "label": "Récupérer les clients",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/customers",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "firstname": { "type": "string" },
+          "lastname": { "type": "string" },
+          "email": { "type": "string" },
+          "birthday": { "type": "string" },
+          "newsletter": { "type": "boolean" },
+          "active": { "type": "boolean" },
+          "date_add": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_products",
+      "label": "Récupérer les produits",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/products",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "reference": { "type": "string" },
+          "name": { "type": "string" },
+          "price": { "type": "number" },
+          "quantity": { "type": "number" },
+          "ean13": { "type": "string" },
+          "active": { "type": "boolean" },
+          "description_short": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_orders",
+      "label": "Récupérer les commandes",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/orders",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "reference": { "type": "string" },
+          "id_customer": { "type": "string" },
+          "total_paid": { "type": "number" },
+          "total_products_wt": { "type": "number" },
+          "current_state": { "type": "string" },
+          "date_add": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_product",
+      "label": "Créer un produit",
+      "type": "destination",
+      "method": "POST",
+      "path": "/api/products",
+      "input_schema": {
+        "type": "object",
+        "required": ["name", "price"],
+        "properties": {
+          "reference": { "type": "string" },
+          "name": { "type": "string" },
+          "price": { "type": "number" },
+          "quantity": { "type": "number", "default": 0 },
+          "ean13": { "type": "string" },
+          "active": { "type": "boolean", "default": true },
+          "description_short": { "type": "string" },
+          "id_category_default": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

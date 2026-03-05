@@ -1,0 +1,115 @@
+{
+  "connector_meta": {
+    "id": "sellsy",
+    "name": "Sellsy",
+    "version": "2.0",
+    "icon": "sellsy.svg",
+    "category": "CRM / Facturation",
+    "auth_type": "oauth2",
+    "docs_url": "https://api.sellsy.com/doc/v2/"
+  },
+  "auth_config": {
+    "token_url": "https://login.sellsy.com/oauth2/access-tokens",
+    "scopes": ["invoices.read", "invoices.write", "contacts.read", "contacts.write", "opportunities.read"]
+  },
+  "operations": [
+    {
+      "id": "list_invoices",
+      "label": "Récupérer les factures",
+      "type": "source",
+      "method": "GET",
+      "path": "/invoices",
+      "pagination": "cursor",
+      "pagination_param": "after",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "invoiceNumber": { "type": "string" },
+          "status": { "type": "string", "enum": ["draft","sent","paid","cancelled"] },
+          "amount": { "type": "number" },
+          "currency": { "type": "string" },
+          "dueDate": { "type": "string", "format": "date" },
+          "clientId": { "type": "string" },
+          "clientName": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_contacts",
+      "label": "Récupérer les clients/contacts",
+      "type": "source",
+      "method": "GET",
+      "path": "/contacts",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "civility": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "company": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "zipCode": { "type": "string" },
+          "country": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_contact",
+      "label": "Créer un contact/client",
+      "type": "destination",
+      "method": "POST",
+      "path": "/contacts",
+      "input_schema": {
+        "type": "object",
+        "required": ["lastName", "email"],
+        "properties": {
+          "civility": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "phone": { "type": "string" },
+          "company": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "zipCode": { "type": "string" },
+          "country": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_invoice",
+      "label": "Créer une facture",
+      "type": "destination",
+      "method": "POST",
+      "path": "/invoices",
+      "input_schema": {
+        "type": "object",
+        "required": ["clientId", "lines"],
+        "properties": {
+          "clientId": { "type": "string" },
+          "dueDate": { "type": "string", "format": "date" },
+          "currency": { "type": "string", "default": "EUR" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": { "type": "string" },
+                "quantity": { "type": "number" },
+                "unitPrice": { "type": "number" },
+                "vatRate": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

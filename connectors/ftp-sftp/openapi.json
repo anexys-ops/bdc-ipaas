@@ -1,0 +1,97 @@
+{
+  "connector_meta": {
+    "id": "ftp-sftp",
+    "name": "FTP / SFTP / CSV",
+    "version": "1.0",
+    "icon": "ftp.svg",
+    "category": "Fichiers",
+    "auth_type": "basic",
+    "docs_url": null
+  },
+  "auth_config": {
+    "protocol_param": "protocol",
+    "host_param": "host",
+    "port_param": "port",
+    "username_param": "username",
+    "password_param": "password",
+    "private_key_param": "private_key"
+  },
+  "operations": [
+    {
+      "id": "read_csv_file",
+      "label": "Lire un fichier CSV",
+      "type": "source",
+      "method": "FILE_READ",
+      "description": "Lit un fichier CSV depuis FTP/SFTP ou chemin local et retourne les lignes",
+      "config_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string", "description": "Chemin du fichier ex: /exports/clients.csv" },
+          "separator": { "type": "string", "default": ";", "description": "Séparateur de colonnes" },
+          "encoding": { "type": "string", "default": "utf-8", "enum": ["utf-8", "windows-1252", "iso-8859-1"] },
+          "hasHeader": { "type": "boolean", "default": true },
+          "skipLines": { "type": "number", "default": 0 }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "Dynamique — colonnes déduites du header CSV"
+      }
+    },
+    {
+      "id": "watch_directory",
+      "label": "Surveiller un dossier (file watch)",
+      "type": "trigger",
+      "method": "FILE_WATCH",
+      "description": "Déclenche un flux dès qu'un nouveau fichier apparaît dans le dossier",
+      "config_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "pattern": { "type": "string", "default": "*.csv", "description": "Glob pattern" },
+          "moveAfter": { "type": "boolean", "default": true, "description": "Déplacer le fichier dans processed/ après lecture" }
+        }
+      }
+    },
+    {
+      "id": "write_csv_file",
+      "label": "Écrire un fichier CSV",
+      "type": "destination",
+      "method": "FILE_WRITE",
+      "description": "Génère et dépose un fichier CSV sur FTP/SFTP",
+      "config_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string", "description": "Dossier de destination" },
+          "filename": { "type": "string", "description": "Nom du fichier. Supporte variables: {date}, {time}, {flowId}" },
+          "separator": { "type": "string", "default": ";" },
+          "encoding": { "type": "string", "default": "utf-8" },
+          "includeHeader": { "type": "boolean", "default": true }
+        }
+      },
+      "input_schema": {
+        "type": "object",
+        "description": "Dynamique — colonnes définies par le mapping"
+      }
+    },
+    {
+      "id": "agent_watch",
+      "label": "Surveiller un dossier local (via Agent Desktop)",
+      "type": "trigger",
+      "method": "AGENT_WATCH",
+      "description": "Nécessite l'Agent Desktop installé sur le poste client",
+      "config_schema": {
+        "type": "object",
+        "required": ["agentId", "watchPath"],
+        "properties": {
+          "agentId": { "type": "string", "description": "ID de l'agent desktop enregistré" },
+          "watchPath": { "type": "string", "description": "Chemin local sur le poste client" },
+          "pattern": { "type": "string", "default": "*.csv" }
+        }
+      }
+    }
+  ]
+}
