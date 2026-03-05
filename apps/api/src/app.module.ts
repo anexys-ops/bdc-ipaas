@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './modules/auth/auth.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { VaultModule } from './modules/vault/vault.module';
+import { ConnectorsModule } from './modules/connectors/connectors.module';
+import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -15,6 +17,8 @@ import { PrismaModule } from './prisma/prisma.module';
     VaultModule,
     AuthModule,
     TenantsModule,
+    ConnectorsModule,
+    MarketplaceModule,
   ],
 })
 export class AppModule {}
