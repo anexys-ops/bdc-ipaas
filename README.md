@@ -57,13 +57,39 @@ cp apps/api/.env.example apps/api/.env
 Voir `CURSOR_SPEC.md` pour les détails complets.
 
 - **Sprint 1** ✅ : Infrastructure (monorepo, NestJS, Prisma, Auth, Tenants, Vault)
-- **Sprint 2** : Connecteurs & Marketplace
-- **Sprint 3** : Flow Engine
-- **Sprint 4** : Mapping Visuel
-- **Sprint 5** : Agent Desktop
-- **Sprint 6** : EDIFACT
-- **Sprint 7** : Billing
-- **Sprint 8** : Production
+- **Sprint 2** ✅ : Connecteurs & Marketplace (OpenAPI, hot-reload)
+- **Sprint 3** ✅ : Flow Engine (BullMQ, CRON, Webhook, execution logs)
+- **Sprint 4** ✅ : Mapping Visuel (Preview, LookupTables)
+- **Sprint 5** ✅ : Agent Desktop (WebSocket Gateway, CLI)
+- **Sprint 6** ✅ : EDIFACT (Parser/Generator/Validator)
+- **Sprint 7** ✅ : Billing (Stripe, Plans, Quotas)
+- **Sprint 8** ✅ : Production (Audit, Notifications, Docker)
+
+## Tests
+
+```bash
+# Exécuter tous les tests
+pnpm test
+
+# Tests API uniquement
+cd apps/api && pnpm test
+
+# Tests packages
+cd packages/mapping-engine && pnpm test
+cd packages/edifact && pnpm test
+```
+
+**95 tests** passent au total (74 API + 13 mapping-engine + 8 EDIFACT).
+
+## Déploiement Docker
+
+```bash
+# Production
+docker compose -f docker/docker-compose.yml up -d
+
+# Développement (PostgreSQL + Redis uniquement)
+docker compose -f docker/docker-compose.dev.yml up -d
+```
 
 ---
 
