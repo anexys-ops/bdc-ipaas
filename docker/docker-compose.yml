@@ -1,62 +1,105 @@
-version: '3.9'
+version: '3.8'
 
 services:
   nginx:
     image: nginx:alpine
-    ports: ["80:80", "443:443"]
+    container_name: anexys-nginx
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ../ssl:/etc/ssl:ro
-    depends_on: [api, frontend]
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+      - frontend
     networks:
       - anexys-network
+    restart: unless-stopped
 
   frontend:
     build:
       context: ../apps/frontend
       dockerfile: Dockerfile
+    container_name: anexys-frontend
     environment:
-      VITE_API_URL: https://app.anexys.fr/api
+      - VITE_API_URL=http://api:3000
+    depends_on:
+      - api
     networks:
       - anexys-network
+    restart: unless-stopped
 
   api:
     build:
       context: ../apps/api
       dockerfile: Dockerfile
-    env_file: ../.env
-    volumes:
-      - ../connectors:/app/connectors
-    depends_on: [postgres-master, redis]
+    container_name: anexys-api
     ports:
       - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://anexys:${DB_PASSWORD}@postgres:5432/anexys_master
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - VAULT_KEY=${VAULT_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../connectors:/app/connectors:ro
     networks:
       - anexys-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   worker:
     build:
       context: ../apps/api
       dockerfile: Dockerfile
-    command: node dist/worker.js
-    env_file: ../.env
-    deploy:
-      replicas: 2
-    depends_on: [postgres-master, redis]
+    container_name: anexys-worker
+    command: ["node", "dist/worker.js"]
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://anexys:${DB_PASSWORD}@postgres:5432/anexys_master
+      - REDIS_URL=redis://redis:6379
+      - VAULT_KEY=${VAULT_KEY}
+    depends_on:
+      - api
+      - redis
     networks:
       - anexys-network
+    restart: unless-stopped
 
-  postgres-master:
+  postgres:
     image: postgres:16-alpine
+    container_name: anexys-postgres
     environment:
-      POSTGRES_DB: anexys_master
-      POSTGRES_USER: anexys
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-anexys_dev_password}
-    volumes:
-      - postgres_master_data:/var/lib/postgresql/data
+      - POSTGRES_USER=anexys
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=anexys_master
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d:ro
     networks:
       - anexys-network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U anexys -d anexys_master"]
       interval: 10s
@@ -65,12 +108,15 @@ services:
 
   redis:
     image: redis:7-alpine
-    volumes:
-      - redis_data:/data
+    container_name: anexys-redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     networks:
       - anexys-network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -78,28 +124,60 @@ services:
       retries: 5
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.3.1
+    container_name: anexys-grafana
     ports:
       - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - loki
+      - prometheus
     networks:
       - anexys-network
+    restart: unless-stopped
 
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:2.9.4
+    container_name: anexys-loki
     ports:
       - "3100:3100"
+    volumes:
+      - loki_data:/loki
+      - ./loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
+    command: -config.file=/etc/loki/local-config.yaml
     networks:
       - anexys-network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    container_name: anexys-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - anexys-network
+    restart: unless-stopped
 
 networks:
   anexys-network:
     driver: bridge
 
 volumes:
-  postgres_master_data:
+  postgres_data:
   redis_data:
   grafana_data:
+  loki_data:
+  prometheus_data:

@@ -1,0 +1,33 @@
+{
+  "name": "@anexys/agent",
+  "version": "1.0.0",
+  "description": "ANEXYS Desktop Agent for file watching and WebSocket communication",
+  "main": "dist/index.js",
+  "bin": {
+    "anexys-agent": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "package:win": "pkg dist/index.js -t node20-win-x64 -o dist/anexys-agent.exe",
+    "package:mac": "pkg dist/index.js -t node20-macos-x64 -o dist/anexys-agent-macos",
+    "package:linux": "pkg dist/index.js -t node20-linux-x64 -o dist/anexys-agent-linux"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.0",
+    "conf": "^12.0.0",
+    "socket.io-client": "^4.7.4",
+    "commander": "^12.0.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "pkg": "^5.8.1"
+  },
+  "pkg": {
+    "assets": ["node_modules/**/*"],
+    "targets": ["node20-win-x64", "node20-macos-x64", "node20-linux-x64"]
+  }
+}

@@ -1,34 +1,37 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  postgres-master:
+  postgres:
     image: postgres:16-alpine
+    container_name: anexys-postgres-dev
     environment:
-      POSTGRES_DB: anexys_master
-      POSTGRES_USER: anexys
-      POSTGRES_PASSWORD: anexys_dev_password
-    volumes:
-      - postgres_master_data:/var/lib/postgresql/data
+      - POSTGRES_USER=anexys
+      - POSTGRES_PASSWORD=anexys_dev_password
+      - POSTGRES_DB=anexys_master
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U anexys -d anexys_master"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    volumes:
-      - redis_data:/data
+    container_name: anexys-redis-dev
     ports:
       - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
 
 volumes:
-  postgres_master_data:
-  redis_data:
+  postgres_dev_data:
+  redis_dev_data:

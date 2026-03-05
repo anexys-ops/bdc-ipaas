@@ -7,6 +7,11 @@ import { ConnectorsModule } from './modules/connectors/connectors.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { FlowsModule } from './modules/flows/flows.module';
 import { EngineModule } from './modules/engine/engine.module';
+import { MappingsModule } from './modules/mappings/mappings.module';
+import { AgentsModule } from './modules/agents/agents.module';
+import { BillingModule } from './modules/billing/billing.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -23,6 +28,11 @@ import { PrismaModule } from './prisma/prisma.module';
     MarketplaceModule,
     FlowsModule,
     EngineModule,
+    MappingsModule,
+    AgentsModule,
+    BillingModule,
+    AuditModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}
