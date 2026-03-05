@@ -5,6 +5,8 @@ import { TenantsModule } from './modules/tenants/tenants.module';
 import { VaultModule } from './modules/vault/vault.module';
 import { ConnectorsModule } from './modules/connectors/connectors.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
+import { FlowsModule } from './modules/flows/flows.module';
+import { EngineModule } from './modules/engine/engine.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -19,6 +21,8 @@ import { PrismaModule } from './prisma/prisma.module';
     TenantsModule,
     ConnectorsModule,
     MarketplaceModule,
+    FlowsModule,
+    EngineModule,
   ],
 })
 export class AppModule {}
