@@ -1,0 +1,71 @@
+{
+  "connector_meta": {
+    "id": "asana",
+    "name": "Asana",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/asana.com",
+    "category": "Gestion de projet",
+    "auth_type": "oauth2",
+    "docs_url": "https://developers.asana.com/docs",
+    "config_instructions": "1) Allez sur https://app.asana.com/0/developer-console. 2) Créez une nouvelle application (Create new app). 3) Configurez l’URL de redirection OAuth (redirect URI) et les scopes (default = read/write). 4) Récupérez le Client ID et le Client Secret. 5) Après autorisation utilisateur, utilisez l’access_token. URL de base : https://app.asana.com/api/1.0. En-tête : Authorization: Bearer <access_token>. Doc : https://developers.asana.com/docs/oauth"
+  },
+  "auth_config": {
+    "token_url": "https://app.asana.com/-/oauth_token",
+    "scopes": ["default"]
+  },
+  "operations": [
+    {
+      "id": "list_workspaces",
+      "label": "Récupérer les espaces de travail",
+      "type": "source",
+      "method": "GET",
+      "path": "/workspaces",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "gid": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_tasks",
+      "label": "Récupérer les tâches",
+      "type": "source",
+      "method": "GET",
+      "path": "/tasks",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "gid": { "type": "string" },
+          "name": { "type": "string" },
+          "completed": { "type": "boolean" },
+          "due_on": { "type": "string" },
+          "assignee": { "type": "object" }
+        }
+      }
+    },
+    {
+      "id": "create_task",
+      "label": "Créer une tâche",
+      "type": "destination",
+      "method": "POST",
+      "path": "/tasks",
+      "input_schema": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "workspace": { "type": "string" },
+              "projects": { "type": "array" },
+              "assignee": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

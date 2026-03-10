@@ -1,0 +1,58 @@
+{
+  "description": "Opérations RPC à exécuter pour tester Catalogue, Documents (chaque type), Clients",
+  "baseUrl": "https://api.sellsy.com",
+  "method": "POST",
+  "contentType": "application/json",
+  "operations": [
+    {
+      "id": "catalogue_getList_item",
+      "label": "Catalogue — Liste des produits (items)",
+      "request": { "method": "Catalogue.getList", "params": { "type": "item", "pagination": { "pagenum": 1, "nbperpage": 10 } } }
+    },
+    {
+      "id": "catalogue_getList_service",
+      "label": "Catalogue — Liste des services",
+      "request": { "method": "Catalogue.getList", "params": { "type": "service", "pagination": { "pagenum": 1, "nbperpage": 10 } } }
+    },
+    {
+      "id": "catalogue_getCategories",
+      "label": "Catalogue — Catégories",
+      "request": { "method": "Catalogue.getCategories", "params": {} }
+    },
+    {
+      "id": "document_getList_invoice",
+      "label": "Document — Liste des factures",
+      "request": { "method": "Document.getList", "params": { "doctype": "invoice", "pagination": { "pagenum": 1, "nbperpage": 10 } } }
+    },
+    {
+      "id": "document_getList_estimate",
+      "label": "Document — Liste des devis",
+      "request": { "method": "Document.getList", "params": { "doctype": "estimate", "pagination": { "pagenum": 1, "nbperpage": 10 } } }
+    },
+    {
+      "id": "document_getList_order",
+      "label": "Document — Liste des commandes",
+      "request": { "method": "Document.getList", "params": { "doctype": "order", "pagination": { "pagenum": 1, "nbperpage": 10 } } }
+    },
+    {
+      "id": "document_getList_delivery",
+      "label": "Document — Liste des livraisons",
+      "request": { "method": "Document.getList", "params": { "doctype": "delivery", "pagination": { "pagenum": 1, "nbperpage": 10 } } }
+    },
+    {
+      "id": "document_getList_proforma",
+      "label": "Document — Liste des proformas",
+      "request": { "method": "Document.getList", "params": { "doctype": "proforma", "pagination": { "pagenum": 1, "nbperpage": 10 } } }
+    },
+    {
+      "id": "document_getList_model",
+      "label": "Document — Liste des modèles",
+      "request": { "method": "Document.getList", "params": { "doctype": "model", "pagination": { "pagenum": 1, "nbperpage": 10 } } }
+    },
+    {
+      "id": "client_getList",
+      "label": "Client — Liste des clients",
+      "request": { "method": "Client.getList", "params": { "pagination": { "pagenum": 1, "nbperpage": 10 } } }
+    }
+  ]
+}

@@ -26,7 +26,7 @@ import {
   FlowVersionResponseDto,
 } from './dto';
 import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { CurrentTenant, Roles } from '../../common/decorators';
+import { CurrentTenant, Roles, Audit } from '../../common/decorators';
 
 @ApiTags('Flux')
 @Controller('flows')
@@ -37,6 +37,7 @@ export class FlowsController {
 
   @Post()
   @Roles('ADMIN', 'OPERATOR', 'SUPER_ADMIN')
+  @Audit('CREATE', 'flow')
   @ApiOperation({ summary: 'Créer un nouveau flux' })
   @ApiResponse({ status: 201, description: 'Flux créé', type: FlowResponseDto })
   async create(
@@ -65,6 +66,7 @@ export class FlowsController {
 
   @Patch(':id')
   @Roles('ADMIN', 'OPERATOR', 'SUPER_ADMIN')
+  @Audit('UPDATE', 'flow')
   @ApiOperation({ summary: 'Mettre à jour un flux' })
   @ApiResponse({ status: 200, description: 'Flux mis à jour', type: FlowResponseDto })
   async update(
@@ -77,6 +79,7 @@ export class FlowsController {
 
   @Delete(':id')
   @Roles('ADMIN', 'SUPER_ADMIN')
+  @Audit('DELETE', 'flow')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Supprimer un flux' })
   @ApiResponse({ status: 204, description: 'Flux supprimé' })
@@ -89,6 +92,7 @@ export class FlowsController {
 
   @Post(':id/destinations')
   @Roles('ADMIN', 'OPERATOR', 'SUPER_ADMIN')
+  @Audit('ADD_DESTINATION', 'flow')
   @ApiOperation({ summary: 'Ajouter une destination au flux' })
   @ApiResponse({ status: 201, description: 'Destination ajoutée', type: FlowResponseDto })
   async addDestination(
@@ -101,6 +105,7 @@ export class FlowsController {
 
   @Delete(':id/destinations/:destinationId')
   @Roles('ADMIN', 'OPERATOR', 'SUPER_ADMIN')
+  @Audit('REMOVE_DESTINATION', 'flow')
   @ApiOperation({ summary: 'Supprimer une destination du flux' })
   @ApiResponse({ status: 200, description: 'Destination supprimée', type: FlowResponseDto })
   async removeDestination(
@@ -123,6 +128,7 @@ export class FlowsController {
 
   @Post(':id/activate')
   @Roles('ADMIN', 'OPERATOR', 'SUPER_ADMIN')
+  @Audit('ACTIVATE', 'flow')
   @ApiOperation({ summary: 'Activer un flux' })
   @ApiResponse({ status: 200, description: 'Flux activé', type: FlowResponseDto })
   async activate(
@@ -134,6 +140,7 @@ export class FlowsController {
 
   @Post(':id/deactivate')
   @Roles('ADMIN', 'OPERATOR', 'SUPER_ADMIN')
+  @Audit('DEACTIVATE', 'flow')
   @ApiOperation({ summary: 'Désactiver un flux' })
   @ApiResponse({ status: 200, description: 'Flux désactivé', type: FlowResponseDto })
   async deactivate(

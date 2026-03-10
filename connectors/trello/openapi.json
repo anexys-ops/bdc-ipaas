@@ -1,0 +1,68 @@
+{
+  "connector_meta": {
+    "id": "trello",
+    "name": "Trello",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/trello.com",
+    "category": "Gestion de projet",
+    "auth_type": "oauth2",
+    "docs_url": "https://developer.atlassian.com/cloud/trello/rest/",
+    "config_instructions": "Trello : developer.atlassian.com/cloud/trello → Create new power-up. OAuth 2.0 avec scope read, write. Récupérez le token. URL de base : https://api.trello.com/1. Paramètres : key (API Key) et token (OAuth Token) en query ou Authorization."
+  },
+  "auth_config": {
+    "token_url": "https://trello.com/1/authorize",
+    "scopes": ["read", "write"]
+  },
+  "operations": [
+    {
+      "id": "list_boards",
+      "label": "Récupérer les tableaux",
+      "type": "source",
+      "method": "GET",
+      "path": "/members/me/boards",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "desc": { "type": "string" },
+          "url": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_cards",
+      "label": "Récupérer les cartes d’une liste",
+      "type": "source",
+      "method": "GET",
+      "path": "/lists/{id}/cards",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "desc": { "type": "string" },
+          "idList": { "type": "string" },
+          "due": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_card",
+      "label": "Créer une carte",
+      "type": "destination",
+      "method": "POST",
+      "path": "/cards",
+      "input_schema": {
+        "type": "object",
+        "required": ["idList", "name"],
+        "properties": {
+          "idList": { "type": "string" },
+          "name": { "type": "string" },
+          "desc": { "type": "string" },
+          "due": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

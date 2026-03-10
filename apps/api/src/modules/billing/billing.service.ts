@@ -4,12 +4,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { BillingPlan, PLAN_LIMITS, CreateSubscriptionDto, BillingResponseDto, InvoiceResponseDto } from './dto/billing.dto';
 import Stripe from 'stripe';
 
-const STRIPE_PRICE_IDS: Record<BillingPlan, string> = {
-  [BillingPlan.FREE]: '',
-  [BillingPlan.STARTER]: 'price_starter',
-  [BillingPlan.PRO]: 'price_pro',
-  [BillingPlan.ENTERPRISE]: 'price_enterprise',
-};
+function getStripePriceIds(configService: { get: (key: string) => string | undefined }): Record<BillingPlan, string> {
+  return {
+    [BillingPlan.FREE]: '',
+    [BillingPlan.STARTER]: configService.get('STRIPE_PRICE_STARTER') ?? '',
+    [BillingPlan.PRO]: configService.get('STRIPE_PRICE_PRO') ?? '',
+    [BillingPlan.ENTERPRISE]: configService.get('STRIPE_PRICE_ENTERPRISE') ?? '',
+  };
+}
 
 @Injectable()
 export class BillingService {
@@ -41,7 +43,7 @@ export class BillingService {
       tenantId,
       plan,
       stripeCustomerId: tenant.stripeCustomerId,
-      stripeSubscriptionId: null,
+      stripeSubscriptionId: tenant.stripeSubscriptionId,
       currentPeriodStart: periodStart,
       currentPeriodEnd: periodEnd,
       usage,
@@ -69,7 +71,8 @@ export class BillingService {
     await this.stripe.paymentMethods.attach(dto.paymentMethodId, { customer: customerId });
     await this.stripe.customers.update(customerId, { invoice_settings: { default_payment_method: dto.paymentMethodId } });
 
-    const priceId = STRIPE_PRICE_IDS[dto.plan];
+    const priceIds = getStripePriceIds(this.configService);
+    const priceId = priceIds[dto.plan];
     if (!priceId) throw new BadRequestException('Plan gratuit, pas d\'abonnement Stripe requis');
 
     const subscription = await this.stripe.subscriptions.create({
@@ -81,7 +84,10 @@ export class BillingService {
 
     await this.prisma.tenant.update({
       where: { id: tenantId },
-      data: { plan: this.mapBillingPlanToPrismaPlan(dto.plan) },
+      data: {
+        plan: this.mapBillingPlanToPrismaPlan(dto.plan),
+        stripeSubscriptionId: subscription.id,
+      },
     });
 
     this.logger.log(`Abonnement créé pour tenant ${tenantId}: ${subscription.id}`);
@@ -92,11 +98,14 @@ export class BillingService {
     if (!this.stripe) throw new BadRequestException('Stripe non configuré');
 
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
-    if (!tenant?.stripeCustomerId) throw new BadRequestException('Aucun client Stripe');
+    if (!tenant) throw new NotFoundException(`Tenant non trouvé: ${tenantId}`);
+    if (tenant.stripeSubscriptionId) {
+      await this.stripe.subscriptions.cancel(tenant.stripeSubscriptionId);
+    }
 
     await this.prisma.tenant.update({
       where: { id: tenantId },
-      data: { plan: 'FREE' },
+      data: { plan: 'FREE', stripeSubscriptionId: null },
     });
 
     this.logger.log(`Abonnement annulé pour tenant ${tenantId}`);
@@ -138,7 +147,28 @@ export class BillingService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return invoices.map(inv => ({
+    return invoices.map(inv => this.mapInvoiceToDto(inv));
+  }
+
+  /**
+   * Récupère une facture par ID (équivalent ancien EDI-Connect export_json).
+   */
+  async getInvoiceById(tenantId: string, invoiceId: string): Promise<InvoiceResponseDto | null> {
+    const inv = await this.prisma.billingInvoice.findFirst({
+      where: { id: invoiceId, tenantId },
+    });
+    return inv ? this.mapInvoiceToDto(inv) : null;
+  }
+
+  private mapInvoiceToDto(inv: {
+    id: string;
+    totalAmount: unknown;
+    status: string;
+    periodStart: Date;
+    periodEnd: Date;
+    createdAt: Date;
+  }): InvoiceResponseDto {
+    return {
       id: inv.id,
       amount: Number(inv.totalAmount),
       currency: 'EUR',
@@ -147,7 +177,7 @@ export class BillingService {
       periodEnd: inv.periodEnd,
       pdfUrl: undefined,
       createdAt: inv.createdAt,
-    }));
+    };
   }
 
   async checkQuota(tenantId: string, metricType: string): Promise<{ allowed: boolean; current: number; limit: number }> {
@@ -241,31 +271,62 @@ export class BillingService {
   }
 
   private async handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
-    const tenantId = subscription.metadata?.tenantId;
+    let tenantId: string | undefined = subscription.metadata?.tenantId;
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst({
+        where: { stripeSubscriptionId: subscription.id },
+      });
+      tenantId = tenant?.id;
+    }
     if (!tenantId) return;
 
     await this.prisma.tenant.update({
       where: { id: tenantId },
-      data: { plan: 'FREE' },
+      data: { plan: 'FREE', stripeSubscriptionId: null },
     });
   }
 
-  private mapPlanToBillingPlan(plan: 'FREE' | 'PRO' | 'ENTERPRISE'): BillingPlan {
+  private mapPlanToBillingPlan(plan: 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE'): BillingPlan {
     const mapping: Record<string, BillingPlan> = {
       FREE: BillingPlan.FREE,
+      STARTER: BillingPlan.STARTER,
       PRO: BillingPlan.PRO,
       ENTERPRISE: BillingPlan.ENTERPRISE,
     };
-    return mapping[plan] || BillingPlan.FREE;
+    return mapping[plan] ?? BillingPlan.FREE;
   }
 
-  private mapBillingPlanToPrismaPlan(plan: BillingPlan): 'FREE' | 'PRO' | 'ENTERPRISE' {
-    const mapping: Record<BillingPlan, 'FREE' | 'PRO' | 'ENTERPRISE'> = {
+  private mapBillingPlanToPrismaPlan(plan: BillingPlan): 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE' {
+    const mapping: Record<BillingPlan, 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE'> = {
       [BillingPlan.FREE]: 'FREE',
-      [BillingPlan.STARTER]: 'PRO',
+      [BillingPlan.STARTER]: 'STARTER',
       [BillingPlan.PRO]: 'PRO',
       [BillingPlan.ENTERPRISE]: 'ENTERPRISE',
     };
     return mapping[plan];
+  }
+
+  async createPortalSession(tenantId: string, returnUrl: string): Promise<{ url: string }> {
+    if (!this.stripe) throw new BadRequestException('Stripe non configuré');
+
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) throw new NotFoundException(`Tenant non trouvé: ${tenantId}`);
+    if (!tenant.stripeCustomerId) throw new BadRequestException('Aucun client Stripe pour ce tenant');
+
+    const session = await this.stripe.billingPortal.sessions.create({
+      customer: tenant.stripeCustomerId,
+      return_url: returnUrl,
+    });
+
+    return { url: session.url ?? '' };
+  }
+
+  getPlans(): Array<{ plan: BillingPlan; limits: { flows: number; executions: number; connectors: number; storage: number }; priceId: string }> {
+    const priceIds = getStripePriceIds(this.configService);
+    return ([BillingPlan.FREE, BillingPlan.STARTER, BillingPlan.PRO, BillingPlan.ENTERPRISE] as const).map((plan) => ({
+      plan,
+      limits: PLAN_LIMITS[plan],
+      priceId: priceIds[plan] || '',
+    }));
   }
 }

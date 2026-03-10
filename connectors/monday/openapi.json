@@ -1,0 +1,61 @@
+{
+  "connector_meta": {
+    "id": "monday",
+    "name": "Monday.com",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/monday.com",
+    "category": "Gestion de projet",
+    "auth_type": "api_key",
+    "docs_url": "https://developer.monday.com/api-reference/docs",
+    "config_instructions": "Monday.com : Profil → Admin → API → Generate. Utilisez le token API dans l’en-tête Authorization. L’API est GraphQL : URL de base https://api.monday.com/v2, méthode POST, body avec query et variables."
+  },
+  "auth_config": {
+    "api_key_header": "Authorization",
+    "base_url_param": "base_url"
+  },
+  "operations": [
+    {
+      "id": "list_boards",
+      "label": "Récupérer les tableaux",
+      "type": "source",
+      "method": "POST",
+      "path": "",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "boards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "number" },
+                    "name": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_item",
+      "label": "Créer un item (ligne)",
+      "type": "destination",
+      "method": "POST",
+      "path": "",
+      "input_schema": {
+        "type": "object",
+        "required": ["board_id", "item_name"],
+        "properties": {
+          "board_id": { "type": "number" },
+          "item_name": { "type": "string" },
+          "column_values": { "type": "object" }
+        }
+      }
+    }
+  ]
+}

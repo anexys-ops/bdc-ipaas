@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConnectorRegistryService } from '../connectors/connector-registry.service';
+import type { AuthConfig, ConnectorOperation } from '../connectors/interfaces';
 import {
   MarketplaceConnectorDto,
   MarketplaceConnectorDetailDto,
   MarketplaceCategoryDto,
   ConnectorOperationDto,
+  ConfigFieldDto,
 } from './dto';
 
 /**
@@ -58,6 +60,22 @@ export class MarketplaceService {
     const destOps = connector.operations.filter((op) => op.type === 'destination');
     const triggerOps = connector.operations.filter((op) => op.type === 'trigger');
 
+    const configFields =
+      connector.config_fields && connector.config_fields.length > 0
+        ? connector.config_fields.map((f) => ({
+            key: f.key,
+            label: f.label,
+            type: f.type,
+            required: f.required,
+            placeholder: f.placeholder,
+            description: f.description,
+          }))
+        : this.buildConfigFields(
+            connector.connector_meta.auth_type,
+            connector.auth_config,
+          );
+
+    const meta = connector.connector_meta as { agent_downloads?: { windows?: string; mac?: string } };
     return {
       id: connector.connector_meta.id,
       name: connector.connector_meta.name,
@@ -69,10 +87,151 @@ export class MarketplaceService {
       sourceOperationsCount: sourceOps.length,
       destinationOperationsCount: destOps.length,
       authConfig: connector.auth_config as Record<string, unknown>,
+      configFields,
+      configInstructions: connector.connector_meta.config_instructions,
+      agentDownloads: meta.agent_downloads,
       sourceOperations: sourceOps.map(this.mapOperationToDto),
       destinationOperations: destOps.map(this.mapOperationToDto),
       triggerOperations: triggerOps.map(this.mapOperationToDto),
     };
+  }
+
+  /**
+   * Construit la liste des champs de configuration selon le type d'auth et le connecteur.
+   */
+  private buildConfigFields(
+    authType: string,
+    authConfig: AuthConfig,
+  ): ConfigFieldDto[] {
+    const baseUrlParam = authConfig.base_url_param ?? 'base_url';
+    const fields: ConfigFieldDto[] = [];
+
+    switch (authType) {
+      case 'oauth2': {
+        fields.push(
+          {
+            key: baseUrlParam,
+            label: 'URL de base',
+            type: 'text',
+            required: false,
+            placeholder: 'https://api.example.com/v2',
+            description: 'URL de l’API (optionnel si valeur par défaut connue).',
+          },
+          {
+            key: 'access_token',
+            label: 'Token d’accès (Access Token)',
+            type: 'password',
+            required: true,
+            placeholder: 'Collez le token OAuth2 ou clé API',
+            description: 'Token obtenu après OAuth ou depuis les paramètres du logiciel.',
+          },
+        );
+        break;
+      }
+      case 'api_key': {
+        const headerName = authConfig.api_key_header ?? 'X-API-Key';
+        fields.push(
+          {
+            key: baseUrlParam,
+            label: 'URL de base',
+            type: 'text',
+            required: true,
+            placeholder: 'https://votre-instance.example.com/api',
+            description: 'URL de base de l’API (sans slash final).',
+          },
+          {
+            key: 'api_key',
+            label: 'Clé API',
+            type: 'password',
+            required: true,
+            placeholder: 'Votre clé API',
+            description: `Envoyée dans l’en-tête ${headerName}. Créez-la dans les paramètres du logiciel.`,
+          },
+        );
+        break;
+      }
+      case 'basic': {
+        fields.push(
+          {
+            key: baseUrlParam,
+            label: 'URL de base',
+            type: 'text',
+            required: false,
+            placeholder: 'https://votre-serveur.example.com',
+            description: 'URL de base (optionnel).',
+          },
+          {
+            key: 'username',
+            label: 'Identifiant',
+            type: 'text',
+            required: true,
+            placeholder: 'Utilisateur API',
+          },
+          {
+            key: 'password',
+            label: 'Mot de passe',
+            type: 'password',
+            required: true,
+            placeholder: 'Mot de passe ou token',
+          },
+        );
+        break;
+      }
+      case 'oauth1': {
+        const shopKey = authConfig.base_url_param ?? 'shop_url';
+        const consumerKeyParam = authConfig.consumer_key_param ?? 'consumer_key';
+        const consumerSecretParam = authConfig.consumer_secret_param ?? 'consumer_secret';
+        fields.push(
+          {
+            key: shopKey,
+            label: 'URL du site / boutique',
+            type: 'text',
+            required: true,
+            placeholder: 'https://votre-boutique.com',
+            description: 'URL de la boutique (sans slash final).',
+          },
+          {
+            key: consumerKeyParam,
+            label: 'Clé consommateur (Consumer Key)',
+            type: 'text',
+            required: true,
+            placeholder: 'ck_xxxx',
+          },
+          {
+            key: consumerSecretParam,
+            label: 'Secret consommateur (Consumer Secret)',
+            type: 'password',
+            required: true,
+            placeholder: 'cs_xxxx',
+            description: 'Clé et secret disponibles dans les réglages API du logiciel.',
+          },
+        );
+        break;
+      }
+      case 'agent': {
+        break;
+      }
+      default: {
+        fields.push(
+          {
+            key: baseUrlParam,
+            label: 'URL de base',
+            type: 'text',
+            required: true,
+            placeholder: 'https://api.example.com',
+          },
+          {
+            key: 'api_key',
+            label: 'Clé API / Secret',
+            type: 'password',
+            required: false,
+            placeholder: 'Optionnel',
+          },
+        );
+      }
+    }
+
+    return fields;
   }
 
   /**
@@ -133,21 +292,20 @@ export class MarketplaceService {
   }
 
   /**
-   * Mappe une opération vers le DTO.
+   * Mappe une opération vers le DTO (avec endpoint path et schémas complets pour afficher les champs JSON).
    */
-  private mapOperationToDto(operation: {
-    id: string;
-    label: string;
-    type: string;
-    method: string;
-    description?: string;
-  }): ConnectorOperationDto {
+  private mapOperationToDto(operation: ConnectorOperation): ConnectorOperationDto {
     return {
       id: operation.id,
       label: operation.label,
       type: operation.type,
       method: operation.method,
+      path: operation.path,
       description: operation.description,
+      outputSchema: operation.output_schema as Record<string, unknown> | undefined,
+      inputSchema: operation.input_schema as Record<string, unknown> | undefined,
+      configSchema: operation.config_schema as Record<string, unknown> | undefined,
+      fileFormat: operation.file_format,
     };
   }
 }

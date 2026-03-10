@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsNumber, Min } from 'class-validator';
+import { IsString, IsEnum, IsNumber, Min, IsUrl } from 'class-validator';
 
 export enum BillingPlan {
   FREE = 'FREE',
@@ -18,6 +18,12 @@ export const PLAN_LIMITS: Record<BillingPlan, { flows: number; executions: numbe
 export class CreateSubscriptionDto {
   @ApiProperty({ enum: BillingPlan }) @IsEnum(BillingPlan) plan!: BillingPlan;
   @ApiProperty() @IsString() paymentMethodId!: string;
+}
+
+export class CreatePortalSessionDto {
+  @ApiProperty({ description: 'URL de retour après utilisation du portail Stripe' })
+  @IsUrl()
+  returnUrl!: string;
 }
 
 export class UsageRecordDto {
@@ -42,6 +48,12 @@ export class BillingResponseDto {
   @ApiProperty() currentPeriodEnd!: Date;
   @ApiProperty() usage!: { flows: number; executions: number; connectors: number; storage: number };
   @ApiProperty() limits!: { flows: number; executions: number; connectors: number; storage: number };
+}
+
+export class PlanInfoDto {
+  @ApiProperty({ enum: BillingPlan }) plan!: BillingPlan;
+  @ApiProperty() limits!: { flows: number; executions: number; connectors: number; storage: number };
+  @ApiProperty() priceId!: string;
 }
 
 export class InvoiceResponseDto {

@@ -21,6 +21,12 @@ export class FlowDestinationResponseDto {
 
   @ApiProperty()
   isActive!: boolean;
+
+  @ApiProperty({ enum: ['CREATE', 'UPDATE'], description: 'Mode d\'écriture : CREATE ou UPDATE (recherche par searchFields)' })
+  writeMode!: string;
+
+  @ApiProperty({ required: false, type: [String], description: 'Champs de recherche pour mode UPDATE' })
+  searchFields?: string[] | null;
 }
 
 export class FlowResponseDto {

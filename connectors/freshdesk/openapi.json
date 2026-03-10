@@ -1,0 +1,72 @@
+{
+  "connector_meta": {
+    "id": "freshdesk",
+    "name": "Freshdesk",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/freshdesk.com",
+    "category": "Support client",
+    "auth_type": "api_key",
+    "docs_url": "https://developers.freshdesk.com/api/",
+    "config_instructions": "Freshdesk : Profile → View Profile → Your API key. L’API utilise l’authentification Basic : envoyez votre email comme username et la clé API comme password (base64). URL de base : https://votre-domaine.freshdesk.com/api/v2"
+  },
+  "auth_config": {
+    "api_key_header": "Authorization",
+    "base_url_param": "base_url"
+  },
+  "operations": [
+    {
+      "id": "list_contacts",
+      "label": "Récupérer les contacts",
+      "type": "source",
+      "method": "GET",
+      "path": "/contacts",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "company_id": { "type": "number" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_tickets",
+      "label": "Récupérer les tickets",
+      "type": "source",
+      "method": "GET",
+      "path": "/tickets",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "subject": { "type": "string" },
+          "status": { "type": "number" },
+          "priority": { "type": "number" },
+          "requester_id": { "type": "number" },
+          "created_at": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_contact",
+      "label": "Créer un contact",
+      "type": "destination",
+      "method": "POST",
+      "path": "/contacts",
+      "input_schema": {
+        "type": "object",
+        "required": ["name", "email"],
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "company_id": { "type": "number" }
+        }
+      }
+    }
+  ]
+}

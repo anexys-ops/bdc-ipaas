@@ -153,6 +153,36 @@ export class AuthService {
   }
 
   /**
+   * Crée une session (tokens + user) pour un utilisateur déjà créé (ex: après signup).
+   */
+  async createSessionForUser(userId: string): Promise<{ response: AuthResponseDto; refreshToken: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { tenant: true },
+    });
+
+    if (!user || !user.isActive || !user.tenant.isActive) {
+      throw new UnauthorizedException('Utilisateur ou organisation invalide');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { lastLoginAt: new Date() },
+    });
+
+    const accessToken = this.generateAccessToken(user, user.tenant.slug);
+    const { token: refreshToken } = await this.createRefreshToken(user.id);
+
+    return {
+      response: {
+        accessToken,
+        user: this.mapUserToResponse(user, user.tenant.slug),
+      },
+      refreshToken,
+    };
+  }
+
+  /**
    * Hash un mot de passe avec bcrypt.
    */
   async hashPassword(password: string): Promise<string> {

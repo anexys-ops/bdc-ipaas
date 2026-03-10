@@ -3,46 +3,52 @@
     "id": "sellsy",
     "name": "Sellsy",
     "version": "2.0",
-    "icon": "sellsy.svg",
+    "icon": "https://logo.clearbit.com/sellsy.com",
     "category": "CRM / Facturation",
     "auth_type": "oauth2",
-    "docs_url": "https://api.sellsy.com/doc/v2/"
+    "docs_url": "https://api.sellsy.com/doc/v2/",
+    "config_instructions": "1) Rendez-vous sur https://www.sellsy.com/developer/api-v2 (ou Sellsy → Paramètres → Intégrations → API). 2) Créez une application pour obtenir le Client ID et le Client Secret. 3) Le token d’accès est obtenu automatiquement (flux Client Credentials) à partir de ces identifiants ; inutile de saisir un token manuellement. 4) URL de base par défaut : https://api.sellsy.com/v2 (optionnel). Doc : https://api.sellsy.com/doc/v2/"
   },
   "auth_config": {
     "token_url": "https://login.sellsy.com/oauth2/access-tokens",
+    "authorization_url": "https://login.sellsy.com/oauth2/authorization",
     "scopes": ["invoices.read", "invoices.write", "contacts.read", "contacts.write", "opportunities.read"]
   },
-  "operations": [
+  "config_fields": [
     {
-      "id": "list_invoices",
-      "label": "Récupérer les factures",
-      "type": "source",
-      "method": "GET",
-      "path": "/invoices",
-      "pagination": "cursor",
-      "pagination_param": "after",
-      "output_schema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "invoiceNumber": { "type": "string" },
-          "status": { "type": "string", "enum": ["draft","sent","paid","cancelled"] },
-          "amount": { "type": "number" },
-          "currency": { "type": "string" },
-          "dueDate": { "type": "string", "format": "date" },
-          "clientId": { "type": "string" },
-          "clientName": { "type": "string" },
-          "createdAt": { "type": "string", "format": "date-time" }
-        }
-      }
+      "key": "client_id",
+      "label": "Client ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "Ex: e3bccf5e-40a9-4109-8e05-160fd93cf47e",
+      "description": "Identifiant de l'application (Sellsy Developer). Le token est récupéré automatiquement avec le Client Secret."
     },
     {
+      "key": "client_secret",
+      "label": "Client Secret",
+      "type": "password",
+      "required": true,
+      "placeholder": "Secret de l'application Sellsy",
+      "description": "Secret de l'application. Avec le Client ID, permet d'obtenir automatiquement le token d'accès."
+    },
+    {
+      "key": "base_url",
+      "label": "URL de base API",
+      "type": "text",
+      "required": false,
+      "placeholder": "https://api.sellsy.com/v2",
+      "description": "Optionnel. Par défaut : https://api.sellsy.com/v2. Ne pas utiliser login.sellsy.com (réservé à l'OAuth)."
+    }
+  ],
+  "operations": [
+    {
       "id": "list_contacts",
-      "label": "Récupérer les clients/contacts",
+      "label": "Lister les contacts",
       "type": "source",
       "method": "GET",
       "path": "/contacts",
       "pagination": "cursor",
+      "pagination_param": "after",
       "output_schema": {
         "type": "object",
         "properties": {
@@ -53,16 +59,46 @@
           "email": { "type": "string" },
           "phone": { "type": "string" },
           "company": { "type": "string" },
+          "companyId": { "type": "string" },
           "address": { "type": "string" },
           "city": { "type": "string" },
           "zipCode": { "type": "string" },
-          "country": { "type": "string" }
+          "country": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_contact",
+      "label": "Récupérer un contact",
+      "type": "source",
+      "method": "GET",
+      "path": "/contacts/{id}",
+      "path_params": ["id"],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "civility": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "company": { "type": "string" },
+          "companyId": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "zipCode": { "type": "string" },
+          "country": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
         }
       }
     },
     {
       "id": "create_contact",
-      "label": "Créer un contact/client",
+      "label": "Créer un contact",
       "type": "destination",
       "method": "POST",
       "path": "/contacts",
@@ -76,10 +112,441 @@
           "email": { "type": "string", "format": "email" },
           "phone": { "type": "string" },
           "company": { "type": "string" },
+          "companyId": { "type": "string" },
           "address": { "type": "string" },
           "city": { "type": "string" },
           "zipCode": { "type": "string" },
           "country": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "update_contact",
+      "label": "Modifier un contact",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/contacts/{id}",
+      "path_params": ["id"],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "civility": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "phone": { "type": "string" },
+          "company": { "type": "string" },
+          "companyId": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "zipCode": { "type": "string" },
+          "country": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "delete_contact",
+      "label": "Supprimer un contact",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/contacts/{id}",
+      "path_params": ["id"]
+    },
+    {
+      "id": "list_companies",
+      "label": "Lister les sociétés",
+      "type": "source",
+      "method": "GET",
+      "path": "/companies",
+      "pagination": "cursor",
+      "pagination_param": "after",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "siret": { "type": "string" },
+          "vatNumber": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "zipCode": { "type": "string" },
+          "country": { "type": "string" },
+          "phone": { "type": "string" },
+          "email": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_company",
+      "label": "Récupérer une société",
+      "type": "source",
+      "method": "GET",
+      "path": "/companies/{id}",
+      "path_params": ["id"],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "siret": { "type": "string" },
+          "vatNumber": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "zipCode": { "type": "string" },
+          "country": { "type": "string" },
+          "phone": { "type": "string" },
+          "email": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_company",
+      "label": "Créer une société",
+      "type": "destination",
+      "method": "POST",
+      "path": "/companies",
+      "input_schema": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "siret": { "type": "string" },
+          "vatNumber": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "zipCode": { "type": "string" },
+          "country": { "type": "string" },
+          "phone": { "type": "string" },
+          "email": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "update_company",
+      "label": "Modifier une société",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/companies/{id}",
+      "path_params": ["id"],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "siret": { "type": "string" },
+          "vatNumber": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "zipCode": { "type": "string" },
+          "country": { "type": "string" },
+          "phone": { "type": "string" },
+          "email": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_quotes",
+      "label": "Lister les devis",
+      "type": "source",
+      "method": "GET",
+      "path": "/estimates",
+      "pagination": "cursor",
+      "pagination_param": "after",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "quoteNumber": { "type": "string" },
+          "status": { "type": "string", "enum": ["draft", "sent", "accepted", "refused", "expired", "converted"] },
+          "amountHT": { "type": "number", "description": "Montant hors taxes" },
+          "amountTTC": { "type": "number", "description": "Montant toutes taxes comprises" },
+          "vatAmount": { "type": "number", "description": "Montant TVA" },
+          "currency": { "type": "string" },
+          "clientId": { "type": "string" },
+          "clientName": { "type": "string" },
+          "validUntil": { "type": "string", "format": "date" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_quote",
+      "label": "Récupérer un devis",
+      "type": "source",
+      "method": "GET",
+      "path": "/estimates/{id}",
+      "path_params": ["id"],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "quoteNumber": { "type": "string" },
+          "status": { "type": "string", "enum": ["draft", "sent", "accepted", "refused", "expired", "converted"] },
+          "amountHT": { "type": "number" },
+          "amountTTC": { "type": "number" },
+          "vatAmount": { "type": "number" },
+          "currency": { "type": "string" },
+          "clientId": { "type": "string" },
+          "clientName": { "type": "string" },
+          "validUntil": { "type": "string", "format": "date" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "label": { "type": "string" },
+                "quantity": { "type": "number" },
+                "unitPriceHT": { "type": "number" },
+                "amountHT": { "type": "number" },
+                "vatRate": { "type": "number" },
+                "amountTTC": { "type": "number" }
+              }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_quote",
+      "label": "Créer un devis",
+      "type": "destination",
+      "method": "POST",
+      "path": "/estimates",
+      "input_schema": {
+        "type": "object",
+        "required": ["clientId", "lines"],
+        "properties": {
+          "clientId": { "type": "string" },
+          "validUntil": { "type": "string", "format": "date" },
+          "currency": { "type": "string", "default": "EUR" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "itemId": { "type": "string" },
+                "label": { "type": "string" },
+                "quantity": { "type": "number" },
+                "unitPrice": { "type": "number" },
+                "vatRate": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_quote",
+      "label": "Modifier un devis",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/estimates/{id}",
+      "path_params": ["id"],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "clientId": { "type": "string" },
+          "validUntil": { "type": "string", "format": "date" },
+          "currency": { "type": "string" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "itemId": { "type": "string" },
+                "label": { "type": "string" },
+                "quantity": { "type": "number" },
+                "unitPrice": { "type": "number" },
+                "vatRate": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "convert_quote_to_invoice",
+      "label": "Convertir un devis en facture",
+      "type": "destination",
+      "method": "POST",
+      "path": "/estimates/{id}/convert",
+      "path_params": ["id"],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "invoiceNumber": { "type": "string" },
+          "status": { "type": "string" },
+          "amountHT": { "type": "number" },
+          "amountTTC": { "type": "number" },
+          "currency": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_orders",
+      "label": "Lister les commandes",
+      "type": "source",
+      "method": "GET",
+      "path": "/orders",
+      "pagination": "cursor",
+      "pagination_param": "after",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "orderNumber": { "type": "string" },
+          "status": { "type": "string", "enum": ["draft", "confirmed", "in_progress", "shipped", "delivered", "cancelled"] },
+          "amountHT": { "type": "number" },
+          "amountTTC": { "type": "number" },
+          "vatAmount": { "type": "number" },
+          "currency": { "type": "string" },
+          "clientId": { "type": "string" },
+          "clientName": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_order",
+      "label": "Récupérer une commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/orders/{id}",
+      "path_params": ["id"],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "orderNumber": { "type": "string" },
+          "status": { "type": "string", "enum": ["draft", "confirmed", "in_progress", "shipped", "delivered", "cancelled"] },
+          "amountHT": { "type": "number" },
+          "amountTTC": { "type": "number" },
+          "vatAmount": { "type": "number" },
+          "currency": { "type": "string" },
+          "clientId": { "type": "string" },
+          "clientName": { "type": "string" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "label": { "type": "string" },
+                "quantity": { "type": "number" },
+                "unitPriceHT": { "type": "number" },
+                "amountHT": { "type": "number" },
+                "vatRate": { "type": "number" },
+                "amountTTC": { "type": "number" }
+              }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_order",
+      "label": "Créer une commande",
+      "type": "destination",
+      "method": "POST",
+      "path": "/orders",
+      "input_schema": {
+        "type": "object",
+        "required": ["clientId", "lines"],
+        "properties": {
+          "clientId": { "type": "string" },
+          "currency": { "type": "string", "default": "EUR" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "itemId": { "type": "string" },
+                "label": { "type": "string" },
+                "quantity": { "type": "number" },
+                "unitPrice": { "type": "number" },
+                "vatRate": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_invoices",
+      "label": "Lister les factures",
+      "type": "source",
+      "method": "GET",
+      "path": "/invoices",
+      "pagination": "cursor",
+      "pagination_param": "after",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "invoiceNumber": { "type": "string" },
+          "status": { "type": "string", "enum": ["draft", "sent", "paid", "cancelled", "overdue"] },
+          "amountHT": { "type": "number", "description": "Montant hors taxes" },
+          "amountTTC": { "type": "number", "description": "Montant TTC" },
+          "vatAmount": { "type": "number", "description": "Montant TVA" },
+          "currency": { "type": "string" },
+          "dueDate": { "type": "string", "format": "date" },
+          "clientId": { "type": "string" },
+          "clientName": { "type": "string" },
+          "paidAmount": { "type": "number" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_invoice",
+      "label": "Récupérer une facture",
+      "type": "source",
+      "method": "GET",
+      "path": "/invoices/{id}",
+      "path_params": ["id"],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "invoiceNumber": { "type": "string" },
+          "status": { "type": "string", "enum": ["draft", "sent", "paid", "cancelled", "overdue"] },
+          "amountHT": { "type": "number" },
+          "amountTTC": { "type": "number" },
+          "vatAmount": { "type": "number" },
+          "currency": { "type": "string" },
+          "dueDate": { "type": "string", "format": "date" },
+          "clientId": { "type": "string" },
+          "clientName": { "type": "string" },
+          "paidAmount": { "type": "number" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "label": { "type": "string" },
+                "quantity": { "type": "number" },
+                "unitPriceHT": { "type": "number" },
+                "amountHT": { "type": "number" },
+                "vatRate": { "type": "number" },
+                "amountTTC": { "type": "number" }
+              }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
         }
       }
     },
@@ -101,6 +568,7 @@
             "items": {
               "type": "object",
               "properties": {
+                "itemId": { "type": "string" },
                 "label": { "type": "string" },
                 "quantity": { "type": "number" },
                 "unitPrice": { "type": "number" },
@@ -108,6 +576,302 @@
               }
             }
           }
+        }
+      }
+    },
+    {
+      "id": "update_invoice",
+      "label": "Modifier une facture",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/invoices/{id}",
+      "path_params": ["id"],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "dueDate": { "type": "string", "format": "date" },
+          "currency": { "type": "string" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "itemId": { "type": "string" },
+                "label": { "type": "string" },
+                "quantity": { "type": "number" },
+                "unitPrice": { "type": "number" },
+                "vatRate": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "validate_invoice",
+      "label": "Valider une facture (marquer envoyée)",
+      "type": "destination",
+      "method": "POST",
+      "path": "/invoices/{id}/mark-as-sent",
+      "path_params": ["id"],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "type": "string", "enum": ["sent"] }
+        }
+      }
+    },
+    {
+      "id": "mark_invoice_paid",
+      "label": "Marquer une facture comme payée",
+      "type": "destination",
+      "method": "POST",
+      "path": "/invoices/{id}/mark-as-paid",
+      "path_params": ["id"],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "type": "string", "enum": ["paid"] },
+          "paidAmount": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_credit_notes",
+      "label": "Lister les avoirs",
+      "type": "source",
+      "method": "GET",
+      "path": "/credit-notes",
+      "pagination": "cursor",
+      "pagination_param": "after",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "creditNoteNumber": { "type": "string" },
+          "status": { "type": "string", "enum": ["draft", "sent", "applied"] },
+          "amountHT": { "type": "number" },
+          "amountTTC": { "type": "number" },
+          "vatAmount": { "type": "number" },
+          "currency": { "type": "string" },
+          "invoiceId": { "type": "string" },
+          "clientId": { "type": "string" },
+          "clientName": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_credit_note",
+      "label": "Créer un avoir",
+      "type": "destination",
+      "method": "POST",
+      "path": "/credit-notes",
+      "input_schema": {
+        "type": "object",
+        "required": ["invoiceId", "lines"],
+        "properties": {
+          "invoiceId": { "type": "string" },
+          "currency": { "type": "string", "default": "EUR" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "invoiceLineId": { "type": "string" },
+                "label": { "type": "string" },
+                "quantity": { "type": "number" },
+                "unitPrice": { "type": "number" },
+                "vatRate": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_items",
+      "label": "Lister les articles/produits",
+      "type": "source",
+      "method": "GET",
+      "path": "/items",
+      "pagination": "cursor",
+      "pagination_param": "after",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "reference": { "type": "string" },
+          "description": { "type": "string" },
+          "unitPriceHT": { "type": "number" },
+          "vatRate": { "type": "number" },
+          "categoryId": { "type": "string" },
+          "unitId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_item",
+      "label": "Récupérer un article",
+      "type": "source",
+      "method": "GET",
+      "path": "/items/{id}",
+      "path_params": ["id"],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "reference": { "type": "string" },
+          "description": { "type": "string" },
+          "unitPriceHT": { "type": "number" },
+          "vatRate": { "type": "number" },
+          "categoryId": { "type": "string" },
+          "unitId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_item",
+      "label": "Créer un article",
+      "type": "destination",
+      "method": "POST",
+      "path": "/items",
+      "input_schema": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "reference": { "type": "string" },
+          "description": { "type": "string" },
+          "unitPriceHT": { "type": "number" },
+          "vatRate": { "type": "number" },
+          "categoryId": { "type": "string" },
+          "unitId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "update_item",
+      "label": "Modifier un article",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/items/{id}",
+      "path_params": ["id"],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "reference": { "type": "string" },
+          "description": { "type": "string" },
+          "unitPriceHT": { "type": "number" },
+          "vatRate": { "type": "number" },
+          "categoryId": { "type": "string" },
+          "unitId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "delete_item",
+      "label": "Supprimer un article",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/items/{id}",
+      "path_params": ["id"]
+    },
+    {
+      "id": "list_item_categories",
+      "label": "Lister les catégories d'articles",
+      "type": "source",
+      "method": "GET",
+      "path": "/item-categories",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "parentId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_taxes",
+      "label": "Lister les taxes/TVA",
+      "type": "source",
+      "method": "GET",
+      "path": "/taxes",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "rate": { "type": "number", "description": "Taux en %" },
+          "country": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_units",
+      "label": "Lister les unités",
+      "type": "source",
+      "method": "GET",
+      "path": "/units",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "symbol": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_payments",
+      "label": "Lister les paiements",
+      "type": "source",
+      "method": "GET",
+      "path": "/payments",
+      "pagination": "cursor",
+      "pagination_param": "after",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "invoiceId": { "type": "string" },
+          "amount": { "type": "number" },
+          "currency": { "type": "string" },
+          "paymentDate": { "type": "string", "format": "date" },
+          "paymentMethod": { "type": "string" },
+          "status": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_payment",
+      "label": "Créer un paiement",
+      "type": "destination",
+      "method": "POST",
+      "path": "/payments",
+      "input_schema": {
+        "type": "object",
+        "required": ["invoiceId", "amount"],
+        "properties": {
+          "invoiceId": { "type": "string" },
+          "amount": { "type": "number" },
+          "currency": { "type": "string" },
+          "paymentDate": { "type": "string", "format": "date" },
+          "paymentMethod": { "type": "string" }
         }
       }
     }

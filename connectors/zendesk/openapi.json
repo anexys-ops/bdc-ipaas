@@ -1,0 +1,78 @@
+{
+  "connector_meta": {
+    "id": "zendesk",
+    "name": "Zendesk",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/zendesk.com",
+    "category": "Support client",
+    "auth_type": "basic",
+    "docs_url": "https://developer.zendesk.com/api-reference",
+    "config_instructions": "1) Zendesk : Admin Center → Apps and integrations → APIs → Zendesk API. 2) Activez l’accès par mot de passe (Token Access) : Settings → API → Enable password access. 3) Créez un token dans votre profil : Agents → votre profil → API. Authentification Basic : email = votre@email.com/token, password = le jeton API. 4) URL de base : https://votre-subdomain.zendesk.com/api/v2. Doc : https://developer.zendesk.com/api-reference/introduction/security-and-auth/"
+  },
+  "auth_config": {
+    "username_param": "username",
+    "password_param": "api_token",
+    "base_url_param": "base_url"
+  },
+  "operations": [
+    {
+      "id": "list_users",
+      "label": "Récupérer les utilisateurs",
+      "type": "source",
+      "method": "GET",
+      "path": "/users.json",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "role": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_tickets",
+      "label": "Récupérer les tickets",
+      "type": "source",
+      "method": "GET",
+      "path": "/tickets.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "subject": { "type": "string" },
+          "status": { "type": "string" },
+          "priority": { "type": "string" },
+          "requester_id": { "type": "number" },
+          "created_at": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_ticket",
+      "label": "Créer un ticket",
+      "type": "destination",
+      "method": "POST",
+      "path": "/tickets.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["ticket"],
+        "properties": {
+          "ticket": {
+            "type": "object",
+            "required": ["subject", "comment"],
+            "properties": {
+              "subject": { "type": "string" },
+              "comment": { "type": "object", "properties": { "body": { "type": "string" } } },
+              "requester_id": { "type": "number" },
+              "priority": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

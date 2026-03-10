@@ -3,15 +3,34 @@
     "id": "dolibarr",
     "name": "Dolibarr",
     "version": "1.0",
-    "icon": "dolibarr.svg",
+    "icon": "https://logo.clearbit.com/dolibarr.org",
     "category": "ERP / CRM",
     "auth_type": "api_key",
-    "docs_url": "https://wiki.dolibarr.org/index.php/API"
+    "docs_url": "https://wiki.dolibarr.org/index.php/API",
+    "config_instructions": "1) Activer l'API : Accueil → Configuration → Modules/Applications → activer « Web services REST API ». 2) Créer une clé API : menu utilisateur (en haut à droite) → onglet « Clé API » → Générer ou régénérer. Copier la clé (DOLAPIKEY) et la conserver en lieu sûr. 3) URL de base : saisir l'URL complète (ex: https://votre-instance.fr/api/index.php) ou le domaine (ex: https://votre-instance.fr) — /api/index.php est ajouté si absent. En-tête : DOLAPIKEY. Doc : https://wiki.dolibarr.org/index.php/Module_Web_Services_API_REST_(developer)"
   },
   "auth_config": {
     "api_key_header": "DOLAPIKEY",
     "base_url_param": "base_url"
   },
+  "config_fields": [
+    {
+      "key": "base_url",
+      "label": "URL de base",
+      "type": "text",
+      "required": true,
+      "placeholder": "https://luxgreen.fr ou https://votre-instance.fr/api/index.php",
+      "description": "Domaine seul (ex: https://luxgreen.fr) ou URL complète avec /api/index.php. Le chemin /api/index.php est ajouté automatiquement si absent."
+    },
+    {
+      "key": "api_key",
+      "label": "Clé API (DOLAPIKEY)",
+      "type": "password",
+      "required": true,
+      "placeholder": "Votre clé générée dans Dolibarr",
+      "description": "Clé API générée dans le profil utilisateur (onglet Clé API). Envoyée dans l'en-tête DOLAPIKEY."
+    }
+  ],
   "operations": [
     {
       "id": "list_thirdparties",
@@ -39,6 +58,130 @@
       }
     },
     {
+      "id": "get_thirdparty",
+      "label": "Récupérer un tiers par ID",
+      "type": "source",
+      "method": "GET",
+      "path": "/thirdparties/{id}",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "name": { "type": "string" },
+          "client": { "type": "number" },
+          "fournisseur": { "type": "number" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "address": { "type": "string" },
+          "zip": { "type": "string" },
+          "town": { "type": "string" },
+          "country_code": { "type": "string" },
+          "tva_intra": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "update_thirdparty",
+      "label": "Mettre à jour un tiers",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/thirdparties/{id}",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "client": { "type": "number" },
+          "fournisseur": { "type": "number" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "address": { "type": "string" },
+          "zip": { "type": "string" },
+          "town": { "type": "string" },
+          "country_code": { "type": "string" },
+          "tva_intra": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "delete_thirdparty",
+      "label": "Supprimer un tiers",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/thirdparties/{id}",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }]
+    },
+    {
+      "id": "list_thirdparties_customers",
+      "label": "Clients uniquement",
+      "type": "source",
+      "method": "GET",
+      "path": "/thirdparties",
+      "params": [{ "name": "mode", "type": "string", "in": "query", "required": true, "default": "1" }],
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "name": { "type": "string" },
+          "client": { "type": "number" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "address": { "type": "string" },
+          "zip": { "type": "string" },
+          "town": { "type": "string" },
+          "country_code": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_thirdparties_suppliers",
+      "label": "Fournisseurs uniquement",
+      "type": "source",
+      "method": "GET",
+      "path": "/thirdparties",
+      "params": [{ "name": "mode", "type": "string", "in": "query", "required": true, "default": "2" }],
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "name": { "type": "string" },
+          "fournisseur": { "type": "number" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "address": { "type": "string" },
+          "zip": { "type": "string" },
+          "town": { "type": "string" },
+          "country_code": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "search_thirdparties",
+      "label": "Rechercher par nom/email",
+      "type": "source",
+      "method": "GET",
+      "path": "/thirdparties",
+      "params": [{ "name": "sqlfilters", "type": "string", "in": "query", "required": false }],
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "client": { "type": "number" },
+          "fournisseur": { "type": "number" }
+        }
+      }
+    },
+    {
       "id": "create_thirdparty",
       "label": "Créer un tiers",
       "type": "destination",
@@ -57,6 +200,244 @@
           "town": { "type": "string" },
           "country_code": { "type": "string", "default": "FR" },
           "tva_intra": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_orders",
+      "label": "Récupérer les commandes",
+      "type": "source",
+      "method": "GET",
+      "path": "/orders",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "socid": { "type": "string" },
+          "date": { "type": "number" },
+          "date_creation": { "type": "number" },
+          "total_ht": { "type": "number" },
+          "total_tva": { "type": "number" },
+          "total_ttc": { "type": "number" },
+          "statut": { "type": "number" },
+          "multicurrency_tx": { "type": "number" },
+          "multicurrency_code": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "get_order",
+      "label": "Détail commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/orders/{id}",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "socid": { "type": "string" },
+          "date": { "type": "number" },
+          "date_creation": { "type": "number" },
+          "total_ht": { "type": "number" },
+          "total_tva": { "type": "number" },
+          "total_ttc": { "type": "number" },
+          "statut": { "type": "number" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "fk_product": { "type": "string" },
+                "label": { "type": "string" },
+                "qty": { "type": "number" },
+                "subprice": { "type": "number" },
+                "tva_tx": { "type": "number" },
+                "total_ht": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_order",
+      "label": "Créer une commande",
+      "type": "destination",
+      "method": "POST",
+      "path": "/orders",
+      "input_schema": {
+        "type": "object",
+        "required": ["socid", "lines"],
+        "properties": {
+          "socid": { "type": "string" },
+          "date": { "type": "number" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fk_product": { "type": "string" },
+                "label": { "type": "string" },
+                "qty": { "type": "number" },
+                "subprice": { "type": "number" },
+                "tva_tx": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_order",
+      "label": "Mettre à jour une commande",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/orders/{id}",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "socid": { "type": "string" },
+          "date": { "type": "number" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fk_product": { "type": "string" },
+                "label": { "type": "string" },
+                "qty": { "type": "number" },
+                "subprice": { "type": "number" },
+                "tva_tx": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "validate_order",
+      "label": "Valider une commande",
+      "type": "destination",
+      "method": "POST",
+      "path": "/orders/{id}/validate",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }]
+    },
+    {
+      "id": "close_order",
+      "label": "Clôturer une commande",
+      "type": "destination",
+      "method": "POST",
+      "path": "/orders/{id}/close",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }]
+    },
+    {
+      "id": "list_order_lines",
+      "label": "Lignes de commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/orders/{id}/lines",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "fk_commande": { "type": "string" },
+          "fk_product": { "type": "string" },
+          "label": { "type": "string" },
+          "description": { "type": "string" },
+          "qty": { "type": "number" },
+          "subprice": { "type": "number" },
+          "tva_tx": { "type": "number" },
+          "total_ht": { "type": "number" },
+          "total_tva": { "type": "number" },
+          "total_ttc": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "add_order_line",
+      "label": "Ajouter une ligne de commande",
+      "type": "destination",
+      "method": "POST",
+      "path": "/orders/{id}/lines",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "input_schema": {
+        "type": "object",
+        "required": ["fk_product", "qty", "subprice"],
+        "properties": {
+          "fk_product": { "type": "string" },
+          "label": { "type": "string" },
+          "qty": { "type": "number" },
+          "subprice": { "type": "number" },
+          "tva_tx": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_invoices",
+      "label": "Récupérer les factures",
+      "type": "source",
+      "method": "GET",
+      "path": "/invoices",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "ref_supplier": { "type": "string" },
+          "socid": { "type": "string" },
+          "date": { "type": "number" },
+          "date_creation": { "type": "number" },
+          "date_lim_reglement": { "type": "number" },
+          "total_ht": { "type": "number" },
+          "total_tva": { "type": "number" },
+          "total_ttc": { "type": "number" },
+          "paye": { "type": "number" },
+          "statut": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "get_invoice",
+      "label": "Détail facture",
+      "type": "source",
+      "method": "GET",
+      "path": "/invoices/{id}",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "socid": { "type": "string" },
+          "date": { "type": "number" },
+          "total_ht": { "type": "number" },
+          "total_tva": { "type": "number" },
+          "total_ttc": { "type": "number" },
+          "paye": { "type": "number" },
+          "statut": { "type": "number" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "fk_product": { "type": "string" },
+                "label": { "type": "string" },
+                "qty": { "type": "number" },
+                "subprice": { "type": "number" },
+                "tva_tx": { "type": "number" },
+                "total_ht": { "type": "number" }
+              }
+            }
+          }
         }
       }
     },
@@ -85,6 +466,439 @@
               }
             }
           }
+        }
+      }
+    },
+    {
+      "id": "update_invoice",
+      "label": "Mettre à jour une facture",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/invoices/{id}",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "socid": { "type": "string" },
+          "date": { "type": "number" },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fk_product": { "type": "string" },
+                "label": { "type": "string" },
+                "qty": { "type": "number" },
+                "subprice": { "type": "number" },
+                "tva_tx": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "validate_invoice",
+      "label": "Valider une facture",
+      "type": "destination",
+      "method": "POST",
+      "path": "/invoices/{id}/validate",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }]
+    },
+    {
+      "id": "list_invoice_lines",
+      "label": "Lignes de facture",
+      "type": "source",
+      "method": "GET",
+      "path": "/invoices/{id}/lines",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "fk_facture": { "type": "string" },
+          "fk_product": { "type": "string" },
+          "label": { "type": "string" },
+          "description": { "type": "string" },
+          "qty": { "type": "number" },
+          "subprice": { "type": "number" },
+          "tva_tx": { "type": "number" },
+          "total_ht": { "type": "number" },
+          "total_tva": { "type": "number" },
+          "total_ttc": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "add_invoice_line",
+      "label": "Ajouter une ligne de facture",
+      "type": "destination",
+      "method": "POST",
+      "path": "/invoices/{id}/lines",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "input_schema": {
+        "type": "object",
+        "required": ["fk_product", "qty", "subprice"],
+        "properties": {
+          "fk_product": { "type": "string" },
+          "label": { "type": "string" },
+          "qty": { "type": "number" },
+          "subprice": { "type": "number" },
+          "tva_tx": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "set_invoice_paid",
+      "label": "Marquer facture payée",
+      "type": "destination",
+      "method": "POST",
+      "path": "/invoices/{id}/settopaid",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "payment_mode_id": { "type": "string" },
+          "payment_date": { "type": "number" },
+          "amount": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_products",
+      "label": "Récupérer les produits",
+      "type": "source",
+      "method": "GET",
+      "path": "/products",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "label": { "type": "string" },
+          "description": { "type": "string" },
+          "price": { "type": "number" },
+          "tva_tx": { "type": "number" },
+          "tosell": { "type": "number" },
+          "tobuy": { "type": "number" },
+          "weight": { "type": "number" },
+          "length": { "type": "number" },
+          "width": { "type": "number" },
+          "height": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "get_product",
+      "label": "Détail produit",
+      "type": "source",
+      "method": "GET",
+      "path": "/products/{id}",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "label": { "type": "string" },
+          "description": { "type": "string" },
+          "price": { "type": "number" },
+          "tva_tx": { "type": "number" },
+          "tosell": { "type": "number" },
+          "tobuy": { "type": "number" },
+          "weight": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "create_product",
+      "label": "Créer un produit",
+      "type": "destination",
+      "method": "POST",
+      "path": "/products",
+      "input_schema": {
+        "type": "object",
+        "required": ["ref", "label"],
+        "properties": {
+          "ref": { "type": "string" },
+          "label": { "type": "string" },
+          "description": { "type": "string" },
+          "price": { "type": "number" },
+          "tva_tx": { "type": "number" },
+          "tosell": { "type": "number" },
+          "tobuy": { "type": "number" },
+          "weight": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "update_product",
+      "label": "Mettre à jour un produit",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/products/{id}",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ref": { "type": "string" },
+          "label": { "type": "string" },
+          "description": { "type": "string" },
+          "price": { "type": "number" },
+          "tva_tx": { "type": "number" },
+          "tosell": { "type": "number" },
+          "tobuy": { "type": "number" },
+          "weight": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "delete_product",
+      "label": "Supprimer un produit",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/products/{id}",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }]
+    },
+    {
+      "id": "list_product_categories",
+      "label": "Catégories produits",
+      "type": "source",
+      "method": "GET",
+      "path": "/categories",
+      "params": [{ "name": "type", "type": "string", "in": "query", "required": true, "default": "0" }],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "fk_parent": { "type": "string" },
+          "type": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "get_product_stock",
+      "label": "Stock par entrepôt",
+      "type": "source",
+      "method": "GET",
+      "path": "/products/{id}/stock",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "fk_product": { "type": "string" },
+          "fk_entrepot": { "type": "string" },
+          "reel": { "type": "number" },
+          "warehouse_ref": { "type": "string" },
+          "warehouse_label": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_pricelists",
+      "label": "Récupérer les tarifs",
+      "type": "source",
+      "method": "GET",
+      "path": "/pricelists",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "entity": { "type": "number" },
+          "date_start": { "type": "number" },
+          "date_end": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "get_pricelist",
+      "label": "Détail tarif",
+      "type": "source",
+      "method": "GET",
+      "path": "/pricelists/{id}",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "entity": { "type": "number" },
+          "date_start": { "type": "number" },
+          "date_end": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_product_prices",
+      "label": "Prix client pour un produit",
+      "type": "source",
+      "method": "GET",
+      "path": "/products/{id}/selling_multiprices/customer/{thirdparty_id}",
+      "params": [
+        { "name": "id", "type": "string", "in": "path", "required": true },
+        { "name": "thirdparty_id", "type": "string", "in": "path", "required": true }
+      ],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "fk_product": { "type": "string" },
+          "fk_soc": { "type": "string" },
+          "price_level": { "type": "number" },
+          "price": { "type": "number" },
+          "price_ttc": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "set_product_price",
+      "label": "Définir prix produit (niveau 1)",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/products/{id}/selling_multiprices/1",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "input_schema": {
+        "type": "object",
+        "required": ["price"],
+        "properties": {
+          "price": { "type": "number" },
+          "price_ttc": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_taxes",
+      "label": "Liste des taxes",
+      "type": "source",
+      "method": "GET",
+      "path": "/setup/dictionary/taxes",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "code": { "type": "string" },
+          "label": { "type": "string" },
+          "taux": { "type": "number" },
+          "type": { "type": "number" },
+          "localtax1": { "type": "number" },
+          "localtax2": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_vat_rates",
+      "label": "Taux de TVA configurés",
+      "type": "source",
+      "method": "GET",
+      "path": "/setup/conf/{mainmodule}",
+      "params": [{ "name": "mainmodule", "type": "string", "in": "path", "required": true }],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_warehouses",
+      "label": "Entrepôts",
+      "type": "source",
+      "method": "GET",
+      "path": "/warehouses",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "label": { "type": "string" },
+          "description": { "type": "string" },
+          "fk_parent": { "type": "string" },
+          "entity": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "get_stock_movements",
+      "label": "Mouvements de stock",
+      "type": "source",
+      "method": "GET",
+      "path": "/stockmovements",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "fk_product": { "type": "string" },
+          "fk_entrepot": { "type": "string" },
+          "qty": { "type": "number" },
+          "price": { "type": "number" },
+          "type_mouvement": { "type": "number" },
+          "datem": { "type": "number" },
+          "label": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_stock_movement",
+      "label": "Créer un mouvement de stock",
+      "type": "destination",
+      "method": "POST",
+      "path": "/stockmovements",
+      "input_schema": {
+        "type": "object",
+        "required": ["product_id", "warehouse_id", "qty", "type_mouvement"],
+        "properties": {
+          "product_id": { "type": "string" },
+          "warehouse_id": { "type": "string" },
+          "qty": { "type": "number" },
+          "price": { "type": "number" },
+          "type_mouvement": { "type": "number", "description": "0=entrée, 1=sortie" },
+          "label": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_payments",
+      "label": "Lignes de paiement (compte bancaire)",
+      "type": "source",
+      "method": "GET",
+      "path": "/bankaccounts/{id}/lines",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "fk_account": { "type": "string" },
+          "datev": { "type": "number" },
+          "dateo": { "type": "number" },
+          "amount": { "type": "number" },
+          "label": { "type": "string" },
+          "fk_type": { "type": "string" },
+          "fk_user_author": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_payment",
+      "label": "Créer un paiement sur facture",
+      "type": "destination",
+      "method": "POST",
+      "path": "/invoices/{id}/payments",
+      "params": [{ "name": "id", "type": "string", "in": "path", "required": true }],
+      "input_schema": {
+        "type": "object",
+        "required": ["payment_mode_id", "amount"],
+        "properties": {
+          "payment_mode_id": { "type": "string" },
+          "payment_date": { "type": "number" },
+          "amount": { "type": "number" },
+          "num_payment": { "type": "string" },
+          "label": { "type": "string" }
         }
       }
     }

@@ -84,6 +84,18 @@ export class EngineController {
     return this.engineService.getExecutionLogs(tenant.id, executionId);
   }
 
+  @Get('queues/stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Statut des queues BullMQ' })
+  @ApiResponse({ status: 200, description: 'Statut des queues (active, waiting, failed, completed)' })
+  async getQueueStats(): Promise<{
+    flowExecutions: { active: number; waiting: number; failed: number; completed: number } | null;
+  }> {
+    return this.engineService.getQueueStats();
+  }
+
   @Post('webhooks/:tenantSlug/:flowId')
   @Public()
   @ApiOperation({ summary: 'Webhook pour déclencher un flux' })

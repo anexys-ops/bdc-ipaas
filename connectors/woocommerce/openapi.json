@@ -3,85 +3,847 @@
     "id": "woocommerce",
     "name": "WooCommerce",
     "version": "3.0",
-    "icon": "woocommerce.svg",
+    "icon": "https://logo.clearbit.com/woocommerce.com",
     "category": "E-commerce",
     "auth_type": "oauth1",
-    "docs_url": "https://woocommerce.github.io/woocommerce-rest-api-docs/"
+    "docs_url": "https://woocommerce.github.io/woocommerce-rest-api-docs/",
+    "config_instructions": "WooCommerce REST API (OAuth 1.0a) : 1) Dans WordPress : Réglages → Avancé → REST API. 2) Ajouter une clé : Description (ex: ANEXYS iPaaS), utilisateur, permissions (Lecture/Écriture). Générer la clé. 3) Conserver la Consumer key (ck_...) et la Consumer secret (cs_...) en lieu sûr (le secret ne s'affiche qu'une fois). 4) URL du site = URL de la boutique (ex: https://votre-boutique.com). Les requêtes iront sur /wp-json/wc/v3/. Doc : https://woocommerce.github.io/woocommerce-rest-api-docs/"
   },
   "auth_config": {
     "consumer_key_param": "consumer_key",
     "consumer_secret_param": "consumer_secret",
     "base_url_param": "shop_url"
   },
+  "config_fields": [
+    {
+      "key": "shop_url",
+      "label": "URL du site / boutique",
+      "type": "text",
+      "required": true,
+      "placeholder": "https://votre-boutique.com",
+      "description": "URL de la boutique WordPress/WooCommerce (sans slash final). Ex: https://monshop.com"
+    },
+    {
+      "key": "consumer_key",
+      "label": "Consumer Key (ck_...)",
+      "type": "text",
+      "required": true,
+      "placeholder": "ck_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "description": "Clé consommateur affichée lors de la création de la clé API (Réglages → Avancé → REST API)."
+    },
+    {
+      "key": "consumer_secret",
+      "label": "Consumer Secret (cs_...)",
+      "type": "password",
+      "required": true,
+      "placeholder": "cs_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "description": "Secret consommateur. Affiché une seule fois à la création de la clé ; à conserver en lieu sûr."
+    }
+  ],
   "operations": [
     {
-      "id": "list_customers",
-      "label": "Récupérer les clients",
+      "id": "get_customer",
+      "label": "Récupérer un client",
       "type": "source",
       "method": "GET",
+      "path": "/wp-json/wc/v3/customers/{id}",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "email": { "type": "string", "format": "email" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "username": { "type": "string" },
+          "date_created": { "type": "string", "format": "date-time" },
+          "date_modified": { "type": "string", "format": "date-time" },
+          "billing": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "company": { "type": "string" },
+              "address_1": { "type": "string" },
+              "address_2": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string" },
+              "postcode": { "type": "string" },
+              "country": { "type": "string" },
+              "email": { "type": "string" },
+              "phone": { "type": "string" }
+            }
+          },
+          "shipping": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "company": { "type": "string" },
+              "address_1": { "type": "string" },
+              "address_2": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string" },
+              "postcode": { "type": "string" },
+              "country": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_customer",
+      "label": "Créer un client",
+      "type": "destination",
+      "method": "POST",
       "path": "/wp-json/wc/v3/customers",
+      "input_schema": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "username": { "type": "string" },
+          "password": { "type": "string" },
+          "billing": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "company": { "type": "string" },
+              "address_1": { "type": "string" },
+              "address_2": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string" },
+              "postcode": { "type": "string" },
+              "country": { "type": "string" },
+              "email": { "type": "string" },
+              "phone": { "type": "string" }
+            }
+          },
+          "shipping": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "company": { "type": "string" },
+              "address_1": { "type": "string" },
+              "address_2": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string" },
+              "postcode": { "type": "string" },
+              "country": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_customer",
+      "label": "Modifier un client",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/wp-json/wc/v3/customers/{id}",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "billing": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "company": { "type": "string" },
+              "address_1": { "type": "string" },
+              "address_2": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string" },
+              "postcode": { "type": "string" },
+              "country": { "type": "string" },
+              "email": { "type": "string" },
+              "phone": { "type": "string" }
+            }
+          },
+          "shipping": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "company": { "type": "string" },
+              "address_1": { "type": "string" },
+              "address_2": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string" },
+              "postcode": { "type": "string" },
+              "country": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "delete_customer",
+      "label": "Supprimer un client",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/wp-json/wc/v3/customers/{id}"
+    },
+    {
+      "id": "list_orders",
+      "label": "Lister les commandes",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/orders",
+      "description": "Pagination : page, per_page. Filtres : status (pending, processing, on-hold, completed, cancelled, refunded, failed), after, before (ISO8601).",
       "pagination": "offset",
       "output_schema": {
         "type": "object",
         "properties": {
           "id": { "type": "number" },
-          "email": { "type": "string" },
-          "first_name": { "type": "string" },
-          "last_name": { "type": "string" },
-          "username": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"] },
+          "currency": { "type": "string" },
+          "total": { "type": "string" },
+          "subtotal": { "type": "string" },
+          "total_tax": { "type": "string" },
+          "date_created": { "type": "string", "format": "date-time" },
+          "date_modified": { "type": "string", "format": "date-time" },
           "billing": {
             "type": "object",
             "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "company": { "type": "string" },
               "address_1": { "type": "string" },
               "city": { "type": "string" },
               "postcode": { "type": "string" },
               "country": { "type": "string" },
+              "email": { "type": "string" },
               "phone": { "type": "string" }
             }
           },
-          "date_created": { "type": "string" }
+          "shipping": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "address_1": { "type": "string" },
+              "city": { "type": "string" },
+              "postcode": { "type": "string" },
+              "country": { "type": "string" }
+            }
+          },
+          "line_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "number" },
+                "name": { "type": "string" },
+                "product_id": { "type": "number" },
+                "quantity": { "type": "number" },
+                "subtotal": { "type": "string" },
+                "total": { "type": "string" },
+                "total_tax": { "type": "string" },
+                "price": { "type": "string" }
+              }
+            }
+          }
         }
       }
     },
     {
-      "id": "list_products",
-      "label": "Récupérer les produits",
+      "id": "get_order",
+      "label": "Récupérer une commande",
       "type": "source",
       "method": "GET",
-      "path": "/wp-json/wc/v3/products",
+      "path": "/wp-json/wc/v3/orders/{id}",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "status": { "type": "string", "enum": ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"] },
+          "currency": { "type": "string" },
+          "total": { "type": "string" },
+          "subtotal": { "type": "string" },
+          "total_tax": { "type": "string" },
+          "shipping_total": { "type": "string" },
+          "discount_total": { "type": "string" },
+          "date_created": { "type": "string", "format": "date-time" },
+          "date_modified": { "type": "string", "format": "date-time" },
+          "customer_id": { "type": "number" },
+          "billing": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "company": { "type": "string" },
+              "address_1": { "type": "string" },
+              "address_2": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string" },
+              "postcode": { "type": "string" },
+              "country": { "type": "string" },
+              "email": { "type": "string" },
+              "phone": { "type": "string" }
+            }
+          },
+          "shipping": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "company": { "type": "string" },
+              "address_1": { "type": "string" },
+              "address_2": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string" },
+              "postcode": { "type": "string" },
+              "country": { "type": "string" }
+            }
+          },
+          "line_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "number" },
+                "name": { "type": "string" },
+                "product_id": { "type": "number" },
+                "variation_id": { "type": "number" },
+                "quantity": { "type": "number" },
+                "subtotal": { "type": "string" },
+                "subtotal_tax": { "type": "string" },
+                "total": { "type": "string" },
+                "total_tax": { "type": "string" },
+                "price": { "type": "string" },
+                "sku": { "type": "string" },
+                "taxes": { "type": "array" }
+              }
+            }
+          },
+          "shipping_lines": { "type": "array" },
+          "fee_lines": { "type": "array" },
+          "coupon_lines": { "type": "array" }
+        }
+      }
+    },
+    {
+      "id": "create_order",
+      "label": "Créer une commande",
+      "type": "destination",
+      "method": "POST",
+      "path": "/wp-json/wc/v3/orders",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "customer_id": { "type": "number" },
+          "status": { "type": "string", "enum": ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"] },
+          "currency": { "type": "string" },
+          "billing": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "company": { "type": "string" },
+              "address_1": { "type": "string" },
+              "address_2": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string" },
+              "postcode": { "type": "string" },
+              "country": { "type": "string" },
+              "email": { "type": "string" },
+              "phone": { "type": "string" }
+            }
+          },
+          "shipping": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "address_1": { "type": "string" },
+              "address_2": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string" },
+              "postcode": { "type": "string" },
+              "country": { "type": "string" }
+            }
+          },
+          "line_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "product_id": { "type": "number" },
+                "variation_id": { "type": "number" },
+                "quantity": { "type": "number" },
+                "subtotal": { "type": "string" },
+                "total": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_order",
+      "label": "Modifier une commande",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/wp-json/wc/v3/orders/{id}",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"] },
+          "billing": { "type": "object" },
+          "shipping": { "type": "object" },
+          "line_items": { "type": "array" }
+        }
+      }
+    },
+    {
+      "id": "delete_order",
+      "label": "Supprimer une commande",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/wp-json/wc/v3/orders/{id}"
+    },
+    {
+      "id": "list_order_notes",
+      "label": "Lister les notes d'une commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/orders/{id}/notes",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "date_created": { "type": "string", "format": "date-time" },
+          "note": { "type": "string" },
+          "customer_note": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "list_order_refunds",
+      "label": "Lister les remboursements d'une commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/orders/{id}/refunds",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "date_created": { "type": "string", "format": "date-time" },
+          "amount": { "type": "string" },
+          "reason": { "type": "string" },
+          "refunded_payment": { "type": "boolean" },
+          "line_items": { "type": "array" }
+        }
+      }
+    },
+    {
+      "id": "create_refund",
+      "label": "Créer un remboursement",
+      "type": "destination",
+      "method": "POST",
+      "path": "/wp-json/wc/v3/orders/{id}/refunds",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "amount": { "type": "string" },
+          "reason": { "type": "string" },
+          "refunded_payment": { "type": "boolean" },
+          "line_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "number" },
+                "quantity": { "type": "number" },
+                "refund_total": { "type": "string" },
+                "refund_tax": { "type": "array" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "get_product",
+      "label": "Récupérer un produit",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/products/{id}",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "sku": { "type": "string" },
+          "price": { "type": "string" },
+          "regular_price": { "type": "string" },
+          "sale_price": { "type": "string" },
+          "status": { "type": "string", "enum": ["draft", "pending", "private", "publish"] },
+          "stock_quantity": { "type": "number" },
+          "stock_status": { "type": "string", "enum": ["instock", "outofstock", "onbackorder"] },
+          "manage_stock": { "type": "boolean" },
+          "tax_status": { "type": "string" },
+          "tax_class": { "type": "string" },
+          "description": { "type": "string" },
+          "short_description": { "type": "string" },
+          "categories": {
+            "type": "array",
+            "items": { "type": "object", "properties": { "id": { "type": "number" }, "name": { "type": "string" } } }
+          },
+          "tags": { "type": "array" },
+          "date_created": { "type": "string", "format": "date-time" },
+          "date_modified": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "update_product",
+      "label": "Modifier un produit",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/wp-json/wc/v3/products/{id}",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "sku": { "type": "string" },
+          "regular_price": { "type": "string" },
+          "sale_price": { "type": "string" },
+          "status": { "type": "string", "enum": ["draft", "pending", "private", "publish"] },
+          "stock_quantity": { "type": "number" },
+          "stock_status": { "type": "string", "enum": ["instock", "outofstock", "onbackorder"] },
+          "manage_stock": { "type": "boolean" },
+          "tax_status": { "type": "string" },
+          "tax_class": { "type": "string" },
+          "description": { "type": "string" },
+          "short_description": { "type": "string" },
+          "categories": { "type": "array" },
+          "tags": { "type": "array" }
+        }
+      }
+    },
+    {
+      "id": "delete_product",
+      "label": "Supprimer un produit",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/wp-json/wc/v3/products/{id}"
+    },
+    {
+      "id": "list_product_categories",
+      "label": "Lister les catégories de produits",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/products/categories",
       "pagination": "offset",
       "output_schema": {
         "type": "object",
         "properties": {
           "id": { "type": "number" },
           "name": { "type": "string" },
-          "sku": { "type": "string" },
-          "price": { "type": "string" },
-          "regular_price": { "type": "string" },
-          "stock_quantity": { "type": "number" },
-          "manage_stock": { "type": "boolean" },
-          "status": { "type": "string" },
-          "categories": { "type": "array" }
+          "slug": { "type": "string" },
+          "parent": { "type": "number" },
+          "description": { "type": "string" },
+          "count": { "type": "number" }
         }
       }
     },
     {
-      "id": "create_product",
-      "label": "Créer un produit",
+      "id": "create_category",
+      "label": "Créer une catégorie produit",
       "type": "destination",
       "method": "POST",
-      "path": "/wp-json/wc/v3/products",
+      "path": "/wp-json/wc/v3/products/categories",
       "input_schema": {
         "type": "object",
         "required": ["name"],
         "properties": {
           "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "parent": { "type": "number" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_product_tags",
+      "label": "Lister les étiquettes produits",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/products/tags",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "description": { "type": "string" },
+          "count": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_variations",
+      "label": "Lister les déclinaisons d'un produit",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/products/{id}/variations",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "sku": { "type": "string" },
+          "price": { "type": "string" },
+          "regular_price": { "type": "string" },
+          "sale_price": { "type": "string" },
+          "stock_quantity": { "type": "number" },
+          "stock_status": { "type": "string" },
+          "attributes": { "type": "array" }
+        }
+      }
+    },
+    {
+      "id": "create_variation",
+      "label": "Créer une déclinaison",
+      "type": "destination",
+      "method": "POST",
+      "path": "/wp-json/wc/v3/products/{id}/variations",
+      "input_schema": {
+        "type": "object",
+        "properties": {
           "sku": { "type": "string" },
           "regular_price": { "type": "string" },
+          "sale_price": { "type": "string" },
           "stock_quantity": { "type": "number" },
-          "manage_stock": { "type": "boolean", "default": true },
-          "status": { "type": "string", "default": "publish" },
-          "description": { "type": "string" }
+          "stock_status": { "type": "string", "enum": ["instock", "outofstock", "onbackorder"] },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "number" },
+                "option": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_variation",
+      "label": "Modifier une déclinaison",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/wp-json/wc/v3/products/{id}/variations/{variation_id}",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "sku": { "type": "string" },
+          "regular_price": { "type": "string" },
+          "sale_price": { "type": "string" },
+          "stock_quantity": { "type": "number" },
+          "stock_status": { "type": "string", "enum": ["instock", "outofstock", "onbackorder"] },
+          "attributes": { "type": "array" }
+        }
+      }
+    },
+    {
+      "id": "get_product_stock",
+      "label": "Récupérer le stock d'un produit",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/products/{id}",
+      "description": "Retourne le produit avec champs stock_quantity et stock_status.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "stock_quantity": { "type": "number" },
+          "stock_status": { "type": "string", "enum": ["instock", "outofstock", "onbackorder"] },
+          "manage_stock": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "update_stock",
+      "label": "Mettre à jour le stock",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/wp-json/wc/v3/products/{id}",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "stock_quantity": { "type": "number" },
+          "stock_status": { "type": "string", "enum": ["instock", "outofstock", "onbackorder"] },
+          "manage_stock": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "list_tax_classes",
+      "label": "Lister les classes de taxe",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/taxes/classes",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "slug": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_taxes",
+      "label": "Lister les taux de taxe",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/taxes",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "postcode": { "type": "string" },
+          "city": { "type": "string" },
+          "rate": { "type": "string" },
+          "name": { "type": "string" },
+          "priority": { "type": "number" },
+          "compound": { "type": "boolean" },
+          "shipping": { "type": "boolean" },
+          "order": { "type": "number" },
+          "class": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_tax",
+      "label": "Créer un taux de taxe",
+      "type": "destination",
+      "method": "POST",
+      "path": "/wp-json/wc/v3/taxes",
+      "input_schema": {
+        "type": "object",
+        "required": ["country", "rate"],
+        "properties": {
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "postcode": { "type": "string" },
+          "city": { "type": "string" },
+          "rate": { "type": "string" },
+          "name": { "type": "string" },
+          "priority": { "type": "number" },
+          "compound": { "type": "boolean" },
+          "shipping": { "type": "boolean" },
+          "order": { "type": "number" },
+          "class": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_coupons",
+      "label": "Lister les bons de réduction",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/coupons",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "code": { "type": "string" },
+          "amount": { "type": "string" },
+          "date_created": { "type": "string", "format": "date-time" },
+          "date_expires": { "type": "string", "format": "date-time" },
+          "discount_type": { "type": "string", "enum": ["percent", "fixed_cart", "fixed_product"] },
+          "description": { "type": "string" },
+          "usage_count": { "type": "number" },
+          "usage_limit": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "create_coupon",
+      "label": "Créer un bon de réduction",
+      "type": "destination",
+      "method": "POST",
+      "path": "/wp-json/wc/v3/coupons",
+      "input_schema": {
+        "type": "object",
+        "required": ["code"],
+        "properties": {
+          "code": { "type": "string" },
+          "amount": { "type": "string" },
+          "discount_type": { "type": "string", "enum": ["percent", "fixed_cart", "fixed_product"] },
+          "description": { "type": "string" },
+          "date_expires": { "type": "string", "format": "date-time" },
+          "usage_limit": { "type": "number" },
+          "individual_use": { "type": "boolean" },
+          "exclude_sale_items": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "update_coupon",
+      "label": "Modifier un bon de réduction",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/wp-json/wc/v3/coupons/{id}",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string" },
+          "amount": { "type": "string" },
+          "discount_type": { "type": "string", "enum": ["percent", "fixed_cart", "fixed_product"] },
+          "description": { "type": "string" },
+          "date_expires": { "type": "string", "format": "date-time" },
+          "usage_limit": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_shipping_zones",
+      "label": "Lister les zones d'expédition",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/shipping/zones",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "order": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_shipping_methods",
+      "label": "Lister les méthodes d'expédition d'une zone",
+      "type": "source",
+      "method": "GET",
+      "path": "/wp-json/wc/v3/shipping/zones/{id}/methods",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "instance_id": { "type": "number" },
+          "title": { "type": "string" },
+          "method_id": { "type": "string" },
+          "method_title": { "type": "string" },
+          "enabled": { "type": "boolean" },
+          "settings": { "type": "object" }
         }
       }
     }

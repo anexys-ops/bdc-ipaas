@@ -1,0 +1,913 @@
+{
+  "connector_meta": {
+    "id": "shopify",
+    "name": "Shopify",
+    "version": "2.0",
+    "icon": "https://logo.clearbit.com/shopify.com",
+    "category": "E-commerce",
+    "auth_type": "oauth2",
+    "docs_url": "https://shopify.dev/docs/api/admin-rest",
+    "config_instructions": "1) Shopify Admin : Paramètres → Applications et canaux de vente → Développer des applications → Créer une application. 2) Configuration → URL de redirection OAuth et scopes (read_customers, write_customers, read_orders, write_orders, read_products, write_products, read_inventory, write_inventory). 3) Récupérez Client ID et Client Secret. Après autorisation du marchand, utilisez l’access_token. 4) URL de base : https://votre-boutique.myshopify.com/admin/api/2024-01. Doc : https://shopify.dev/docs/api/admin-rest"
+  },
+  "auth_config": {
+    "token_url": "https://votre-boutique.myshopify.com/admin/oauth/access_token",
+    "scopes": ["read_customers", "write_customers", "read_orders", "write_orders", "read_products", "write_products", "read_inventory", "write_inventory"]
+  },
+  "operations": [
+    {
+      "id": "list_customers",
+      "label": "Récupérer les clients",
+      "type": "source",
+      "method": "GET",
+      "path": "/customers.json",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number", "description": "ID Shopify du client" },
+          "email": { "type": "string", "format": "email" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "phone": { "type": "string" },
+          "verified_email": { "type": "boolean" },
+          "tax_exempt": { "type": "boolean" },
+          "tags": { "type": "string" },
+          "orders_count": { "type": "number" },
+          "total_spent": { "type": "string" },
+          "state": { "type": "string", "enum": ["disabled", "invited", "declined", "enabled"] },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "default_address": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "number" },
+              "address1": { "type": "string" },
+              "address2": { "type": "string" },
+              "city": { "type": "string" },
+              "province": { "type": "string" },
+              "country": { "type": "string" },
+              "zip": { "type": "string" },
+              "phone": { "type": "string" },
+              "company": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "get_customer",
+      "label": "Détail d'un client",
+      "type": "source",
+      "method": "GET",
+      "path": "/customers/{id}.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "email": { "type": "string" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "phone": { "type": "string" },
+          "verified_email": { "type": "boolean" },
+          "tax_exempt": { "type": "boolean" },
+          "tags": { "type": "string" },
+          "orders_count": { "type": "number" },
+          "total_spent": { "type": "string" },
+          "state": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "default_address": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "number" },
+              "address1": { "type": "string" },
+              "address2": { "type": "string" },
+              "city": { "type": "string" },
+              "province": { "type": "string" },
+              "country": { "type": "string" },
+              "zip": { "type": "string" },
+              "phone": { "type": "string" },
+              "company": { "type": "string" }
+            }
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "number" },
+                "address1": { "type": "string" },
+                "city": { "type": "string" },
+                "country": { "type": "string" },
+                "zip": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_customer",
+      "label": "Modifier un client",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/customers/{id}.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["customer"],
+        "properties": {
+          "customer": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "number" },
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "email": { "type": "string" },
+              "phone": { "type": "string" },
+              "verified_email": { "type": "boolean" },
+              "tax_exempt": { "type": "boolean" },
+              "tags": { "type": "string" },
+              "state": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "search_customers",
+      "label": "Rechercher des clients",
+      "type": "source",
+      "method": "GET",
+      "path": "/customers/search.json",
+      "parameters": [
+        { "name": "query", "in": "query", "required": true, "schema": { "type": "string" }, "description": "Critère de recherche (email, nom, etc.)" }
+      ],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "email": { "type": "string" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "phone": { "type": "string" },
+          "orders_count": { "type": "number" },
+          "total_spent": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_customer_orders",
+      "label": "Commandes d'un client",
+      "type": "source",
+      "method": "GET",
+      "path": "/customers/{id}/orders.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "order_number": { "type": "number" },
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "total_price": { "type": "string" },
+          "subtotal_price": { "type": "string" },
+          "total_tax": { "type": "string" },
+          "financial_status": { "type": "string", "enum": ["pending", "authorized", "paid", "partially_paid", "refunded", "voided"] },
+          "fulfillment_status": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "cancelled_at": { "type": "string", "format": "date-time" },
+          "currency": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_customer",
+      "label": "Créer un client",
+      "type": "destination",
+      "method": "POST",
+      "path": "/customers.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["customer"],
+        "properties": {
+          "customer": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "email": { "type": "string", "format": "email" },
+              "phone": { "type": "string" },
+              "tags": { "type": "string" },
+              "verified_email": { "type": "boolean" },
+              "tax_exempt": { "type": "boolean" },
+              "addresses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "address1": { "type": "string" },
+                    "city": { "type": "string" },
+                    "province": { "type": "string" },
+                    "country": { "type": "string" },
+                    "zip": { "type": "string" },
+                    "phone": { "type": "string" },
+                    "company": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_orders",
+      "label": "Récupérer les commandes",
+      "type": "source",
+      "method": "GET",
+      "path": "/orders.json",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "order_number": { "type": "number" },
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "total_price": { "type": "string" },
+          "subtotal_price": { "type": "string" },
+          "total_tax": { "type": "string" },
+          "total_discounts": { "type": "string" },
+          "financial_status": { "type": "string", "enum": ["pending", "authorized", "paid", "partially_paid", "refunded", "voided"] },
+          "fulfillment_status": { "type": "string" },
+          "customer": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "number" },
+              "email": { "type": "string" },
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" }
+            }
+          },
+          "billing_address": {
+            "type": "object",
+            "properties": {
+              "address1": { "type": "string" },
+              "city": { "type": "string" },
+              "country": { "type": "string" },
+              "zip": { "type": "string" }
+            }
+          },
+          "shipping_address": {
+            "type": "object",
+            "properties": {
+              "address1": { "type": "string" },
+              "city": { "type": "string" },
+              "country": { "type": "string" },
+              "zip": { "type": "string" }
+            }
+          },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "currency": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "get_order",
+      "label": "Détail d'une commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/orders/{id}.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "order_number": { "type": "number" },
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "total_price": { "type": "string" },
+          "subtotal_price": { "type": "string" },
+          "total_tax": { "type": "string" },
+          "total_discounts": { "type": "string" },
+          "financial_status": { "type": "string" },
+          "fulfillment_status": { "type": "string" },
+          "customer": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "number" },
+              "email": { "type": "string" },
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" }
+            }
+          },
+          "billing_address": { "type": "object" },
+          "shipping_address": { "type": "object" },
+          "line_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "number" },
+                "title": { "type": "string" },
+                "quantity": { "type": "number" },
+                "price": { "type": "string" },
+                "sku": { "type": "string" },
+                "variant_id": { "type": "number" }
+              }
+            }
+          },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "currency": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "update_order",
+      "label": "Modifier une commande",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/orders/{id}.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["order"],
+        "properties": {
+          "order": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "number" },
+              "note": { "type": "string" },
+              "tags": { "type": "string" },
+              "shipping_address": {
+                "type": "object",
+                "properties": {
+                  "address1": { "type": "string" },
+                  "city": { "type": "string" },
+                  "province": { "type": "string" },
+                  "country": { "type": "string" },
+                  "zip": { "type": "string" },
+                  "phone": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "cancel_order",
+      "label": "Annuler une commande",
+      "type": "destination",
+      "method": "POST",
+      "path": "/orders/{id}/cancel.json",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "reason": { "type": "string", "enum": ["customer", "inventory", "fraud", "other"], "description": "Raison de l'annulation" },
+          "refund": { "type": "object", "properties": { "note": { "type": "string" } } }
+        }
+      }
+    },
+    {
+      "id": "close_order",
+      "label": "Clôturer une commande",
+      "type": "destination",
+      "method": "POST",
+      "path": "/orders/{id}/close.json"
+    },
+    {
+      "id": "list_order_refunds",
+      "label": "Remboursements d'une commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/orders/{id}/refunds.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "order_id": { "type": "number" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "note": { "type": "string" },
+          "total": { "type": "string" },
+          "refund_line_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line_item_id": { "type": "number" },
+                "quantity": { "type": "number" },
+                "restock_type": { "type": "string" }
+              }
+            }
+          },
+          "transactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "number" },
+                "kind": { "type": "string" },
+                "amount": { "type": "string" },
+                "status": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_refund",
+      "label": "Créer un remboursement",
+      "type": "destination",
+      "method": "POST",
+      "path": "/orders/{id}/refunds.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["refund"],
+        "properties": {
+          "refund": {
+            "type": "object",
+            "properties": {
+              "note": { "type": "string" },
+              "notify": { "type": "boolean" },
+              "refund_line_items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "line_item_id": { "type": "number" },
+                    "quantity": { "type": "number" },
+                    "restock_type": { "type": "string", "enum": ["no_restock", "cancel", "return"] }
+                  }
+                }
+              },
+              "shipping": { "type": "object", "properties": { "full_refund": { "type": "boolean" } } }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_fulfillments",
+      "label": "Expéditions d'une commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/orders/{id}/fulfillments.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "order_id": { "type": "number" },
+          "status": { "type": "string", "enum": ["pending", "open", "success", "cancelled", "error"] },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "tracking_number": { "type": "string" },
+          "tracking_company": { "type": "string" },
+          "tracking_url": { "type": "string" },
+          "line_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "number" },
+                "quantity": { "type": "number" },
+                "line_item_id": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_fulfillment",
+      "label": "Créer une expédition",
+      "type": "destination",
+      "method": "POST",
+      "path": "/fulfillments.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["fulfillment"],
+        "properties": {
+          "fulfillment": {
+            "type": "object",
+            "required": ["line_items"],
+            "properties": {
+              "order_id": { "type": "number" },
+              "line_items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "number", "description": "ID du line_item de la commande" },
+                    "quantity": { "type": "number" }
+                  }
+                }
+              },
+              "tracking_number": { "type": "string" },
+              "tracking_company": { "type": "string" },
+              "tracking_url": { "type": "string" },
+              "notify_customer": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "get_product",
+      "label": "Détail d'un produit",
+      "type": "source",
+      "method": "GET",
+      "path": "/products/{id}.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "title": { "type": "string" },
+          "body_html": { "type": "string" },
+          "vendor": { "type": "string" },
+          "product_type": { "type": "string" },
+          "handle": { "type": "string" },
+          "status": { "type": "string", "enum": ["active", "archived", "draft"] },
+          "tags": { "type": "string" },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "number" },
+                "title": { "type": "string" },
+                "price": { "type": "string" },
+                "sku": { "type": "string" },
+                "inventory_quantity": { "type": "number" },
+                "weight": { "type": "number" },
+                "weight_unit": { "type": "string" }
+              }
+            }
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "values": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_product",
+      "label": "Créer un produit",
+      "type": "destination",
+      "method": "POST",
+      "path": "/products.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["product"],
+        "properties": {
+          "product": {
+            "type": "object",
+            "required": ["title"],
+            "properties": {
+              "title": { "type": "string" },
+              "body_html": { "type": "string" },
+              "vendor": { "type": "string" },
+              "product_type": { "type": "string" },
+              "handle": { "type": "string" },
+              "status": { "type": "string", "default": "active" },
+              "tags": { "type": "string" },
+              "variants": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "price": { "type": "string" },
+                    "sku": { "type": "string" },
+                    "inventory_quantity": { "type": "number" },
+                    "weight": { "type": "number" },
+                    "weight_unit": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_product",
+      "label": "Modifier un produit",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/products/{id}.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["product"],
+        "properties": {
+          "product": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "number" },
+              "title": { "type": "string" },
+              "body_html": { "type": "string" },
+              "vendor": { "type": "string" },
+              "product_type": { "type": "string" },
+              "handle": { "type": "string" },
+              "status": { "type": "string" },
+              "tags": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "delete_product",
+      "label": "Supprimer un produit",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/products/{id}.json"
+    },
+    {
+      "id": "list_product_variants",
+      "label": "Variantes d'un produit",
+      "type": "source",
+      "method": "GET",
+      "path": "/products/{id}/variants.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "product_id": { "type": "number" },
+          "title": { "type": "string" },
+          "price": { "type": "string" },
+          "compare_at_price": { "type": "string" },
+          "sku": { "type": "string" },
+          "barcode": { "type": "string" },
+          "inventory_quantity": { "type": "number" },
+          "inventory_management": { "type": "string" },
+          "weight": { "type": "number" },
+          "weight_unit": { "type": "string" },
+          "option1": { "type": "string" },
+          "option2": { "type": "string" },
+          "option3": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_variant",
+      "label": "Créer une variante",
+      "type": "destination",
+      "method": "POST",
+      "path": "/products/{id}/variants.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["variant"],
+        "properties": {
+          "variant": {
+            "type": "object",
+            "properties": {
+              "product_id": { "type": "number" },
+              "title": { "type": "string" },
+              "price": { "type": "string" },
+              "compare_at_price": { "type": "string" },
+              "sku": { "type": "string" },
+              "barcode": { "type": "string" },
+              "inventory_quantity": { "type": "number" },
+              "inventory_management": { "type": "string" },
+              "weight": { "type": "number" },
+              "weight_unit": { "type": "string" },
+              "option1": { "type": "string" },
+              "option2": { "type": "string" },
+              "option3": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_variant",
+      "label": "Modifier une variante",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/variants/{id}.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["variant"],
+        "properties": {
+          "variant": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "number" },
+              "price": { "type": "string" },
+              "compare_at_price": { "type": "string" },
+              "sku": { "type": "string" },
+              "barcode": { "type": "string" },
+              "inventory_quantity": { "type": "number" },
+              "inventory_management": { "type": "string" },
+              "weight": { "type": "number" },
+              "weight_unit": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_collections",
+      "label": "Récupérer les collections",
+      "type": "source",
+      "method": "GET",
+      "path": "/custom_collections.json",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "title": { "type": "string" },
+          "handle": { "type": "string" },
+          "body_html": { "type": "string" },
+          "sort_order": { "type": "string" },
+          "published_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_collect",
+      "label": "Associations produit-collection (collects)",
+      "type": "source",
+      "method": "GET",
+      "path": "/collects.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "collection_id": { "type": "number" },
+          "product_id": { "type": "number" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_inventory_levels",
+      "label": "Niveaux d'inventaire",
+      "type": "source",
+      "method": "GET",
+      "path": "/inventory_levels.json",
+      "parameters": [
+        { "name": "location_ids", "in": "query", "schema": { "type": "string" }, "description": "IDs des emplacements (séparés par des virgules)" },
+        { "name": "inventory_item_ids", "in": "query", "schema": { "type": "string" }, "description": "IDs des items d'inventaire" }
+      ],
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "inventory_item_id": { "type": "number" },
+          "location_id": { "type": "number" },
+          "available": { "type": "number" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "set_inventory_level",
+      "label": "Définir un niveau d'inventaire",
+      "type": "destination",
+      "method": "POST",
+      "path": "/inventory_levels/set.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["location_id", "inventory_item_id", "available"],
+        "properties": {
+          "location_id": { "type": "number" },
+          "inventory_item_id": { "type": "number" },
+          "available": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_locations",
+      "label": "Emplacements / entrepôts",
+      "type": "source",
+      "method": "GET",
+      "path": "/locations.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "address1": { "type": "string" },
+          "address2": { "type": "string" },
+          "city": { "type": "string" },
+          "province": { "type": "string" },
+          "country": { "type": "string" },
+          "zip": { "type": "string" },
+          "phone": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_price_rules",
+      "label": "Règles de tarification (codes promo)",
+      "type": "source",
+      "method": "GET",
+      "path": "/price_rules.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "title": { "type": "string" },
+          "value": { "type": "string" },
+          "value_type": { "type": "string", "enum": ["fixed_amount", "percentage"] },
+          "target_type": { "type": "string", "enum": ["line_item", "shipping_line"] },
+          "target_selection": { "type": "string", "enum": ["all", "entitled"] },
+          "allocation_method": { "type": "string", "enum": ["across", "each"] },
+          "starts_at": { "type": "string", "format": "date-time" },
+          "ends_at": { "type": "string", "format": "date-time" },
+          "usage_limit": { "type": "number" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_price_rule",
+      "label": "Créer une règle de tarification",
+      "type": "destination",
+      "method": "POST",
+      "path": "/price_rules.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["price_rule"],
+        "properties": {
+          "price_rule": {
+            "type": "object",
+            "required": ["title", "target_type", "target_selection", "allocation_method", "value_type", "value"],
+            "properties": {
+              "title": { "type": "string" },
+              "target_type": { "type": "string" },
+              "target_selection": { "type": "string" },
+              "allocation_method": { "type": "string" },
+              "value_type": { "type": "string" },
+              "value": { "type": "string" },
+              "starts_at": { "type": "string", "format": "date-time" },
+              "ends_at": { "type": "string", "format": "date-time" },
+              "usage_limit": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "get_shop_tax",
+      "label": "Config taxes de la boutique",
+      "type": "source",
+      "method": "GET",
+      "path": "/shop.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "taxes_included": { "type": "boolean" },
+          "tax_shipping": { "type": "boolean" },
+          "country_code": { "type": "string" },
+          "currency": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_transactions",
+      "label": "Transactions d'une commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/orders/{id}/transactions.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "order_id": { "type": "number" },
+          "kind": { "type": "string", "enum": ["authorization", "capture", "sale", "void", "refund"] },
+          "status": { "type": "string", "enum": ["pending", "success", "failure", "error"] },
+          "amount": { "type": "string" },
+          "currency": { "type": "string" },
+          "gateway": { "type": "string" },
+          "message": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  ]
+}

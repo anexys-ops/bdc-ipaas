@@ -5,7 +5,9 @@
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --filter=@anexys/api --filter=@anexys/frontend",
+    "dev:frontend": "turbo run dev --filter=@anexys/frontend",
+    "dev:all": "turbo run dev",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""

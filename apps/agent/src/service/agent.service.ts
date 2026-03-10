@@ -7,7 +7,7 @@ import { Logger } from 'winston';
 
 export class AgentService {
   private socket: Socket | null = null;
-  private watcher: chokidar.FSWatcher | null = null;
+  private watcher: ReturnType<typeof chokidar.watch> | null = null;
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 10;
@@ -103,8 +103,8 @@ export class AgentService {
       awaitWriteFinish: { stabilityThreshold: 2000, pollInterval: 100 },
     });
 
-    this.watcher.on('add', (filePath) => this.handleNewFile(filePath));
-    this.watcher.on('error', (err) => this.logger.error(`Erreur de surveillance: ${err.message}`));
+    this.watcher.on('add', (filePath: string) => this.handleNewFile(filePath));
+    this.watcher.on('error', (err: unknown) => this.logger.error(`Erreur de surveillance: ${err instanceof Error ? err.message : String(err)}`));
 
     this.logger.info(`Surveillance active sur: ${existingPaths.join(', ')}`);
   }

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { VaultModule } from './modules/vault/vault.module';
@@ -12,10 +13,16 @@ import { AgentsModule } from './modules/agents/agents.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { UsersModule } from './modules/users/users.module';
+import { GroupsModule } from './modules/groups/groups.module';
+import { EdifactModule } from './modules/edifact/edifact.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { LoggerModule } from './common/logger';
+import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 
 @Module({
   imports: [
+    LoggerModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
@@ -33,6 +40,15 @@ import { PrismaModule } from './prisma/prisma.module';
     BillingModule,
     AuditModule,
     NotificationsModule,
+    UsersModule,
+    GroupsModule,
+    EdifactModule,
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditInterceptor,
+    },
   ],
 })
 export class AppModule {}

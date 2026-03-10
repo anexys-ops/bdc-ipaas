@@ -8,6 +8,7 @@ import {
   HttpStatus,
   UseGuards,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,18 +18,72 @@ import {
 } from '@nestjs/swagger';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
-import { LoginDto, AuthResponseDto, RefreshResponseDto } from './dto';
-import { Public } from '../../common/decorators';
+import { TenantsService } from '../tenants/tenants.service';
+import { Plan } from '../tenants/dto/create-tenant.dto';
+import { TenantUserRole } from '../tenants/dto/create-tenant-user.dto';
+import { LoginDto, AuthResponseDto, RefreshResponseDto, SignupTrialDto } from './dto';
+import { Public, Audit } from '../../common/decorators';
 import { JwtAuthGuard } from '../../common/guards';
 import { CurrentUser } from '../../common/decorators';
 import { AuthenticatedUser } from './interfaces';
+import { AuditService } from '../audit/audit.service';
 
 @ApiTags('Authentification')
 @Controller('auth')
 export class AuthController {
   private readonly REFRESH_TOKEN_COOKIE = 'refreshToken';
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly tenantsService: TenantsService,
+    private readonly auditService: AuditService,
+  ) {}
+
+  @Post('signup-trial')
+  @Public()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Créer un compte d\'essai (tenant + admin)' })
+  @ApiResponse({ status: 201, description: 'Compte créé, utilisateur connecté', type: AuthResponseDto })
+  @ApiResponse({ status: 400, description: 'Données invalides' })
+  @ApiResponse({ status: 409, description: 'Slug ou email déjà utilisé' })
+  async signupTrial(
+    @Body() dto: SignupTrialDto,
+    @Res({ passthrough: true }) response: Response,
+    @Req() request: Request,
+  ): Promise<AuthResponseDto> {
+    const slug = dto.companyName
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+    if (slug.length < 3) {
+      throw new BadRequestException('Le nom d\'entreprise doit produire un identifiant d\'au moins 3 caractères (lettres, chiffres, tirets)');
+    }
+    const tenant = await this.tenantsService.create({
+      slug,
+      name: dto.companyName.trim(),
+      plan: Plan.FREE,
+    });
+    const user = await this.tenantsService.createUser(tenant.id, {
+      email: dto.email,
+      password: dto.password,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      role: TenantUserRole.ADMIN,
+    });
+    const { response: authResponse, refreshToken } =
+      await this.authService.createSessionForUser(user.id);
+    this.setRefreshTokenCookie(response, refreshToken);
+    await this.auditService.log({
+      tenantId: tenant.id,
+      userId: user.id,
+      action: 'SIGNUP_TRIAL',
+      resource: 'auth',
+      ipAddress: request.ip ?? request.socket?.remoteAddress,
+      userAgent: request.get('user-agent') ?? undefined,
+    });
+    return authResponse;
+  }
 
   @Post('login')
   @Public()
@@ -39,10 +94,20 @@ export class AuthController {
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) response: Response,
+    @Req() request: Request,
   ): Promise<AuthResponseDto> {
     const { response: authResponse, refreshToken } = await this.authService.login(loginDto);
 
     this.setRefreshTokenCookie(response, refreshToken);
+
+    await this.auditService.log({
+      tenantId: authResponse.user.tenantId,
+      userId: authResponse.user.id,
+      action: 'LOGIN',
+      resource: 'auth',
+      ipAddress: request.ip ?? request.socket?.remoteAddress,
+      userAgent: request.get('user-agent') ?? undefined,
+    });
 
     return authResponse;
   }
@@ -67,6 +132,7 @@ export class AuthController {
 
   @Post('logout')
   @UseGuards(JwtAuthGuard)
+  @Audit('LOGOUT', 'auth')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Déconnexion' })
@@ -86,6 +152,7 @@ export class AuthController {
 
   @Post('logout-all')
   @UseGuards(JwtAuthGuard)
+  @Audit('LOGOUT_ALL', 'auth')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Déconnexion de tous les appareils' })

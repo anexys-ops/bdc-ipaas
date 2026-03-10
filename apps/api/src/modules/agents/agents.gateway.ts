@@ -66,8 +66,9 @@ export class AgentsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const tenants = await this.prisma.tenant.findMany({ where: { isActive: true } });
     
     for (const tenant of tenants) {
-      // En production, chercher dans la base tenant
-      // Pour l'instant, on simule une authentification réussie
+      // En production: vérifier tokenHash dans tenant DB (AgentToken.tokenHash)
+      void tokenHash;
+      void tenant;
     }
 
     // Simulation d'auth réussie

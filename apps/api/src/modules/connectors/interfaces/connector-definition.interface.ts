@@ -2,15 +2,27 @@
  * Interface décrivant la structure d'un fichier openapi.json de connecteur.
  */
 
+/** Liens de téléchargement de l’agent (connexion sans API). */
+export interface AgentDownloads {
+  /** Nom ou URL du package Windows (ex: bdc-ipaas-agent-sage-1.0.0-win.exe) */
+  windows?: string;
+  /** Nom ou URL du package macOS (ex: bdc-ipaas-agent-sage-1.0.0-mac.dmg) */
+  mac?: string;
+}
+
 export interface ConnectorMeta {
   id: string;
   name: string;
   version: string;
   icon: string;
   category: string;
-  auth_type: 'oauth2' | 'api_key' | 'basic' | 'oauth1';
+  auth_type: 'oauth2' | 'api_key' | 'basic' | 'oauth1' | 'agent';
   modes?: string[];
   docs_url: string | null;
+  /** Instructions pour configurer le connecteur (URL, clé API, etc.) par logiciel/module */
+  config_instructions?: string;
+  /** Pour auth_type agent : packages à télécharger (Windows / Mac). */
+  agent_downloads?: AgentDownloads;
 }
 
 export interface AuthConfig {
@@ -67,10 +79,22 @@ export interface ConnectorOperation {
   config_schema?: OperationSchema;
 }
 
+/** Champ de configuration pour le formulaire (URL, clé API, secret, refresh_token, etc.) */
+export interface ConfigFieldDefinition {
+  key: string;
+  label: string;
+  type: 'text' | 'password';
+  required: boolean;
+  placeholder?: string;
+  description?: string;
+}
+
 export interface ConnectorDefinition {
   connector_meta: ConnectorMeta;
   auth_config: AuthConfig;
   operations: ConnectorOperation[];
+  /** Champs du formulaire de configuration (optionnel). Si présent, utilisé à la place du build par défaut. */
+  config_fields?: ConfigFieldDefinition[];
 }
 
 export interface LoadedConnector extends ConnectorDefinition {

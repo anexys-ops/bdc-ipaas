@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Delete, Body, Headers, Req, Param, UseGuards, RawBodyRequest } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Headers, Req, Param, UseGuards, RawBodyRequest, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
 import { BillingService } from './billing.service';
-import { CreateSubscriptionDto, BillingResponseDto, InvoiceResponseDto } from './dto/billing.dto';
+import { CreateSubscriptionDto, CreatePortalSessionDto, BillingResponseDto, InvoiceResponseDto, PlanInfoDto } from './dto/billing.dto';
 import { JwtAuthGuard, RolesGuard } from '../../common/guards';
 import { CurrentTenant, Roles, Public } from '../../common/decorators';
 
@@ -33,6 +33,23 @@ export class BillingController {
     return this.billingService.cancelSubscription(tenant.id);
   }
 
+  @Post('portal')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Créer une session du portail client Stripe' })
+  createPortalSession(
+    @CurrentTenant() tenant: { id: string },
+    @Body() dto: CreatePortalSessionDto,
+  ): Promise<{ url: string }> {
+    return this.billingService.createPortalSession(tenant.id, dto.returnUrl);
+  }
+
+  @Get('plans')
+  @Public()
+  @ApiOperation({ summary: 'Plans disponibles avec prix et limites (sans auth)' })
+  getPlans(): PlanInfoDto[] {
+    return this.billingService.getPlans();
+  }
+
   @Get('usage')
   @ApiOperation({ summary: 'Historique d\'utilisation' })
   getUsageHistory(@CurrentTenant() tenant: { id: string }) {
@@ -43,6 +60,28 @@ export class BillingController {
   @ApiOperation({ summary: 'Liste des factures' })
   getInvoices(@CurrentTenant() tenant: { id: string }): Promise<InvoiceResponseDto[]> {
     return this.billingService.getInvoices(tenant.id);
+  }
+
+  @Get('invoices/:id/export')
+  @ApiOperation({ summary: 'Export facture en JSON (compatibilité ancien module EDI-Connect)' })
+  async exportInvoiceJson(
+    @CurrentTenant() tenant: { id: string },
+    @Param('id') id: string,
+  ): Promise<InvoiceResponseDto> {
+    const invoice = await this.billingService.getInvoiceById(tenant.id, id);
+    if (!invoice) throw new NotFoundException(`Facture non trouvée: ${id}`);
+    return invoice;
+  }
+
+  @Get('invoices/:id')
+  @ApiOperation({ summary: 'Détail d\'une facture (JSON, équivalent ancien EDI-Connect export_json)' })
+  async getInvoiceById(
+    @CurrentTenant() tenant: { id: string },
+    @Param('id') id: string,
+  ): Promise<InvoiceResponseDto> {
+    const invoice = await this.billingService.getInvoiceById(tenant.id, id);
+    if (!invoice) throw new NotFoundException(`Facture non trouvée: ${id}`);
+    return invoice;
   }
 
   @Get('quota/:metricType')

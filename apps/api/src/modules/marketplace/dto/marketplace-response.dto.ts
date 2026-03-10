@@ -1,5 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+export class ConfigFieldDto {
+  @ApiProperty({ description: 'Clé du champ (ex: base_url, api_key)' })
+  key!: string;
+
+  @ApiProperty({ description: 'Libellé affiché' })
+  label!: string;
+
+  @ApiProperty({ description: 'Type de champ: text ou password', enum: ['text', 'password'] })
+  type!: 'text' | 'password';
+
+  @ApiProperty({ description: 'Champ obligatoire' })
+  required!: boolean;
+
+  @ApiProperty({ description: 'Placeholder', required: false })
+  placeholder?: string;
+
+  @ApiProperty({ description: 'Description ou aide', required: false })
+  description?: string;
+}
+
 export class ConnectorOperationDto {
   @ApiProperty({ description: 'ID de l\'opération' })
   id!: string;
@@ -13,8 +33,29 @@ export class ConnectorOperationDto {
   @ApiProperty({ description: 'Méthode HTTP ou type de fichier' })
   method!: string;
 
+  @ApiProperty({ description: 'Endpoint (chemin API), ex: /thirdparties, /wp-json/wc/v3/customers', required: false })
+  path?: string;
+
   @ApiProperty({ description: 'Description de l\'opération', required: false })
   description?: string;
+
+  @ApiProperty({
+    description: 'Schéma de sortie (source) : champs retournés par l\'API. properties + required',
+    required: false,
+  })
+  outputSchema?: Record<string, unknown>;
+
+  @ApiProperty({
+    description: 'Schéma d\'entrée (destination) : champs à remplir pour l\'appel. properties + required',
+    required: false,
+  })
+  inputSchema?: Record<string, unknown>;
+
+  @ApiProperty({ description: 'Schéma de config spécifique à l\'opération', required: false })
+  configSchema?: Record<string, unknown>;
+
+  @ApiProperty({ description: 'Format fichier (FILE)', required: false })
+  fileFormat?: string;
 }
 
 export class MarketplaceConnectorDto {
@@ -46,9 +87,36 @@ export class MarketplaceConnectorDto {
   destinationOperationsCount!: number;
 }
 
+export class AgentDownloadsDto {
+  @ApiProperty({ description: 'Package ou URL Windows (agent)', required: false })
+  windows?: string;
+
+  @ApiProperty({ description: 'Package ou URL macOS (agent)', required: false })
+  mac?: string;
+}
+
 export class MarketplaceConnectorDetailDto extends MarketplaceConnectorDto {
   @ApiProperty({ description: 'Configuration d\'authentification requise' })
   authConfig!: Record<string, unknown>;
+
+  @ApiProperty({
+    description: 'Champs du formulaire de configuration (URL, clé API, secret, etc.)',
+    type: [ConfigFieldDto],
+  })
+  configFields!: ConfigFieldDto[];
+
+  @ApiProperty({
+    description: 'Pour connecteur agent : liens de téléchargement Windows / Mac',
+    type: AgentDownloadsDto,
+    required: false,
+  })
+  agentDownloads?: AgentDownloadsDto;
+
+  @ApiProperty({
+    description: 'Instructions pour configurer ce connecteur (par module/logiciel)',
+    required: false,
+  })
+  configInstructions?: string;
 
   @ApiProperty({ description: 'Opérations source disponibles', type: [ConnectorOperationDto] })
   sourceOperations!: ConnectorOperationDto[];

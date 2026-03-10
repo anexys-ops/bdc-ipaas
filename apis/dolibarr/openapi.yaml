@@ -1,0 +1,817 @@
+openapi: 3.0.3
+info:
+  title: Dolibarr REST API
+  description: |
+    API REST de Dolibarr ERP/CRM. Les appels se font sur l'URL de base de votre instance
+    (ex. https://votre-domaine.fr/api/index.php).
+    Activer le module « API REST » dans Configuration → Modules/Applications.
+    La clé API (DOLAPIKEY) se génère dans le profil utilisateur (onglet Clé API).
+  version: 1.0.0
+  contact:
+    name: Dolibarr
+    url: https://www.dolibarr.org
+  license:
+    name: GPL
+    url: https://www.gnu.org/licenses/gpl.html
+
+servers:
+  - url: https://bdcloud.luxgreen.net/api/index.php
+    description: Instance exemple (remplacer par votre URL)
+  - url: /api/index.php
+    description: URL relative (base à configurer)
+
+tags:
+  - name: Auth
+    description: Authentification (obtention du token)
+  - name: Tiers
+    description: Clients et fournisseurs (thirdparties)
+  - name: Produits
+    description: Catalogue produits
+  - name: Commandes
+    description: Commandes clients/fournisseurs
+  - name: Factures
+    description: Factures
+  - name: Référentiels
+    description: Référentiels (pays, etc.)
+
+security:
+  - ApiKeyHeader: []
+
+components:
+  securitySchemes:
+    ApiKeyHeader:
+      type: apiKey
+      in: header
+      name: DOLAPIKEY
+      description: Clé API générée dans le profil utilisateur (onglet Clé API)
+    EntityHeader:
+      type: apiKey
+      in: header
+      name: DOLAPIENTITY
+      description: "(Optionnel) Entité en multi-société. '' = première société."
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "404"
+            message:
+              type: string
+
+    ThirdParty:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID du tiers
+        ref:
+          type: string
+          description: Référence
+        name:
+          type: string
+        client:
+          type: integer
+          description: "1 = client, 0 = non"
+        fournisseur:
+          type: integer
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        zip:
+          type: string
+        town:
+          type: string
+        country_code:
+          type: string
+        tva_intra:
+          type: string
+
+    ThirdPartyCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        client:
+          type: integer
+          default: 1
+        code_client:
+          type: string
+          default: "auto"
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        zip:
+          type: string
+        town:
+          type: string
+        country_code:
+          type: string
+          default: "FR"
+        tva_intra:
+          type: string
+
+    InvoiceLine:
+      type: object
+      properties:
+        fk_product:
+          type: string
+        label:
+          type: string
+        desc:
+          type: string
+        qty:
+          type: number
+        subprice:
+          type: number
+        tva_tx:
+          type: number
+
+    InvoiceCreate:
+      type: object
+      required:
+        - socid
+        - lines
+      properties:
+        socid:
+          type: string
+          description: ID du tiers (client)
+        date:
+          type: integer
+          description: Timestamp
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceLine'
+
+    OrderLine:
+      type: object
+      properties:
+        fk_product:
+          type: string
+        desc:
+          type: string
+        subprice:
+          type: number
+        qty:
+          type: number
+        tva_tx:
+          type: number
+
+    OrderCreate:
+      type: object
+      required:
+        - socid
+      properties:
+        socid:
+          type: string
+        type:
+          type: string
+          description: "0 = commande client, 1 = commande fournisseur"
+          default: "0"
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLine'
+        note_private:
+          type: string
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        ref:
+          type: string
+        label:
+          type: string
+        price:
+          type: number
+        tva_tx:
+          type: number
+
+    ProductCreate:
+      type: object
+      required:
+        - ref
+        - label
+      properties:
+        ref:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        tva_tx:
+          type: number
+        type:
+          type: string
+          description: "0 = produit/service, 1 = produit physique"
+
+paths:
+  /login:
+    get:
+      tags: [Auth]
+      summary: Login (GET) — déconseillé
+      description: |
+        Retourne le token API pour login/mot de passe.
+        **À éviter** : préférer définir une clé API (DOLAPIKEY) sur l'utilisateur et l'utiliser directement.
+      operationId: getLogin
+      security: []
+      parameters:
+        - name: login
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: password
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: entity
+          in: query
+          schema:
+            type: string
+        - name: reset
+          in: query
+          schema:
+            type: integer
+            enum: [0, 1]
+      responses:
+        '200':
+          description: Token(s) retourné(s)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '403':
+          description: Accès refusé
+        '500':
+          description: Erreur serveur
+
+    post:
+      tags: [Auth]
+      summary: Login (POST) — déconseillé
+      operationId: postLogin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [login, password]
+              properties:
+                login:
+                  type: string
+                password:
+                  type: string
+                entity:
+                  type: string
+                reset:
+                  type: integer
+                  enum: [0, 1]
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '403':
+          description: Accès refusé
+        '500':
+          description: Erreur serveur
+
+  /thirdparties:
+    get:
+      tags: [Tiers]
+      summary: Liste des tiers (clients/fournisseurs)
+      operationId: listThirdparties
+      parameters:
+        - name: sortfield
+          in: query
+          schema:
+            type: string
+            example: t.rowid
+        - name: sortorder
+          in: query
+          schema:
+            type: string
+            enum: [ASC, DESC]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: mode
+          in: query
+          schema:
+            type: integer
+            description: "1 = clients, 2 = fournisseurs"
+        - name: sqlfilters
+          in: query
+          schema:
+            type: string
+          description: Filtres SQL (ex. (t.nom:=:'NomSociété'))
+      responses:
+        '200':
+          description: Liste des tiers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ThirdParty'
+        '403':
+          description: Accès refusé
+        '500':
+          description: Erreur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags: [Tiers]
+      summary: Créer un tiers
+      operationId: createThirdparty
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThirdPartyCreate'
+      responses:
+        '200':
+          description: ID du tiers créé
+          content:
+            application/json:
+              schema:
+                type: integer
+        '400':
+          description: Données invalides
+        '403':
+          description: Accès refusé
+        '500':
+          description: Erreur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /thirdparties/{id}:
+    get:
+      tags: [Tiers]
+      summary: Détail d'un tiers
+      operationId: getThirdparty
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détail du tiers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThirdParty'
+        '404':
+          description: Tiers non trouvé
+    put:
+      tags: [Tiers]
+      summary: Modifier un tiers
+      operationId: updateThirdparty
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThirdPartyCreate'
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Tiers non trouvé
+    delete:
+      tags: [Tiers]
+      summary: Supprimer un tiers
+      operationId: deleteThirdparty
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Tiers non trouvé
+
+  /products:
+    get:
+      tags: [Produits]
+      summary: Liste des produits
+      operationId: listProducts
+      parameters:
+        - name: sortfield
+          in: query
+          schema:
+            type: string
+            example: rowid
+        - name: sortorder
+          in: query
+          schema:
+            type: string
+            enum: [ASC, DESC]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: sqlfilters
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des produits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '403':
+          description: Accès refusé
+        '500':
+          description: Erreur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags: [Produits]
+      summary: Créer un produit
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '200':
+          description: ID du produit créé
+          content:
+            application/json:
+              schema:
+                type: integer
+        '400':
+          description: Données invalides
+        '403':
+          description: Accès refusé
+        '500':
+          description: Erreur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /products/{id}:
+    get:
+      tags: [Produits]
+      summary: Détail d'un produit
+      operationId: getProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détail du produit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Produit non trouvé
+    put:
+      tags: [Produits]
+      summary: Modifier un produit
+      operationId: updateProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Produit non trouvé
+    delete:
+      tags: [Produits]
+      summary: Supprimer un produit
+      operationId: deleteProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Produit non trouvé
+
+  /orders:
+    get:
+      tags: [Commandes]
+      summary: Liste des commandes
+      operationId: listOrders
+      parameters:
+        - name: sortfield
+          in: query
+          schema:
+            type: string
+        - name: sortorder
+          in: query
+          schema:
+            type: string
+            enum: [ASC, DESC]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste des commandes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '403':
+          description: Accès refusé
+        '500':
+          description: Erreur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags: [Commandes]
+      summary: Créer une commande (sans lignes)
+      description: |
+        Créer d'abord la commande, puis ajouter les lignes via POST /orders/{id}/lines.
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreate'
+      responses:
+        '200':
+          description: ID de la commande créée
+          content:
+            application/json:
+              schema:
+                type: integer
+        '400':
+          description: Données invalides
+        '403':
+          description: Accès refusé
+        '500':
+          description: Erreur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /orders/{id}/lines:
+    post:
+      tags: [Commandes]
+      summary: Ajouter des lignes à une commande
+      operationId: addOrderLines
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lines:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/OrderLine'
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Commande non trouvée
+        '500':
+          description: Erreur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /orders/{id}/validate:
+    post:
+      tags: [Commandes]
+      summary: Valider une commande
+      operationId: validateOrder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idwarehouse:
+                  type: string
+                  default: "0"
+                notrigger:
+                  type: string
+                  enum: ["0", "1"]
+                  default: "0"
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Commande non trouvée
+        '500':
+          description: Erreur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invoices:
+    get:
+      tags: [Factures]
+      summary: Liste des factures
+      operationId: listInvoices
+      parameters:
+        - name: sortfield
+          in: query
+          schema:
+            type: string
+        - name: sortorder
+          in: query
+          schema:
+            type: string
+            enum: [ASC, DESC]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste des factures
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '403':
+          description: Accès refusé
+        '500':
+          description: Erreur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags: [Factures]
+      summary: Créer une facture
+      operationId: createInvoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceCreate'
+      responses:
+        '200':
+          description: ID de la facture créée
+          content:
+            application/json:
+              schema:
+                type: integer
+        '400':
+          description: Données invalides (socid, lines requis)
+        '403':
+          description: Accès refusé
+        '500':
+          description: Erreur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invoices/{id}:
+    get:
+      tags: [Factures]
+      summary: Détail d'une facture
+      operationId: getInvoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détail de la facture
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Facture non trouvée
+
+  /dictionarycountries:
+    get:
+      tags: [Référentiels]
+      summary: Liste des pays (référentiel)
+      operationId: listCountries
+      responses:
+        '200':
+          description: Liste des pays
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '403':
+          description: Accès refusé

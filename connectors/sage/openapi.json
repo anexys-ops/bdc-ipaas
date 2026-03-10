@@ -1,0 +1,18 @@
+{
+  "connector_meta": {
+    "id": "sage",
+    "name": "Sage",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/sage.com",
+    "category": "ERP / Comptabilité",
+    "auth_type": "agent",
+    "docs_url": null,
+    "config_instructions": "Connexion via un agent à installer sur votre poste. Aucune API : téléchargez l’agent correspondant à votre système (Windows ou Mac), installez-le et associez-le à votre compte pour synchroniser les données.",
+    "agent_downloads": {
+      "windows": "bdc-ipaas-agent-sage-1.0.0-win.exe",
+      "mac": "bdc-ipaas-agent-sage-1.0.0-mac.dmg"
+    }
+  },
+  "auth_config": {},
+  "operations": []
+}

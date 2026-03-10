@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { NotFoundException } from '@nestjs/common';
 import { TenantsService } from './tenants.service';
+import { TenantDatabaseService } from './tenant-database.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { VaultService } from '../vault/vault.service';
 import { Plan } from './dto';
@@ -31,6 +32,10 @@ describe('TenantsService', () => {
       create: jest.fn(),
       update: jest.fn(),
     },
+    user: {
+      count: jest.fn().mockResolvedValue(0),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
     $executeRawUnsafe: jest.fn(),
   };
 
@@ -48,6 +53,13 @@ describe('TenantsService', () => {
     }),
   };
 
+  const mockTenantDatabaseService = {
+    getClient: jest.fn().mockResolvedValue({
+      connector: { count: jest.fn().mockResolvedValue(0) },
+      flow: { count: jest.fn().mockResolvedValue(0) },
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -55,6 +67,7 @@ describe('TenantsService', () => {
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: VaultService, useValue: mockVaultService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: TenantDatabaseService, useValue: mockTenantDatabaseService },
       ],
     }).compile();
 

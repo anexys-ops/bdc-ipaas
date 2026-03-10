@@ -1,0 +1,844 @@
+{
+  "connector_meta": {
+    "id": "quickbooks",
+    "name": "QuickBooks Online",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/intuit.com",
+    "category": "Comptabilité",
+    "auth_type": "oauth2",
+    "docs_url": "https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/account",
+    "config_instructions": "QuickBooks : Intuit Developer Portal → Create app → OAuth 2.0. Scopes : com.intuit.quickbooks.accounting. URL de base : https://quickbooks.api.intuit.com/v3/company/{realmId}. Utilisez access_token (et refresh_token pour renouveler). realmId = ID du cabinet QuickBooks."
+  },
+  "auth_config": {
+    "token_url": "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer",
+    "scopes": ["com.intuit.quickbooks.accounting"]
+  },
+  "operations": [
+    {
+      "id": "list_customers",
+      "label": "Récupérer les clients",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/query?query=select * from Customer",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "QueryResponse": {
+            "type": "object",
+            "properties": {
+              "Customer": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "Id": { "type": "string" },
+                    "DisplayName": { "type": "string" },
+                    "PrimaryEmailAddr": { "type": "object", "properties": { "Address": { "type": "string" } } },
+                    "PrimaryPhone": { "type": "object", "properties": { "FreeFormNumber": { "type": "string" } } },
+                    "Balance": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "get_customer",
+      "label": "Obtenir un client",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/customer/{customerId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["realmId", "customerId"],
+        "properties": {
+          "realmId": { "type": "string" },
+          "customerId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Customer": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "DisplayName": { "type": "string" },
+              "PrimaryEmailAddr": { "type": "object", "properties": { "Address": { "type": "string" } } },
+              "PrimaryPhone": { "type": "object", "properties": { "FreeFormNumber": { "type": "string" } } },
+              "Balance": { "type": "number" },
+              "BillAddr": { "type": "object" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_customer",
+      "label": "Créer un client",
+      "type": "destination",
+      "method": "POST",
+      "path": "/company/{realmId}/customer",
+      "input_schema": {
+        "type": "object",
+        "required": ["DisplayName"],
+        "properties": {
+          "DisplayName": { "type": "string" },
+          "PrimaryEmailAddr": { "type": "object", "properties": { "Address": { "type": "string" } } },
+          "PrimaryPhone": { "type": "object", "properties": { "FreeFormNumber": { "type": "string" } } },
+          "BillAddr": {
+            "type": "object",
+            "properties": {
+              "Line1": { "type": "string" },
+              "City": { "type": "string" },
+              "CountrySubDivisionCode": { "type": "string" },
+              "PostalCode": { "type": "string" },
+              "Country": { "type": "string" }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Customer": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "DisplayName": { "type": "string" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_customer",
+      "label": "Modifier un client",
+      "type": "destination",
+      "method": "POST",
+      "path": "/company/{realmId}/customer",
+      "input_schema": {
+        "type": "object",
+        "required": ["Id", "SyncToken"],
+        "properties": {
+          "Id": { "type": "string" },
+          "SyncToken": { "type": "string" },
+          "DisplayName": { "type": "string" },
+          "PrimaryEmailAddr": { "type": "object", "properties": { "Address": { "type": "string" } } },
+          "PrimaryPhone": { "type": "object", "properties": { "FreeFormNumber": { "type": "string" } } }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Customer": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "query_customers",
+      "label": "Requête clients (SQL-like)",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/query",
+      "input_schema": {
+        "type": "object",
+        "required": ["realmId", "query"],
+        "properties": {
+          "realmId": { "type": "string" },
+          "query": { "type": "string", "description": "Requête SQL-like (ex: select * from Customer where DisplayName like '%Acme%')" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "QueryResponse": {
+            "type": "object",
+            "properties": {
+              "Customer": {
+                "type": "array",
+                "items": { "type": "object" }
+              },
+              "startPosition": { "type": "integer" },
+              "maxResults": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_invoices",
+      "label": "Récupérer les factures",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/query?query=select * from Invoice",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "QueryResponse": {
+            "type": "object",
+            "properties": {
+              "Invoice": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "Id": { "type": "string" },
+                    "DocNumber": { "type": "string" },
+                    "CustomerRef": { "type": "object", "properties": { "value": { "type": "string" } } },
+                    "TotalAmt": { "type": "number" },
+                    "Balance": { "type": "number" },
+                    "TxnDate": { "type": "string" },
+                    "DueDate": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "get_invoice",
+      "label": "Obtenir une facture",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/invoice/{invoiceId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["realmId", "invoiceId"],
+        "properties": {
+          "realmId": { "type": "string" },
+          "invoiceId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Invoice": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "DocNumber": { "type": "string" },
+              "CustomerRef": { "type": "object" },
+              "Line": { "type": "array" },
+              "TotalAmt": { "type": "number" },
+              "Balance": { "type": "number" },
+              "TxnDate": { "type": "string" },
+              "DueDate": { "type": "string" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_invoice",
+      "label": "Créer une facture",
+      "type": "destination",
+      "method": "POST",
+      "path": "/company/{realmId}/invoice",
+      "input_schema": {
+        "type": "object",
+        "required": ["CustomerRef", "Line"],
+        "properties": {
+          "CustomerRef": { "type": "object", "properties": { "value": { "type": "string" } } },
+          "TxnDate": { "type": "string", "format": "date" },
+          "DueDate": { "type": "string", "format": "date" },
+          "Line": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "DetailType": { "type": "string", "enum": ["SalesItemLineDetail"] },
+                "Amount": { "type": "number" },
+                "SalesItemLineDetail": {
+                  "type": "object",
+                  "properties": {
+                    "ItemRef": { "type": "object", "properties": { "value": { "type": "string" } } },
+                    "Qty": { "type": "number" },
+                    "UnitPrice": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Invoice": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "DocNumber": { "type": "string" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_invoice",
+      "label": "Modifier une facture",
+      "type": "destination",
+      "method": "POST",
+      "path": "/company/{realmId}/invoice",
+      "input_schema": {
+        "type": "object",
+        "required": ["Id", "SyncToken"],
+        "properties": {
+          "Id": { "type": "string" },
+          "SyncToken": { "type": "string" },
+          "CustomerRef": { "type": "object" },
+          "TxnDate": { "type": "string" },
+          "DueDate": { "type": "string" },
+          "Line": { "type": "array" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Invoice": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "void_invoice",
+      "label": "Annuler une facture",
+      "type": "destination",
+      "method": "POST",
+      "path": "/company/{realmId}/invoice",
+      "input_schema": {
+        "type": "object",
+        "required": ["Id", "SyncToken"],
+        "properties": {
+          "Id": { "type": "string" },
+          "SyncToken": { "type": "string" },
+          "TxnDate": { "type": "string" },
+          "PrivateNote": { "type": "string", "description": "Raison de l'annulation" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Invoice": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "Balance": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_payments",
+      "label": "Récupérer les paiements",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/query?query=select * from Payment",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "QueryResponse": {
+            "type": "object",
+            "properties": {
+              "Payment": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "Id": { "type": "string" },
+                    "TotalAmt": { "type": "number" },
+                    "CustomerRef": { "type": "object" },
+                    "TxnDate": { "type": "string" },
+                    "PaymentRefNum": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_payment",
+      "label": "Créer un paiement",
+      "type": "destination",
+      "method": "POST",
+      "path": "/company/{realmId}/payment",
+      "input_schema": {
+        "type": "object",
+        "required": ["CustomerRef", "TotalAmt"],
+        "properties": {
+          "CustomerRef": { "type": "object", "properties": { "value": { "type": "string" } } },
+          "TotalAmt": { "type": "number" },
+          "TxnDate": { "type": "string", "format": "date" },
+          "PaymentRefNum": { "type": "string" },
+          "PaymentMethodRef": { "type": "object", "properties": { "value": { "type": "string" } } }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Payment": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "TotalAmt": { "type": "number" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_items",
+      "label": "Récupérer les articles (produits)",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/query?query=select * from Item",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "QueryResponse": {
+            "type": "object",
+            "properties": {
+              "Item": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "Id": { "type": "string" },
+                    "Name": { "type": "string" },
+                    "Type": { "type": "string" },
+                    "UnitPrice": { "type": "number" },
+                    "Sku": { "type": "string" },
+                    "QtyOnHand": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "get_item",
+      "label": "Obtenir un article",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/item/{itemId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["realmId", "itemId"],
+        "properties": {
+          "realmId": { "type": "string" },
+          "itemId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Item": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "Name": { "type": "string" },
+              "Type": { "type": "string" },
+              "UnitPrice": { "type": "number" },
+              "Sku": { "type": "string" },
+              "QtyOnHand": { "type": "number" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_item",
+      "label": "Créer un article",
+      "type": "destination",
+      "method": "POST",
+      "path": "/company/{realmId}/item",
+      "input_schema": {
+        "type": "object",
+        "required": ["Type", "Name"],
+        "properties": {
+          "Type": { "type": "string", "enum": ["Service", "NonInventory", "Inventory"] },
+          "Name": { "type": "string" },
+          "UnitPrice": { "type": "number" },
+          "Sku": { "type": "string" },
+          "Description": { "type": "string" },
+          "IncomeAccountRef": { "type": "object", "properties": { "value": { "type": "string" } } }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Item": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "Name": { "type": "string" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_item",
+      "label": "Modifier un article",
+      "type": "destination",
+      "method": "POST",
+      "path": "/company/{realmId}/item",
+      "input_schema": {
+        "type": "object",
+        "required": ["Id", "SyncToken"],
+        "properties": {
+          "Id": { "type": "string" },
+          "SyncToken": { "type": "string" },
+          "Name": { "type": "string" },
+          "UnitPrice": { "type": "number" },
+          "Sku": { "type": "string" },
+          "Description": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Item": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_sales_receipts",
+      "label": "Récupérer les reçus de vente",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/query?query=select * from SalesReceipt",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "QueryResponse": {
+            "type": "object",
+            "properties": {
+              "SalesReceipt": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "Id": { "type": "string" },
+                    "DocNumber": { "type": "string" },
+                    "TotalAmt": { "type": "number" },
+                    "CustomerRef": { "type": "object" },
+                    "TxnDate": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_sales_receipt",
+      "label": "Créer un reçu de vente",
+      "type": "destination",
+      "method": "POST",
+      "path": "/company/{realmId}/salesreceipt",
+      "input_schema": {
+        "type": "object",
+        "required": ["CustomerRef", "Line"],
+        "properties": {
+          "CustomerRef": { "type": "object", "properties": { "value": { "type": "string" } } },
+          "TxnDate": { "type": "string", "format": "date" },
+          "Line": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "DetailType": { "type": "string" },
+                "Amount": { "type": "number" },
+                "SalesItemLineDetail": {
+                  "type": "object",
+                  "properties": {
+                    "ItemRef": { "type": "object", "properties": { "value": { "type": "string" } } },
+                    "Qty": { "type": "number" },
+                    "UnitPrice": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "SalesReceipt": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "DocNumber": { "type": "string" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_tax_codes",
+      "label": "Récupérer les codes taxe",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/query?query=select * from TaxCode",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "QueryResponse": {
+            "type": "object",
+            "properties": {
+              "TaxCode": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "Id": { "type": "string" },
+                    "Name": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_tax_rates",
+      "label": "Récupérer les taux de taxe",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/query?query=select * from TaxRate",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "QueryResponse": {
+            "type": "object",
+            "properties": {
+              "TaxRate": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "Id": { "type": "string" },
+                    "Name": { "type": "string" },
+                    "Rate": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_vendors",
+      "label": "Récupérer les fournisseurs",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/query?query=select * from Vendor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "QueryResponse": {
+            "type": "object",
+            "properties": {
+              "Vendor": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "Id": { "type": "string" },
+                    "DisplayName": { "type": "string" },
+                    "PrimaryEmailAddr": { "type": "object" },
+                    "PrimaryPhone": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_vendor",
+      "label": "Créer un fournisseur",
+      "type": "destination",
+      "method": "POST",
+      "path": "/company/{realmId}/vendor",
+      "input_schema": {
+        "type": "object",
+        "required": ["DisplayName"],
+        "properties": {
+          "DisplayName": { "type": "string" },
+          "PrimaryEmailAddr": { "type": "object", "properties": { "Address": { "type": "string" } } },
+          "PrimaryPhone": { "type": "object", "properties": { "FreeFormNumber": { "type": "string" } } },
+          "BillAddr": {
+            "type": "object",
+            "properties": {
+              "Line1": { "type": "string" },
+              "City": { "type": "string" },
+              "PostalCode": { "type": "string" },
+              "Country": { "type": "string" }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Vendor": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "DisplayName": { "type": "string" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_bills",
+      "label": "Récupérer les factures fournisseur",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/query?query=select * from Bill",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "QueryResponse": {
+            "type": "object",
+            "properties": {
+              "Bill": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "Id": { "type": "string" },
+                    "VendorRef": { "type": "object" },
+                    "TotalAmt": { "type": "number" },
+                    "Balance": { "type": "number" },
+                    "TxnDate": { "type": "string" },
+                    "DueDate": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_bill",
+      "label": "Créer une facture fournisseur",
+      "type": "destination",
+      "method": "POST",
+      "path": "/company/{realmId}/bill",
+      "input_schema": {
+        "type": "object",
+        "required": ["VendorRef", "Line"],
+        "properties": {
+          "VendorRef": { "type": "object", "properties": { "value": { "type": "string" } } },
+          "TxnDate": { "type": "string", "format": "date" },
+          "DueDate": { "type": "string", "format": "date" },
+          "Line": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "DetailType": { "type": "string" },
+                "Amount": { "type": "number" },
+                "ItemBasedExpenseLineDetail": {
+                  "type": "object",
+                  "properties": {
+                    "ItemRef": { "type": "object", "properties": { "value": { "type": "string" } } },
+                    "Qty": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Bill": {
+            "type": "object",
+            "properties": {
+              "Id": { "type": "string" },
+              "SyncToken": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_accounts",
+      "label": "Récupérer le plan comptable",
+      "type": "source",
+      "method": "GET",
+      "path": "/company/{realmId}/query?query=select * from Account",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "QueryResponse": {
+            "type": "object",
+            "properties": {
+              "Account": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "Id": { "type": "string" },
+                    "Name": { "type": "string" },
+                    "AccountType": { "type": "string" },
+                    "AccountSubType": { "type": "string" },
+                    "CurrentBalance": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -16,18 +16,27 @@ export class AuditController {
   @ApiOperation({ summary: 'Obtenir les logs d\'audit' })
   @ApiQuery({ name: 'action', required: false })
   @ApiQuery({ name: 'resource', required: false })
+  @ApiQuery({ name: 'userId', required: false })
+  @ApiQuery({ name: 'from', required: false, description: 'Date ISO (début)' })
+  @ApiQuery({ name: 'to', required: false, description: 'Date ISO (fin)' })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'offset', required: false })
   async getLogs(
     @CurrentTenant() tenant: { id: string },
     @Query('action') action?: string,
     @Query('resource') resource?: string,
+    @Query('userId') userId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ): Promise<{ logs: AuditLogEntry[]; total: number }> {
     return this.auditService.getLogs(tenant.id, {
       action,
       resource,
+      userId,
+      from: from ? new Date(from) : undefined,
+      to: to ? new Date(to) : undefined,
       limit: limit ? parseInt(limit, 10) : 50,
       offset: offset ? parseInt(offset, 10) : 0,
     });

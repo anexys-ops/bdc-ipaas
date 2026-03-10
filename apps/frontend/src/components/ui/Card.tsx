@@ -3,12 +3,19 @@ import type { HTMLAttributes, ReactNode } from 'react';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
+  variant?: 'solid' | 'glass';
 }
 
-export function Card({ className, children, ...props }: CardProps) {
+export function Card({ className, children, variant = 'glass', ...props }: CardProps) {
   return (
     <div
-      className={clsx('bg-white rounded-xl shadow-sm border border-gray-200 p-6', className)}
+      className={clsx(
+        'rounded-2xl p-6 transition-all duration-300',
+        variant === 'glass' &&
+          'bg-white/95 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-primary-100',
+        variant === 'solid' && 'bg-white shadow-sm border border-slate-200/80',
+        className,
+      )}
       {...props}
     >
       {children}

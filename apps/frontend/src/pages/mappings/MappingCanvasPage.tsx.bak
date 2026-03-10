@@ -1,0 +1,570 @@
+import { useCallback, useEffect, useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import ReactFlow, {
+  Background,
+  Controls,
+  MiniMap,
+  Handle,
+  Position,
+  useNodesState,
+  useEdgesState,
+  type Node,
+  type Edge,
+  type NodeProps,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
+import { MappingFieldsDnd } from '../../components/mapping';
+import { connectorsApi } from '../../api/connectors';
+import { marketplaceApi } from '../../api/marketplace';
+import { mappingsApi } from '../../api/mappings';
+import type { PreviewResponse } from '../../api/mappings';
+import {
+  Database, Upload, Loader2, ChevronDown, ChevronRight,
+  GripVertical, ArrowRight, Play, CheckCircle, XCircle,
+  AlertCircle, Copy,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import type { ConfiguredConnector, MarketplaceConnectorDetail, MappingRule } from '../../types';
+
+const SOURCE_NODE_ID = 'source';
+const DEST_NODE_ID = 'dest';
+
+type DropPayload = {
+  connectorId: string;
+  connectorName: string;
+  connectorType: string;
+  operationId: string;
+  operationLabel: string;
+  schema: Record<string, unknown>;
+  isSource: boolean;
+};
+
+/** Aplatit un schema JSON imbriqué en liste de champs. */
+function flattenSchema(schema: Record<string, unknown>, prefix = ''): string[] {
+  if (!schema || typeof schema !== 'object') return [];
+  const props = (schema['properties'] as Record<string, unknown>) ?? schema;
+  const fields: string[] = [];
+  for (const [key, val] of Object.entries(props)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    fields.push(fullKey);
+    if (val && typeof val === 'object') {
+      const nested = (val as Record<string, unknown>)['properties'] as Record<string, unknown> | undefined;
+      if (nested) fields.push(...flattenSchema(nested, fullKey));
+    }
+  }
+  return fields;
+}
+
+function SourceNodeComponent({ data }: NodeProps<{ payload?: DropPayload }>) {
+  const fields = data?.payload ? flattenSchema(data.payload.schema).slice(0, 10) : [];
+  return (
+    <div
+      className="min-w-[240px] rounded-2xl border-2 border-emerald-500/50 bg-white shadow-lg relative"
+      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.boxShadow = '0 0 0 3px #10b981'; }}
+      onDragLeave={(e) => { e.currentTarget.style.boxShadow = ''; }}
+      onDrop={(e) => {
+        e.preventDefault(); e.currentTarget.style.boxShadow = '';
+        const raw = e.dataTransfer.getData('application/json');
+        if (!raw) return;
+        try {
+          const p = JSON.parse(raw) as DropPayload;
+          if (!p.isSource) { toast.error('Glissez une opération source ici (vert)'); return; }
+          (window as unknown as Record<string, unknown>).__dropPayload = { ...p, isSource: true };
+          (window as unknown as Record<string, unknown>).__dropTarget = SOURCE_NODE_ID;
+          window.dispatchEvent(new CustomEvent('connector-drop'));
+        } catch { /* ignore */ }
+      }}
+    >
+      <div className="bg-emerald-500 text-white px-4 py-2.5 rounded-t-2xl flex items-center gap-2">
+        <Database className="w-4 h-4" />
+        <span className="font-semibold text-sm">Source</span>
+      </div>
+      <div className="p-3">
+        {data?.payload ? (
+          <>
+            <p className="font-medium text-slate-800 text-sm">{data.payload.connectorName}</p>
+            <p className="text-xs text-slate-500 mb-2">{data.payload.operationLabel}</p>
+            <div className="space-y-1">
+              {fields.map((f) => (
+                <div key={f} className="text-xs text-slate-600 flex items-center gap-1.5 bg-emerald-50 rounded px-2 py-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />{f}
+                </div>
+              ))}
+              {flattenSchema(data.payload.schema).length > 10 && (
+                <p className="text-xs text-slate-400">+{flattenSchema(data.payload.schema).length - 10} champs</p>
+              )}
+            </div>
+          </>
+        ) : (
+          <p className="text-xs text-slate-400 text-center py-4">Glissez une opération <span className="text-emerald-600 font-medium">source</span> ici</p>
+        )}
+      </div>
+      <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-emerald-500 !border-2 !border-white" />
+    </div>
+  );
+}
+
+function DestNodeComponent({ data }: NodeProps<{ payload?: DropPayload }>) {
+  const fields = data?.payload ? flattenSchema(data.payload.schema).slice(0, 10) : [];
+  return (
+    <div
+      className="min-w-[240px] rounded-2xl border-2 border-blue-500/50 bg-white shadow-lg relative"
+      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.boxShadow = '0 0 0 3px #3b82f6'; }}
+      onDragLeave={(e) => { e.currentTarget.style.boxShadow = ''; }}
+      onDrop={(e) => {
+        e.preventDefault(); e.currentTarget.style.boxShadow = '';
+        const raw = e.dataTransfer.getData('application/json');
+        if (!raw) return;
+        try {
+          const p = JSON.parse(raw) as DropPayload;
+          if (p.isSource) { toast.error('Glissez une opération destination ici (bleu)'); return; }
+          (window as unknown as Record<string, unknown>).__dropPayload = { ...p, isSource: false };
+          (window as unknown as Record<string, unknown>).__dropTarget = DEST_NODE_ID;
+          window.dispatchEvent(new CustomEvent('connector-drop'));
+        } catch { /* ignore */ }
+      }}
+    >
+      <div className="bg-blue-500 text-white px-4 py-2.5 rounded-t-2xl flex items-center gap-2">
+        <Upload className="w-4 h-4" />
+        <span className="font-semibold text-sm">Destination</span>
+      </div>
+      <div className="p-3">
+        {data?.payload ? (
+          <>
+            <p className="font-medium text-slate-800 text-sm">{data.payload.connectorName}</p>
+            <p className="text-xs text-slate-500 mb-2">{data.payload.operationLabel}</p>
+            <div className="space-y-1">
+              {fields.map((f) => (
+                <div key={f} className="text-xs text-slate-600 flex items-center gap-1.5 bg-blue-50 rounded px-2 py-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />{f}
+                </div>
+              ))}
+              {flattenSchema(data.payload.schema).length > 10 && (
+                <p className="text-xs text-slate-400">+{flattenSchema(data.payload.schema).length - 10} champs</p>
+              )}
+            </div>
+          </>
+        ) : (
+          <p className="text-xs text-slate-400 text-center py-4">Glissez une opération <span className="text-blue-600 font-medium">destination</span> ici</p>
+        )}
+      </div>
+      <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-blue-500 !border-2 !border-white" />
+    </div>
+  );
+}
+
+const nodeTypes = { source: SourceNodeComponent, destination: DestNodeComponent };
+
+function ConnectorPaletteWithDetail({ connector }: { connector: ConfiguredConnector }) {
+  const [open, setOpen] = useState(false);
+  const { data: detail, isLoading } = useQuery({
+    queryKey: ['marketplace', connector.type],
+    queryFn: () => marketplaceApi.getDetail(connector.type),
+    enabled: open,
+  });
+
+  return (
+    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-slate-50"
+      >
+        {open ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
+        <span className="font-medium text-slate-800 truncate text-sm">{connector.name}</span>
+        <span className="text-xs text-slate-400 ml-auto shrink-0">{connector.connectorInfo?.name ?? connector.type}</span>
+      </button>
+      {open && (
+        <div className="border-t border-slate-100 bg-slate-50/50 p-2 space-y-3">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+            </div>
+          ) : (
+            <>
+              {detail?.sourceOperations && detail.sourceOperations.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-1.5">Entrée (source)</p>
+                  {detail.sourceOperations.map((op) => (
+                    <div
+                      key={op.id}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('application/json', JSON.stringify({
+                          connectorId: connector.id,
+                          connectorName: connector.name,
+                          connectorType: connector.type,
+                          operationId: op.id,
+                          operationLabel: op.label,
+                          schema: op.outputSchema ?? {},
+                          isSource: true,
+                        } as DropPayload));
+                        e.dataTransfer.effectAllowed = 'copy';
+                      }}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200/80 cursor-grab text-sm text-emerald-800 hover:bg-emerald-100 mb-1"
+                    >
+                      <GripVertical className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="truncate">{op.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {detail?.destinationOperations && detail.destinationOperations.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1.5">Sortie (destination)</p>
+                  {detail.destinationOperations.map((op) => (
+                    <div
+                      key={op.id}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('application/json', JSON.stringify({
+                          connectorId: connector.id,
+                          connectorName: connector.name,
+                          connectorType: connector.type,
+                          operationId: op.id,
+                          operationLabel: op.label,
+                          schema: op.inputSchema ?? {},
+                          isSource: false,
+                        } as DropPayload));
+                        e.dataTransfer.effectAllowed = 'copy';
+                      }}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-blue-50 border border-blue-200/80 cursor-grab text-sm text-blue-800 hover:bg-blue-100 mb-1"
+                    >
+                      <GripVertical className="w-4 h-4 text-blue-500 shrink-0" />
+                      <span className="truncate">{op.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PreviewPanel({ rules, sourceSchema, onClose }: {
+  rules: MappingRule[];
+  sourceSchema: Record<string, unknown>;
+  onClose: () => void;
+}) {
+  const [sampleJson, setSampleJson] = useState(() => {
+    const sample: Record<string, unknown> = {};
+    const fields = flattenSchema(sourceSchema).slice(0, 8);
+    for (const f of fields) {
+      const parts = f.split('.');
+      let obj = sample;
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (!obj[parts[i]]) obj[parts[i]] = {};
+        obj = obj[parts[i]] as Record<string, unknown>;
+      }
+      obj[parts[parts.length - 1]] = `exemple_${parts[parts.length - 1]}`;
+    }
+    return JSON.stringify([sample], null, 2);
+  });
+  const [result, setResult] = useState<PreviewResponse | null>(null);
+  const [jsonError, setJsonError] = useState('');
+
+  const previewMutation = useMutation({
+    mutationFn: () => {
+      let parsed: Record<string, unknown>[];
+      try {
+        parsed = JSON.parse(sampleJson);
+        if (!Array.isArray(parsed)) parsed = [parsed];
+        setJsonError('');
+      } catch {
+        throw new Error('JSON invalide');
+      }
+      return mappingsApi.preview({ rules, sampleData: parsed });
+    },
+    onSuccess: (data) => setResult(data),
+    onError: (e: Error) => { setJsonError(e.message); },
+  });
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+          <div>
+            <h3 className="font-semibold text-slate-900">Prévisualisation du mapping</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{rules.length} règle(s) — modifiez les données test et cliquez Exécuter</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+        </div>
+        <div className="flex-1 overflow-auto p-6 grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Données d'entrée (JSON)</label>
+            <textarea
+              value={sampleJson}
+              onChange={(e) => setSampleJson(e.target.value)}
+              rows={14}
+              className="w-full font-mono text-xs border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-400/50 outline-none resize-none"
+              spellCheck={false}
+            />
+            {jsonError && <p className="text-xs text-red-500 mt-1">{jsonError}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Résultat</label>
+            {result ? (
+              <div className="space-y-3">
+                <div className="flex gap-3 text-xs">
+                  <span className="flex items-center gap-1 text-emerald-600"><CheckCircle className="w-3.5 h-3.5" />{result.stats.success} OK</span>
+                  {result.stats.failed > 0 && <span className="flex items-center gap-1 text-red-500"><XCircle className="w-3.5 h-3.5" />{result.stats.failed} erreur(s)</span>}
+                </div>
+                {result.results.map((r, i) => (
+                  <div key={i} className={`rounded-xl border p-3 text-xs ${r.success ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'}`}>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      {r.success ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
+                      <span className="font-medium">Ligne {r.index + 1}</span>
+                    </div>
+                    {r.error && <p className="text-red-600 mb-1">{r.error}</p>}
+                    {r.data && <pre className="overflow-auto font-mono text-slate-700 text-xs max-h-32">{JSON.stringify(r.data, null, 2)}</pre>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-48 text-slate-400 text-sm border border-dashed border-slate-200 rounded-xl">
+                Cliquez "Exécuter" pour voir le résultat
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="px-6 py-4 border-t border-slate-200 flex gap-3">
+          <Button onClick={() => previewMutation.mutate()} disabled={previewMutation.isPending}>
+            {previewMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+            Exécuter
+          </Button>
+          <Button variant="outline" onClick={onClose}>Fermer</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function MappingCanvasPage() {
+  const [sourcePayload, setSourcePayload] = useState<DropPayload | null>(null);
+  const [destPayload, setDestPayload] = useState<DropPayload | null>(null);
+  const [mappingName, setMappingName] = useState('');
+  const [rules, setRules] = useState<MappingRule[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const { data: connectors, isLoading } = useQuery({
+    queryKey: ['connectors'],
+    queryFn: () => connectorsApi.getAll(),
+  });
+
+  const initialNodes: Node[] = [
+    { id: SOURCE_NODE_ID, type: 'source', position: { x: 60, y: 180 }, data: { payload: null }, draggable: false },
+    { id: DEST_NODE_ID, type: 'destination', position: { x: 500, y: 180 }, data: { payload: null }, draggable: false },
+  ];
+  const initialEdges: Edge[] = [
+    { id: 'e-main', source: SOURCE_NODE_ID, target: DEST_NODE_ID, type: 'smoothstep', animated: true, style: { stroke: '#94a3b8', strokeWidth: 2 } },
+  ];
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+
+  const onDropEvent = useCallback(() => {
+    const payload = (window as unknown as Record<string, unknown>).__dropPayload as DropPayload | undefined;
+    const target = (window as unknown as Record<string, unknown>).__dropTarget as string | undefined;
+    if (!payload || !target) return;
+    if (target === SOURCE_NODE_ID) setSourcePayload(payload);
+    else setDestPayload(payload);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('connector-drop', onDropEvent);
+    return () => window.removeEventListener('connector-drop', onDropEvent);
+  }, [onDropEvent]);
+
+  useEffect(() => {
+    setNodes((nds) => nds.map((n) => {
+      if (n.id === SOURCE_NODE_ID) return { ...n, data: { payload: sourcePayload } };
+      if (n.id === DEST_NODE_ID) return { ...n, data: { payload: destPayload } };
+      return n;
+    }));
+  }, [sourcePayload, destPayload, setNodes]);
+
+  /** Réinitialise les règles quand on change de source ou de destination (nouveau glissement). */
+  useEffect(() => {
+    setRules([]);
+  }, [sourcePayload?.connectorId, sourcePayload?.operationId, destPayload?.connectorId, destPayload?.operationId]);
+
+  const sourceSchema = sourcePayload?.schema ?? {};
+  const destSchema = destPayload?.schema ?? {};
+
+  /** Champs source/destination (clés du schéma = properties). */
+  const sourceFieldNames = Object.keys(sourceSchema);
+  const destFieldNames = Object.keys(destSchema);
+
+  /** Auto-mapping : quand source et destination sont définis et qu’il n’y a pas encore de règles, remplir avec les champs de même nom. */
+  useEffect(() => {
+    if (!sourcePayload || !destPayload || rules.length > 0) return;
+    const sameNameRules: MappingRule[] = destFieldNames
+      .filter((destField) => sourceFieldNames.includes(destField))
+      .map((destinationField) => ({ destinationField, type: 'from' as const, sourceField: destinationField }));
+    if (sameNameRules.length > 0) setRules(sameNameRules);
+  }, [sourcePayload, destPayload, sourceFieldNames.join(','), destFieldNames.join(','), rules.length]);
+
+  const canSave = !!mappingName.trim() && !!sourcePayload && !!destPayload && rules.length > 0;
+
+  const createMutation = useMutation({
+    mutationFn: () => mappingsApi.create({
+      name: mappingName.trim(),
+      sourceSchema,
+      destinationSchema: destSchema,
+      rules,
+      sourceConnectorId: sourcePayload?.connectorId,
+      sourceOperationId: sourcePayload?.operationId,
+      destinationConnectorId: destPayload?.connectorId,
+      destinationOperationId: destPayload?.operationId,
+    }),
+    onSuccess: () => toast.success('Mapping enregistré avec succès'),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="flex h-[calc(100vh-4rem)] bg-slate-100">
+      {/* Palette gauche */}
+      <aside className="w-72 border-r border-slate-200 bg-white flex flex-col overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-slate-200 bg-slate-50">
+          <h2 className="font-semibold text-slate-800 text-sm">Connecteurs disponibles</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Glissez une opération vers la source ou la destination.</p>
+        </div>
+        <div className="flex-1 overflow-auto p-3 space-y-2">
+          {isLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-7 h-7 animate-spin text-slate-400" /></div>
+          ) : !connectors?.length ? (
+            <div className="text-center py-8">
+              <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm text-slate-500">Aucun connecteur configuré.</p>
+              <a href="/connectors/new" className="text-xs text-blue-500 underline mt-1 block">Ajouter un connecteur</a>
+            </div>
+          ) : (
+            connectors.map((c) => <ConnectorPaletteWithDetail key={c.id} connector={c} />)
+          )}
+        </div>
+      </aside>
+
+      {/* Zone principale */}
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Canvas ReactFlow */}
+        <div className="h-[42%] min-h-[220px] border-b border-slate-200 bg-slate-50">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            nodeTypes={nodeTypes}
+            fitView
+            fitViewOptions={{ padding: 0.3 }}
+            proOptions={{ hideAttribution: true }}
+          >
+            <Background gap={20} color="#e2e8f0" />
+            <Controls showInteractive={false} />
+            <MiniMap nodeStrokeWidth={3} zoomable pannable />
+          </ReactFlow>
+        </div>
+
+        {/* Zone mapping des champs */}
+        <div className="flex-1 overflow-auto">
+          {sourcePayload && destPayload ? (
+            <div className="max-w-5xl mx-auto p-4 space-y-4">
+              {/* Barre de nom + actions */}
+              <div className="flex items-center gap-3">
+                <input
+                  placeholder="Nom du mapping (ex: Sellsy → EBP Clients)"
+                  value={mappingName}
+                  onChange={(e) => setMappingName(e.target.value)}
+                  className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-400/50 outline-none"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPreview(true)}
+                  disabled={rules.length === 0}
+                  title={rules.length === 0 ? 'Créez d\'abord des règles de mapping' : 'Tester le mapping sur des données'}
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Tester
+                </Button>
+                <Button
+                  onClick={() => createMutation.mutate()}
+                  disabled={!canSave || createMutation.isPending}
+                >
+                  {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Enregistrer
+                </Button>
+              </div>
+
+              {/* Indicateur de règles */}
+              {rules.length > 0 && (
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <CheckCircle className="w-4 h-4 text-emerald-500" />
+                  <span>{rules.length} règle(s) configurée(s)</span>
+                  <button onClick={() => setRules([])} className="text-xs text-red-400 hover:text-red-600 ml-auto">Tout effacer</button>
+                </div>
+              )}
+
+              {/* Aide sur les formules */}
+              <details className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-2 text-xs text-blue-700">
+                <summary className="cursor-pointer font-medium select-none">📋 Formules disponibles</summary>
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
+                  <span><code>UPPER(source.nom)</code> → majuscules</span>
+                  <span><code>LOWER(source.nom)</code> → minuscules</span>
+                  <span><code>TRIM(source.texte)</code> → sans espaces</span>
+                  <span><code>CONCAT(source.a, " ", source.b)</code> → concaténation</span>
+                  <span><code>DATE_FORMAT(source.date, "DD/MM/YYYY")</code> → format date</span>
+                  <span><code>NUMBER(source.montant)</code> → conversion numérique</span>
+                  <span><code>ROUND(source.prix, 2)</code> → arrondi</span>
+                  <span><code>IF(source.actif === "1", "Oui", "Non")</code> → condition</span>
+                </div>
+              </details>
+
+              {/* Editor des règles */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-slate-800 flex items-center gap-2 text-base">
+                    <ArrowRight className="w-5 h-5" />
+                    Règles de correspondance
+                  </CardTitle>
+                  <p className="text-sm text-slate-500">
+                    Glissez un champ source vers un champ destination. Double-cliquez une règle pour définir une formule.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <MappingFieldsDnd
+                    sourceSchema={sourceSchema}
+                    destinationSchema={destSchema}
+                    rules={rules}
+                    onRulesChange={setRules}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                <ArrowRight className="w-8 h-8 text-slate-300" />
+              </div>
+              <h3 className="font-semibold text-slate-700 mb-1">Configurez le mapping</h3>
+              <p className="text-sm text-slate-500 max-w-xs">
+                Glissez une opération <span className="text-emerald-600 font-medium">source</span> et une <span className="text-blue-600 font-medium">destination</span> depuis la palette de gauche vers le canevas.
+              </p>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Modal prévisualisation */}
+      {showPreview && sourcePayload && (
+        <PreviewPanel
+          rules={rules}
+          sourceSchema={sourceSchema}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
+    </div>
+  );
+}

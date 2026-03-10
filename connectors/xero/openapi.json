@@ -1,0 +1,772 @@
+{
+  "connector_meta": {
+    "id": "xero",
+    "name": "Xero",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/xero.com",
+    "category": "Comptabilité",
+    "auth_type": "oauth2",
+    "docs_url": "https://developer.xero.com/documentation/api/overview",
+    "config_instructions": "Xero : Developer Portal → My Apps → New app. OAuth 2.0 avec scopes openid profile email accounting.contacts accounting.transactions. URL de base : https://api.xero.com/api.xro/2.0. Collez l'access_token après connexion OAuth2."
+  },
+  "auth_config": {
+    "token_url": "https://identity.xero.com/connect/token",
+    "scopes": ["openid", "profile", "email", "accounting.contacts", "accounting.transactions"]
+  },
+  "operations": [
+    {
+      "id": "list_contacts",
+      "label": "Récupérer les contacts",
+      "type": "source",
+      "method": "GET",
+      "path": "/Contacts",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Contacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ContactID": { "type": "string" },
+                "Name": { "type": "string" },
+                "EmailAddress": { "type": "string" },
+                "Phones": { "type": "array" },
+                "IsCustomer": { "type": "boolean" },
+                "IsSupplier": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "get_contact",
+      "label": "Obtenir un contact",
+      "type": "source",
+      "method": "GET",
+      "path": "/Contacts/{contactId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["contactId"],
+        "properties": {
+          "contactId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Contacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ContactID": { "type": "string" },
+                "Name": { "type": "string" },
+                "FirstName": { "type": "string" },
+                "LastName": { "type": "string" },
+                "EmailAddress": { "type": "string" },
+                "Phones": { "type": "array" },
+                "Addresses": { "type": "array" },
+                "IsCustomer": { "type": "boolean" },
+                "IsSupplier": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_contact",
+      "label": "Créer un contact",
+      "type": "destination",
+      "method": "POST",
+      "path": "/Contacts",
+      "input_schema": {
+        "type": "object",
+        "required": ["Name"],
+        "properties": {
+          "Name": { "type": "string" },
+          "EmailAddress": { "type": "string" },
+          "FirstName": { "type": "string" },
+          "LastName": { "type": "string" },
+          "Phones": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "PhoneType": { "type": "string" },
+                "PhoneNumber": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Contacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ContactID": { "type": "string" },
+                "Name": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_contact",
+      "label": "Modifier un contact",
+      "type": "destination",
+      "method": "POST",
+      "path": "/Contacts/{contactId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["contactId"],
+        "properties": {
+          "contactId": { "type": "string" },
+          "Name": { "type": "string" },
+          "EmailAddress": { "type": "string" },
+          "FirstName": { "type": "string" },
+          "LastName": { "type": "string" },
+          "Phones": { "type": "array" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Contacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ContactID": { "type": "string" },
+                "Name": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "delete_contact",
+      "label": "Supprimer un contact",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/Contacts/{contactId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["contactId"],
+        "properties": {
+          "contactId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "search_contacts",
+      "label": "Rechercher des contacts",
+      "type": "source",
+      "method": "GET",
+      "path": "/Contacts",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "where": { "type": "string", "description": "Filtre (ex: Name.Contains(\"Acme\"))" },
+          "order": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Contacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ContactID": { "type": "string" },
+                "Name": { "type": "string" },
+                "EmailAddress": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_invoices",
+      "label": "Récupérer les factures",
+      "type": "source",
+      "method": "GET",
+      "path": "/Invoices",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Invoices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "InvoiceID": { "type": "string" },
+                "InvoiceNumber": { "type": "string" },
+                "Type": { "type": "string" },
+                "Contact": { "type": "object" },
+                "Total": { "type": "number" },
+                "Status": { "type": "string" },
+                "Date": { "type": "string" },
+                "DueDate": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "get_invoice",
+      "label": "Obtenir une facture",
+      "type": "source",
+      "method": "GET",
+      "path": "/Invoices/{invoiceId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["invoiceId"],
+        "properties": {
+          "invoiceId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Invoices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "InvoiceID": { "type": "string" },
+                "InvoiceNumber": { "type": "string" },
+                "Type": { "type": "string" },
+                "Contact": { "type": "object" },
+                "LineItems": { "type": "array" },
+                "Total": { "type": "number" },
+                "Status": { "type": "string" },
+                "Date": { "type": "string" },
+                "DueDate": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_invoice",
+      "label": "Créer une facture",
+      "type": "destination",
+      "method": "POST",
+      "path": "/Invoices",
+      "input_schema": {
+        "type": "object",
+        "required": ["Type", "Contact", "LineItems"],
+        "properties": {
+          "Type": { "type": "string", "enum": ["ACCREC", "ACCPAY"] },
+          "Contact": { "type": "object", "properties": { "ContactID": { "type": "string" } } },
+          "Date": { "type": "string", "format": "date" },
+          "DueDate": { "type": "string", "format": "date" },
+          "LineItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Description": { "type": "string" },
+                "Quantity": { "type": "number" },
+                "UnitAmount": { "type": "number" },
+                "AccountCode": { "type": "string" },
+                "TaxType": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Invoices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "InvoiceID": { "type": "string" },
+                "InvoiceNumber": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_invoice",
+      "label": "Modifier une facture",
+      "type": "destination",
+      "method": "POST",
+      "path": "/Invoices/{invoiceId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["invoiceId"],
+        "properties": {
+          "invoiceId": { "type": "string" },
+          "Type": { "type": "string" },
+          "Contact": { "type": "object" },
+          "Date": { "type": "string" },
+          "DueDate": { "type": "string" },
+          "LineItems": { "type": "array" },
+          "Status": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Invoices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "InvoiceID": { "type": "string" },
+                "InvoiceNumber": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_credit_notes",
+      "label": "Récupérer les avoirs",
+      "type": "source",
+      "method": "GET",
+      "path": "/CreditNotes",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "CreditNotes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "CreditNoteID": { "type": "string" },
+                "CreditNoteNumber": { "type": "string" },
+                "Type": { "type": "string" },
+                "Contact": { "type": "object" },
+                "Total": { "type": "number" },
+                "Status": { "type": "string" },
+                "Date": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_credit_note",
+      "label": "Créer un avoir",
+      "type": "destination",
+      "method": "POST",
+      "path": "/CreditNotes",
+      "input_schema": {
+        "type": "object",
+        "required": ["Type", "Contact", "LineItems"],
+        "properties": {
+          "Type": { "type": "string", "enum": ["ACCRECCREDIT", "ACCPAYCREDIT"] },
+          "Contact": { "type": "object", "properties": { "ContactID": { "type": "string" } } },
+          "Date": { "type": "string", "format": "date" },
+          "LineItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Description": { "type": "string" },
+                "Quantity": { "type": "number" },
+                "UnitAmount": { "type": "number" },
+                "AccountCode": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "CreditNotes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "CreditNoteID": { "type": "string" },
+                "CreditNoteNumber": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_items",
+      "label": "Récupérer les articles (produits)",
+      "type": "source",
+      "method": "GET",
+      "path": "/Items",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ItemID": { "type": "string" },
+                "Code": { "type": "string" },
+                "Name": { "type": "string" },
+                "Description": { "type": "string" },
+                "PurchaseDescription": { "type": "string" },
+                "PurchaseDetails": { "type": "object" },
+                "SalesDetails": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "get_item",
+      "label": "Obtenir un article",
+      "type": "source",
+      "method": "GET",
+      "path": "/Items/{itemId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["itemId"],
+        "properties": {
+          "itemId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ItemID": { "type": "string" },
+                "Code": { "type": "string" },
+                "Name": { "type": "string" },
+                "Description": { "type": "string" },
+                "PurchaseDetails": { "type": "object" },
+                "SalesDetails": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_item",
+      "label": "Créer un article",
+      "type": "destination",
+      "method": "POST",
+      "path": "/Items",
+      "input_schema": {
+        "type": "object",
+        "required": ["Name"],
+        "properties": {
+          "Code": { "type": "string" },
+          "Name": { "type": "string" },
+          "Description": { "type": "string" },
+          "PurchaseDescription": { "type": "string" },
+          "PurchaseDetails": {
+            "type": "object",
+            "properties": {
+              "UnitPrice": { "type": "number" },
+              "AccountCode": { "type": "string" }
+            }
+          },
+          "SalesDetails": {
+            "type": "object",
+            "properties": {
+              "UnitPrice": { "type": "number" },
+              "AccountCode": { "type": "string" }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ItemID": { "type": "string" },
+                "Code": { "type": "string" },
+                "Name": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update_item",
+      "label": "Modifier un article",
+      "type": "destination",
+      "method": "POST",
+      "path": "/Items/{itemId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["itemId"],
+        "properties": {
+          "itemId": { "type": "string" },
+          "Code": { "type": "string" },
+          "Name": { "type": "string" },
+          "Description": { "type": "string" },
+          "PurchaseDetails": { "type": "object" },
+          "SalesDetails": { "type": "object" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ItemID": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_accounts",
+      "label": "Récupérer le plan comptable",
+      "type": "source",
+      "method": "GET",
+      "path": "/Accounts",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Accounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "AccountID": { "type": "string" },
+                "Code": { "type": "string" },
+                "Name": { "type": "string" },
+                "Type": { "type": "string" },
+                "Status": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_tax_rates",
+      "label": "Récupérer les taux de taxe",
+      "type": "source",
+      "method": "GET",
+      "path": "/TaxRates",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "TaxRates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Name": { "type": "string" },
+                "Type": { "type": "string" },
+                "TaxComponents": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "Name": { "type": "string" },
+                      "Rate": { "type": "number" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_payments",
+      "label": "Récupérer les paiements",
+      "type": "source",
+      "method": "GET",
+      "path": "/Payments",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Payments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "PaymentID": { "type": "string" },
+                "Amount": { "type": "number" },
+                "Date": { "type": "string" },
+                "Reference": { "type": "string" },
+                "Invoice": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_payment",
+      "label": "Créer un paiement",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/Payments",
+      "input_schema": {
+        "type": "object",
+        "required": ["Invoice", "Account", "Amount"],
+        "properties": {
+          "Invoice": { "type": "object", "properties": { "InvoiceID": { "type": "string" } } },
+          "Account": { "type": "object", "properties": { "Code": { "type": "string" } } },
+          "Amount": { "type": "number" },
+          "Date": { "type": "string", "format": "date" },
+          "Reference": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Payments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "PaymentID": { "type": "string" },
+                "Amount": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_tracking_categories",
+      "label": "Récupérer les catégories de suivi",
+      "type": "source",
+      "method": "GET",
+      "path": "/TrackingCategories",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "TrackingCategories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "TrackingCategoryID": { "type": "string" },
+                "Name": { "type": "string" },
+                "Status": { "type": "string" },
+                "Options": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "TrackingOptionID": { "type": "string" },
+                      "Name": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_purchase_orders",
+      "label": "Récupérer les bons de commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/PurchaseOrders",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "PurchaseOrders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "PurchaseOrderID": { "type": "string" },
+                "PurchaseOrderNumber": { "type": "string" },
+                "Contact": { "type": "object" },
+                "Total": { "type": "number" },
+                "Status": { "type": "string" },
+                "Date": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_purchase_order",
+      "label": "Créer un bon de commande",
+      "type": "destination",
+      "method": "POST",
+      "path": "/PurchaseOrders",
+      "input_schema": {
+        "type": "object",
+        "required": ["Contact", "LineItems"],
+        "properties": {
+          "Contact": { "type": "object", "properties": { "ContactID": { "type": "string" } } },
+          "Date": { "type": "string", "format": "date" },
+          "DeliveryDate": { "type": "string", "format": "date" },
+          "LineItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Description": { "type": "string" },
+                "Quantity": { "type": "number" },
+                "UnitAmount": { "type": "number" },
+                "AccountCode": { "type": "string" },
+                "ItemCode": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "PurchaseOrders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "PurchaseOrderID": { "type": "string" },
+                "PurchaseOrderNumber": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

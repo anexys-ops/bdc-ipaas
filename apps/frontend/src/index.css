@@ -4,32 +4,50 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply text-slate-700 antialiased bg-slate-50/50;
   }
 }
 
 @layer components {
+  .glass {
+    @apply bg-white/80 backdrop-blur-sm border border-slate-200/60 shadow-sm rounded-2xl;
+  }
+  .glass-card {
+    @apply bg-white/90 backdrop-blur-sm border border-slate-200/80 shadow-sm rounded-2xl;
+  }
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300 hover:bg-white hover:shadow-md hover:border-primary-200/60;
+  }
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply px-4 py-2 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white;
   }
-  
   .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+    @apply btn bg-primary-500 text-white hover:bg-primary-400 focus:ring-primary-300 shadow-sm;
   }
-  
   .btn-secondary {
-    @apply btn bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500;
+    @apply btn bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 focus:ring-slate-300;
   }
-  
   .btn-outline {
-    @apply btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-primary-500;
+    @apply btn border-2 border-primary-200 bg-white/80 text-primary-700 hover:bg-primary-50 focus:ring-primary-300;
   }
-  
   .input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+    @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300 transition-all;
   }
-  
-  .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+  .page-bg {
+    min-height: 100vh;
+    background: linear-gradient(160deg, #f0f9ff 0%, #e0f2fe 25%, #fefce8 60%, #ede9fe 100%);
+  }
+  .page-bg-mesh {
+    min-height: 100vh;
+    background: linear-gradient(160deg, #f0f9ff 0%, #e0f2fe 20%, #f5f3ff 50%, #fefce8 80%, #f0fdf4 100%);
+  }
+}
+
+@layer utilities {
+  .shadow-glass {
+    box-shadow: 0 4px 20px -2px rgba(14, 165, 233, 0.08), 0 2px 8px -2px rgba(0, 0, 0, 0.04);
+  }
+  .shadow-glass-lg {
+    box-shadow: 0 8px 30px -4px rgba(14, 165, 233, 0.1), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
   }
 }

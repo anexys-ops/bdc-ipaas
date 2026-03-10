@@ -1,0 +1,50 @@
+{
+  "connector_meta": {
+    "id": "slack",
+    "name": "Slack",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/slack.com",
+    "category": "Messagerie",
+    "auth_type": "oauth2",
+    "docs_url": "https://api.slack.com/apis",
+    "config_instructions": "Slack : api.slack.com/apps → Create New App → OAuth & Permissions. Scopes : channels:read, users:read, chat:write, files:read. Installez l’app sur le workspace et récupérez le Bot User OAuth Token (xoxb-xxx). URL de base : https://slack.com/api"
+  },
+  "auth_config": {
+    "token_url": "https://slack.com/api/oauth.v2.access",
+    "scopes": ["channels:read", "users:read", "chat:write"]
+  },
+  "operations": [
+    {
+      "id": "list_users",
+      "label": "Récupérer les utilisateurs",
+      "type": "source",
+      "method": "GET",
+      "path": "/users.list",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "real_name": { "type": "string" },
+          "profile": { "type": "object", "properties": { "email": { "type": "string" } } }
+        }
+      }
+    },
+    {
+      "id": "post_message",
+      "label": "Envoyer un message",
+      "type": "destination",
+      "method": "POST",
+      "path": "/chat.postMessage",
+      "input_schema": {
+        "type": "object",
+        "required": ["channel", "text"],
+        "properties": {
+          "channel": { "type": "string" },
+          "text": { "type": "string" },
+          "thread_ts": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

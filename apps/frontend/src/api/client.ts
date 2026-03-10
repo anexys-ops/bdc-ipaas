@@ -28,17 +28,45 @@ class ApiClient {
     return headers;
   }
 
+  private async refreshAccessToken(): Promise<string | null> {
+    const res = await fetch(`${this.baseUrl}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    return data?.accessToken ?? null;
+  }
+
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const { skipAuth = false, ...fetchOptions } = options;
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...fetchOptions,
-      headers: {
-        ...this.getHeaders(skipAuth),
-        ...fetchOptions.headers,
-      },
-      credentials: 'include',
-    });
+    const doRequest = async (): Promise<Response> => {
+      return fetch(`${this.baseUrl}${endpoint}`, {
+        ...fetchOptions,
+        headers: {
+          ...this.getHeaders(skipAuth),
+          ...(fetchOptions.headers as HeadersInit),
+        },
+        credentials: 'include',
+      });
+    };
+
+    let response = await doRequest();
+
+    if (response.status === 401) {
+      const { isAuthenticated } = useAuthStore.getState();
+      if (isAuthenticated && !endpoint.includes('/auth/refresh')) {
+        const accessToken = await this.refreshAccessToken();
+        if (accessToken) {
+          useAuthStore.getState().setAccessToken(accessToken);
+          response = await doRequest();
+        } else {
+          useAuthStore.getState().logout();
+        }
+      }
+    }
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -46,7 +74,13 @@ class ApiClient {
       }
 
       const error = await response.json().catch(() => ({ message: 'Erreur inconnue' }));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      const message =
+        typeof error?.message === 'string'
+          ? error.message
+          : Array.isArray(error?.message)
+            ? error.message.join(', ')
+            : error?.message ?? `HTTP ${response.status}`;
+      throw new Error(message);
     }
 
     if (response.status === 204) {

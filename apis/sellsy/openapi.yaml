@@ -1,0 +1,613 @@
+openapi: 3.0.3
+info:
+  title: Sellsy API v2
+  description: |
+    API REST v2 de Sellsy (CRM, facturation, contacts, opportunités).
+    Authentification OAuth2 (Authorization Code avec PKCE ou Client Credentials selon le type d'application).
+    Base URL : https://api.sellsy.com/v2
+  version: "2.0"
+  contact:
+    name: Sellsy
+    url: https://www.sellsy.com
+  license:
+    name: Propriétaire
+    url: https://www.sellsy.com
+
+servers:
+  - url: https://api.sellsy.com/v2
+    description: API Sellsy v2
+
+tags:
+  - name: Documents
+    description: Devis, factures, achats (documents)
+  - name: Contacts
+    description: Contacts (clients, prospects, fournisseurs)
+  - name: Clients
+    description: Fiches clients
+  - name: Opportunités
+    description: Pipeline commercial
+  - name: Comptabilité
+    description: Comptes, journaux
+  - name: Catalogue
+    description: Catalogue, variations, catégories
+  - name: Account
+    description: Préférences compte, infos
+
+security:
+  - OAuth2: []
+
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://login.sellsy.com/oauth2/authorization
+          tokenUrl: https://login.sellsy.com/oauth2/access-tokens
+          scopes:
+            invoices.read: Lecture des factures
+            invoices.write: Écriture des factures
+            contacts.read: Lecture des contacts
+            contacts.write: Écriture des contacts
+            opportunities.read: Lecture des opportunités
+            opportunities.write: Écriture des opportunités
+            documents.read: Lecture des documents
+            documents.write: Écriture des documents
+        clientCredentials:
+          tokenUrl: https://login.sellsy.com/oauth2/access-tokens
+          scopes:
+            invoices.read: Lecture des factures
+            invoices.write: Écriture des factures
+            contacts.read: Lecture des contacts
+            contacts.write: Écriture des contacts
+      description: |
+        PKCE requis pour le flux Authorization Code.
+        Durée de vie du token : 3600 s ; utiliser le refresh token pour renouveler.
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        status:
+          type: integer
+
+    Contact:
+      type: object
+      properties:
+        id:
+          type: string
+        civility:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        company:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        zipCode:
+          type: string
+        country:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ContactCreate:
+      type: object
+      required:
+        - lastName
+        - email
+      properties:
+        civility:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        company:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        zipCode:
+          type: string
+        country:
+          type: string
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+        invoiceNumber:
+          type: string
+        status:
+          type: string
+          enum: [draft, sent, paid, cancelled]
+        amount:
+          type: number
+        currency:
+          type: string
+        dueDate:
+          type: string
+          format: date
+        clientId:
+          type: string
+        clientName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    InvoiceCreate:
+      type: object
+      required:
+        - clientId
+        - lines
+      properties:
+        clientId:
+          type: string
+        dueDate:
+          type: string
+          format: date
+        currency:
+          type: string
+          default: EUR
+        lines:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              quantity:
+                type: number
+              unitPrice:
+                type: number
+              vatRate:
+                type: number
+
+    DocumentListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        pagination:
+          type: object
+          properties:
+            after:
+              type: string
+            limit:
+              type: integer
+
+paths:
+  /contacts:
+    get:
+      tags: [Contacts]
+      summary: Liste des contacts
+      operationId: listContacts
+      parameters:
+        - name: after
+          in: query
+          description: Curseur de pagination (cursor-based)
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Liste des contacts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Contact'
+                  pagination:
+                    type: object
+        '401':
+          description: Non authentifié
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Accès refusé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags: [Contacts]
+      summary: Créer un contact
+      operationId: createContact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactCreate'
+      responses:
+        '201':
+          description: Contact créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '400':
+          description: Données invalides (lastName, email requis)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès refusé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /contacts/{id}:
+    get:
+      tags: [Contacts]
+      summary: Détail d'un contact
+      operationId: getContact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Détail du contact
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '404':
+          description: Contact non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      tags: [Contacts]
+      summary: Modifier un contact
+      operationId: updateContact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactCreate'
+      responses:
+        '200':
+          description: Contact mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '404':
+          description: Contact non trouvé
+        '400':
+          description: Données invalides
+
+  /invoices:
+    get:
+      tags: [Documents]
+      summary: Liste des factures
+      operationId: listInvoices
+      parameters:
+        - name: after
+          in: query
+          description: Curseur de pagination
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, sent, paid, cancelled]
+      responses:
+        '200':
+          description: Liste des factures
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invoice'
+                  pagination:
+                    type: object
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès refusé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags: [Documents]
+      summary: Créer une facture
+      operationId: createInvoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceCreate'
+      responses:
+        '201':
+          description: Facture créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '400':
+          description: Données invalides (clientId, lines requis)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès refusé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invoices/{id}:
+    get:
+      tags: [Documents]
+      summary: Détail d'une facture
+      operationId: getInvoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Détail de la facture
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '404':
+          description: Facture non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      tags: [Documents]
+      summary: Modifier une facture
+      operationId: updateInvoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceCreate'
+      responses:
+        '200':
+          description: Facture mise à jour
+        '404':
+          description: Facture non trouvée
+        '400':
+          description: Données invalides
+
+  /documents:
+    get:
+      tags: [Documents]
+      summary: Liste des documents (devis, factures, achats...)
+      operationId: listDocuments
+      parameters:
+        - name: after
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: type
+          in: query
+          description: Type de document
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListResponse'
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès refusé
+
+  /documents/{id}:
+    get:
+      tags: [Documents]
+      summary: Détail d'un document
+      operationId: getDocument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Détail du document
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Document non trouvé
+
+  /clients:
+    get:
+      tags: [Clients]
+      summary: Liste des clients
+      operationId: listClients
+      parameters:
+        - name: after
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste des clients
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  pagination:
+                    type: object
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès refusé
+
+  /clients/{id}:
+    get:
+      tags: [Clients]
+      summary: Détail d'un client
+      operationId: getClient
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Détail du client
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Client non trouvé
+
+  /opportunities:
+    get:
+      tags: [Opportunités]
+      summary: Liste des opportunités
+      operationId: listOpportunities
+      parameters:
+        - name: after
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste des opportunités
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  pagination:
+                    type: object
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès refusé
+
+  /opportunities/funnels:
+    get:
+      tags: [Opportunités]
+      summary: Liste des tunnels (funnels) d'opportunités
+      operationId: getFunnels
+      responses:
+        '200':
+          description: Liste des tunnels
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès refusé

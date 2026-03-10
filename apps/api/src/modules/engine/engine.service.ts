@@ -17,6 +17,8 @@ export interface ExecutionResult {
   recordsOut: number;
   recordsFailed: number;
   errorMessage?: string;
+  startedAt?: Date;
+  finishedAt?: Date | null;
 }
 
 /**
@@ -43,7 +45,7 @@ export class EngineService {
     if (redisUrl) {
       try {
         const url = new URL(redisUrl);
-        this.flowQueue = new Queue('flow-execution', {
+        this.flowQueue = new Queue('flow-executions', {
           connection: {
             host: url.hostname,
             port: parseInt(url.port) || 6379,
@@ -174,6 +176,8 @@ export class EngineService {
 
       for (const destination of flow.destinations) {
         try {
+          // destination.writeMode (CREATE | UPDATE) et destination.searchFields (pour UPDATE)
+          // seront utilisés ici : si UPDATE, rechercher par searchFields puis PATCH si trouvé, sinon créer ou ignorer (logs).
           if (!isDryRun) {
             recordsOut += recordsIn;
           }
@@ -277,6 +281,8 @@ export class EngineService {
       recordsOut: execution.recordsOut,
       recordsFailed: execution.recordsFailed,
       errorMessage: execution.errorMessage || undefined,
+      startedAt: execution.startedAt,
+      finishedAt: execution.finishedAt ?? undefined,
     };
   }
 
@@ -302,6 +308,31 @@ export class EngineService {
   }
 
   /**
+   * Récupère le statut des queues BullMQ (active, waiting, failed, completed).
+   */
+  async getQueueStats(): Promise<{
+    flowExecutions: { active: number; waiting: number; failed: number; completed: number } | null;
+  }> {
+    if (!this.flowQueue) {
+      return { flowExecutions: null };
+    }
+    try {
+      const counts = await this.flowQueue.getJobCounts();
+      return {
+        flowExecutions: {
+          active: counts.active ?? 0,
+          waiting: counts.waiting ?? 0,
+          failed: counts.failed ?? 0,
+          completed: counts.completed ?? 0,
+        },
+      };
+    } catch (error) {
+      this.logger.warn(`Impossible de récupérer les stats des queues: ${error}`);
+      return { flowExecutions: null };
+    }
+  }
+
+  /**
    * Récupère l'historique des exécutions d'un flux.
    */
   async getFlowExecutions(
@@ -324,6 +355,8 @@ export class EngineService {
       recordsOut: e.recordsOut,
       recordsFailed: e.recordsFailed,
       errorMessage: e.errorMessage || undefined,
+      startedAt: e.startedAt,
+      finishedAt: e.finishedAt ?? undefined,
     }));
   }
 }

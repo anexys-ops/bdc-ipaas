@@ -1,0 +1,644 @@
+{
+  "connector_meta": {
+    "id": "salesforce",
+    "name": "Salesforce",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/salesforce.com",
+    "category": "CRM / Ventes",
+    "auth_type": "oauth2",
+    "docs_url": "https://developer.salesforce.com/docs/apis",
+    "config_instructions": "1) Salesforce : Setup (Paramètres) → Apps → App Manager → New Connected App. 2) Cochez « Enable OAuth Settings », définissez la Callback URL et les scopes (api, refresh_token). 3) Récupérez Consumer Key (Client ID) et Consumer Secret. 4) Après autorisation, utilisez access_token et refresh_token. URL de base : https://votre-instance.salesforce.com/services/data/v59.0. Doc : https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/"
+  },
+  "auth_config": {
+    "token_url": "https://login.salesforce.com/services/oauth2/token",
+    "scopes": ["api", "refresh_token"]
+  },
+  "operations": [
+    {
+      "id": "list_accounts",
+      "label": "Récupérer les comptes",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Account",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "Name": { "type": "string" },
+          "Industry": { "type": "string" },
+          "Phone": { "type": "string" },
+          "BillingCity": { "type": "string" },
+          "BillingStreet": { "type": "string" },
+          "BillingCountry": { "type": "string" },
+          "CreatedDate": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_account",
+      "label": "Obtenir un compte",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Account/{accountId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["accountId"],
+        "properties": {
+          "accountId": { "type": "string", "description": "ID du compte Salesforce" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "Name": { "type": "string" },
+          "Industry": { "type": "string" },
+          "Phone": { "type": "string" },
+          "BillingCity": { "type": "string" },
+          "BillingStreet": { "type": "string" },
+          "BillingCountry": { "type": "string" },
+          "CreatedDate": { "type": "string" },
+          "LastModifiedDate": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_account",
+      "label": "Créer un compte",
+      "type": "destination",
+      "method": "POST",
+      "path": "/sobjects/Account",
+      "input_schema": {
+        "type": "object",
+        "required": ["Name"],
+        "properties": {
+          "Name": { "type": "string" },
+          "Industry": { "type": "string" },
+          "Phone": { "type": "string" },
+          "BillingCity": { "type": "string" },
+          "BillingStreet": { "type": "string" },
+          "BillingCountry": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "success": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "update_account",
+      "label": "Modifier un compte",
+      "type": "destination",
+      "method": "PATCH",
+      "path": "/sobjects/Account/{accountId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["accountId"],
+        "properties": {
+          "accountId": { "type": "string" },
+          "Name": { "type": "string" },
+          "Industry": { "type": "string" },
+          "Phone": { "type": "string" },
+          "BillingCity": { "type": "string" },
+          "BillingStreet": { "type": "string" },
+          "BillingCountry": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "delete_account",
+      "label": "Supprimer un compte",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/sobjects/Account/{accountId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["accountId"],
+        "properties": {
+          "accountId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_contacts",
+      "label": "Récupérer les contacts",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Contact",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "FirstName": { "type": "string" },
+          "LastName": { "type": "string" },
+          "Email": { "type": "string" },
+          "Phone": { "type": "string" },
+          "AccountId": { "type": "string" },
+          "CreatedDate": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_contact",
+      "label": "Obtenir un contact",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Contact/{contactId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["contactId"],
+        "properties": {
+          "contactId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "FirstName": { "type": "string" },
+          "LastName": { "type": "string" },
+          "Email": { "type": "string" },
+          "Phone": { "type": "string" },
+          "AccountId": { "type": "string" },
+          "CreatedDate": { "type": "string" },
+          "LastModifiedDate": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_contact",
+      "label": "Créer un contact",
+      "type": "destination",
+      "method": "POST",
+      "path": "/sobjects/Contact",
+      "input_schema": {
+        "type": "object",
+        "required": ["LastName"],
+        "properties": {
+          "FirstName": { "type": "string" },
+          "LastName": { "type": "string" },
+          "Email": { "type": "string" },
+          "Phone": { "type": "string" },
+          "AccountId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "success": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "update_contact",
+      "label": "Modifier un contact",
+      "type": "destination",
+      "method": "PATCH",
+      "path": "/sobjects/Contact/{contactId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["contactId"],
+        "properties": {
+          "contactId": { "type": "string" },
+          "FirstName": { "type": "string" },
+          "LastName": { "type": "string" },
+          "Email": { "type": "string" },
+          "Phone": { "type": "string" },
+          "AccountId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "delete_contact",
+      "label": "Supprimer un contact",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/sobjects/Contact/{contactId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["contactId"],
+        "properties": {
+          "contactId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "search_contacts",
+      "label": "Rechercher des contacts (SOQL)",
+      "type": "source",
+      "method": "GET",
+      "path": "/query",
+      "input_schema": {
+        "type": "object",
+        "required": ["q"],
+        "properties": {
+          "q": { "type": "string", "description": "Requête SOQL (ex: SELECT Id, Name, Email FROM Contact WHERE ...)" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "totalSize": { "type": "integer" },
+          "done": { "type": "boolean" },
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "attributes": { "type": "object" },
+                "Id": { "type": "string" },
+                "Name": { "type": "string" },
+                "Email": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_opportunities",
+      "label": "Récupérer les opportunités",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Opportunity",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "Name": { "type": "string" },
+          "Amount": { "type": "number" },
+          "StageName": { "type": "string" },
+          "CloseDate": { "type": "string", "format": "date" },
+          "AccountId": { "type": "string" },
+          "CreatedDate": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_opportunity",
+      "label": "Obtenir une opportunité",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Opportunity/{opportunityId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["opportunityId"],
+        "properties": {
+          "opportunityId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "Name": { "type": "string" },
+          "Amount": { "type": "number" },
+          "StageName": { "type": "string" },
+          "CloseDate": { "type": "string" },
+          "AccountId": { "type": "string" },
+          "CreatedDate": { "type": "string" },
+          "LastModifiedDate": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_opportunity",
+      "label": "Créer une opportunité",
+      "type": "destination",
+      "method": "POST",
+      "path": "/sobjects/Opportunity",
+      "input_schema": {
+        "type": "object",
+        "required": ["Name", "CloseDate", "StageName"],
+        "properties": {
+          "Name": { "type": "string" },
+          "Amount": { "type": "number" },
+          "StageName": { "type": "string" },
+          "CloseDate": { "type": "string", "format": "date" },
+          "AccountId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "success": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "update_opportunity",
+      "label": "Modifier une opportunité",
+      "type": "destination",
+      "method": "PATCH",
+      "path": "/sobjects/Opportunity/{opportunityId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["opportunityId"],
+        "properties": {
+          "opportunityId": { "type": "string" },
+          "Name": { "type": "string" },
+          "Amount": { "type": "number" },
+          "StageName": { "type": "string" },
+          "CloseDate": { "type": "string", "format": "date" },
+          "AccountId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_products",
+      "label": "Récupérer les produits (PricebookEntry)",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/PricebookEntry",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "Name": { "type": "string" },
+          "Product2Id": { "type": "string" },
+          "Pricebook2Id": { "type": "string" },
+          "UnitPrice": { "type": "number" },
+          "IsActive": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "get_product",
+      "label": "Obtenir un produit (PricebookEntry)",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/PricebookEntry/{productId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["productId"],
+        "properties": {
+          "productId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "Name": { "type": "string" },
+          "Product2Id": { "type": "string" },
+          "Pricebook2Id": { "type": "string" },
+          "UnitPrice": { "type": "number" },
+          "IsActive": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "create_product",
+      "label": "Créer un produit (PricebookEntry)",
+      "type": "destination",
+      "method": "POST",
+      "path": "/sobjects/PricebookEntry",
+      "input_schema": {
+        "type": "object",
+        "required": ["Pricebook2Id", "Product2Id", "UnitPrice"],
+        "properties": {
+          "Pricebook2Id": { "type": "string" },
+          "Product2Id": { "type": "string" },
+          "UnitPrice": { "type": "number" },
+          "IsActive": { "type": "boolean", "default": true }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "success": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "list_orders",
+      "label": "Récupérer les commandes",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Order",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "OrderNumber": { "type": "string" },
+          "AccountId": { "type": "string" },
+          "Status": { "type": "string" },
+          "TotalAmount": { "type": "number" },
+          "EffectiveDate": { "type": "string", "format": "date" },
+          "CreatedDate": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_order",
+      "label": "Obtenir une commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Order/{orderId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["orderId"],
+        "properties": {
+          "orderId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "OrderNumber": { "type": "string" },
+          "AccountId": { "type": "string" },
+          "Status": { "type": "string" },
+          "TotalAmount": { "type": "number" },
+          "EffectiveDate": { "type": "string" },
+          "CreatedDate": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_order",
+      "label": "Créer une commande",
+      "type": "destination",
+      "method": "POST",
+      "path": "/sobjects/Order",
+      "input_schema": {
+        "type": "object",
+        "required": ["AccountId", "EffectiveDate", "Status"],
+        "properties": {
+          "AccountId": { "type": "string" },
+          "EffectiveDate": { "type": "string", "format": "date" },
+          "Status": { "type": "string", "enum": ["Draft", "Activated"] },
+          "TotalAmount": { "type": "number" },
+          "Pricebook2Id": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "success": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "list_quotes",
+      "label": "Récupérer les devis",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Quote",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "Name": { "type": "string" },
+          "OpportunityId": { "type": "string" },
+          "Status": { "type": "string" },
+          "TotalPrice": { "type": "number" },
+          "ExpirationDate": { "type": "string", "format": "date" },
+          "CreatedDate": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_quote",
+      "label": "Créer un devis",
+      "type": "destination",
+      "method": "POST",
+      "path": "/sobjects/Quote",
+      "input_schema": {
+        "type": "object",
+        "required": ["Name", "OpportunityId"],
+        "properties": {
+          "Name": { "type": "string" },
+          "OpportunityId": { "type": "string" },
+          "Status": { "type": "string", "enum": ["Draft", "Active", "Accepted", "Syncing"] },
+          "ExpirationDate": { "type": "string", "format": "date" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "success": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "list_invoices",
+      "label": "Récupérer les factures",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Invoice",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "Name": { "type": "string" },
+          "AccountId": { "type": "string" },
+          "Status": { "type": "string" },
+          "TotalAmount": { "type": "number" },
+          "InvoiceDate": { "type": "string", "format": "date" },
+          "DueDate": { "type": "string", "format": "date" },
+          "CreatedDate": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_invoice",
+      "label": "Créer une facture",
+      "type": "destination",
+      "method": "POST",
+      "path": "/sobjects/Invoice",
+      "input_schema": {
+        "type": "object",
+        "required": ["AccountId", "Status"],
+        "properties": {
+          "AccountId": { "type": "string" },
+          "Status": { "type": "string", "enum": ["Draft", "Posted"] },
+          "InvoiceDate": { "type": "string", "format": "date" },
+          "DueDate": { "type": "string", "format": "date" },
+          "TotalAmount": { "type": "number" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "success": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "list_tax_rates",
+      "label": "Récupérer les taux de taxe (objet Tax personnalisé)",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Tax__c",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "Name": { "type": "string" },
+          "Rate__c": { "type": "number" },
+          "CreatedDate": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_pricelists",
+      "label": "Récupérer les grilles tarifaires (Pricebook2)",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Pricebook2",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "Name": { "type": "string" },
+          "IsActive": { "type": "boolean" },
+          "Description": { "type": "string" },
+          "CreatedDate": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_pricelist",
+      "label": "Obtenir une grille tarifaire",
+      "type": "source",
+      "method": "GET",
+      "path": "/sobjects/Pricebook2/{pricebookId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["pricebookId"],
+        "properties": {
+          "pricebookId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "Id": { "type": "string" },
+          "Name": { "type": "string" },
+          "IsActive": { "type": "boolean" },
+          "Description": { "type": "string" },
+          "CreatedDate": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

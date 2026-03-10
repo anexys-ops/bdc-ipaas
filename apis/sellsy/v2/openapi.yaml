@@ -1,0 +1,1115 @@
+# Sellsy API v2 — REST
+# Référence officielle : https://docs.sellsy.com/api/v2/
+# Changelog : https://docs.sellsy.com/api/v2/changelog.html
+openapi: 3.0.3
+info:
+  title: Sellsy API v2
+  description: |
+    API REST v2 de Sellsy. Référence complète : [docs.sellsy.com/api/v2](https://docs.sellsy.com/api/v2/).
+    Authentification OAuth2 (Authorization Code + PKCE ou Client Credentials).
+    Ressources : Companies, Individuals, Contacts, Documents (estimates, invoices, orders, deliveries, credit-notes, proposals), Items, Units, Taxes, Webhooks, etc.
+  version: "2.0"
+  contact:
+    name: Sellsy
+    url: https://www.sellsy.com
+  license:
+    name: Propriétaire
+    url: https://www.sellsy.com
+
+servers:
+  - url: https://api.sellsy.com/v2
+    description: API Sellsy v2
+
+tags:
+  - name: Companies
+    description: Sociétés (clients / prospects)
+  - name: Individuals
+    description: Particuliers
+  - name: Contacts
+    description: Contacts (liés aux sociétés ou particuliers)
+  - name: Estimates
+    description: Devis
+  - name: Invoices
+    description: Factures
+  - name: Orders
+    description: Commandes
+  - name: Deliveries
+    description: Bons de livraison
+  - name: Credit-notes
+    description: Avoirs
+  - name: Proposals
+    description: Modèles et documents de proposition
+  - name: Items
+    description: Catalogue (produits / services)
+  - name: Units
+    description: Unités
+  - name: Taxes
+    description: Taxes / TVA
+  - name: Opportunities
+    description: Opportunités
+  - name: Webhooks
+    description: Webhooks
+  - name: Search
+    description: Recherche globale
+  - name: Account
+    description: Compte, adresses, paramètres
+
+security:
+  - OAuth2: []
+
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://login.sellsy.com/oauth2/authorization
+          tokenUrl: https://login.sellsy.com/oauth2/access-tokens
+          scopes:
+            invoices.read: Lecture des factures
+            invoices.write: Écriture des factures
+            contacts.read: Lecture des contacts
+            contacts.write: Écriture des contacts
+            opportunities.read: Lecture des opportunités
+            opportunities.write: Écriture des opportunités
+            documents.read: Lecture des documents
+            documents.write: Écriture des documents
+        clientCredentials:
+          tokenUrl: https://login.sellsy.com/oauth2/access-tokens
+          scopes: {}
+      description: PKCE requis pour Authorization Code. Token 3600 s.
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        message: { type: string }
+        status: { type: integer }
+
+    Pagination:
+      type: object
+      properties:
+        after: { type: string, description: Curseur pagination }
+        limit: { type: integer }
+
+paths:
+  # ---- Companies (sociétés = clients / prospects) ----
+  /companies:
+    get:
+      tags: [Companies]
+      summary: Liste des sociétés
+      operationId: listCompanies
+      parameters:
+        - name: after
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Liste paginée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { type: object }
+                  pagination: { type: object }
+        '401': { description: Non authentifié }
+        '403': { description: Accès refusé }
+    post:
+      tags: [Companies]
+      summary: Créer une société
+      operationId: createCompany
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                reference: { type: string }
+                type: { type: string }
+      responses:
+        '201': { description: Société créée }
+        '400': { description: Données invalides }
+        '401': { description: Non authentifié }
+
+  /companies/search:
+    post:
+      tags: [Companies]
+      summary: Rechercher des sociétés
+      operationId: searchCompanies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reference: { type: string }
+                archived: { type: boolean }
+      responses:
+        '200': { description: Résultats }
+        '401': { description: Non authentifié }
+
+  /companies/{id}:
+    get:
+      tags: [Companies]
+      summary: Détail d'une société
+      operationId: getCompany
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail société }
+        '404': { description: Non trouvé }
+    put:
+      tags: [Companies]
+      summary: Modifier une société
+      operationId: updateCompany
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvé }
+    delete:
+      tags: [Companies]
+      summary: Supprimer une société
+      operationId: deleteCompany
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Supprimé }
+        '404': { description: Non trouvé }
+
+  /companies/{id}/convert:
+    post:
+      tags: [Companies]
+      summary: Convertir un prospect en client
+      operationId: convertCompany
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvé }
+
+  # ---- Individuals ----
+  /individuals:
+    get:
+      tags: [Individuals]
+      summary: Liste des particuliers
+      operationId: listIndividuals
+      parameters:
+        - name: after
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200': { description: Liste paginée }
+        '401': { description: Non authentifié }
+    post:
+      tags: [Individuals]
+      summary: Créer un particulier
+      operationId: createIndividual
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201': { description: Créé }
+        '401': { description: Non authentifié }
+
+  /individuals/search:
+    post:
+      tags: [Individuals]
+      summary: Rechercher des particuliers
+      operationId: searchIndividuals
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: Résultats }
+        '401': { description: Non authentifié }
+
+  /individuals/{id}:
+    get:
+      tags: [Individuals]
+      summary: Détail d'un particulier
+      operationId: getIndividual
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvé }
+    put:
+      tags: [Individuals]
+      summary: Modifier un particulier
+      operationId: updateIndividual
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvé }
+
+  /individuals/{id}/convert:
+    post:
+      tags: [Individuals]
+      summary: Convertir prospect en client
+      operationId: convertIndividual
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvé }
+
+  # ---- Contacts ----
+  /contacts:
+    get:
+      tags: [Contacts]
+      summary: Liste des contacts
+      operationId: listContacts
+      parameters:
+        - name: after
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200': { description: Liste paginée }
+        '401': { description: Non authentifié }
+    post:
+      tags: [Contacts]
+      summary: Créer un contact
+      operationId: createContact
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201': { description: Créé }
+        '401': { description: Non authentifié }
+
+  /contacts/{id}:
+    get:
+      tags: [Contacts]
+      summary: Détail d'un contact
+      operationId: getContact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvé }
+    patch:
+      tags: [Contacts]
+      summary: Modifier un contact
+      operationId: updateContact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvé }
+
+  # ---- Estimates (devis) ----
+  /estimates:
+    get:
+      tags: [Estimates]
+      summary: Liste des devis
+      operationId: listEstimates
+      parameters:
+        - name: after
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200': { description: Liste paginée }
+        '401': { description: Non authentifié }
+    post:
+      tags: [Estimates]
+      summary: Créer un devis
+      operationId: createEstimate
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201': { description: Créé }
+        '400': { description: Données invalides }
+        '401': { description: Non authentifié }
+
+  /estimates/search:
+    post:
+      tags: [Estimates]
+      summary: Rechercher des devis
+      operationId: searchEstimates
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: Résultats }
+        '401': { description: Non authentifié }
+
+  /estimates/{id}:
+    get:
+      tags: [Estimates]
+      summary: Détail d'un devis
+      operationId: getEstimate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvé }
+    put:
+      tags: [Estimates]
+      summary: Modifier un devis
+      operationId: updateEstimate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvé }
+
+  # ---- Invoices (factures) ----
+  /invoices:
+    get:
+      tags: [Invoices]
+      summary: Liste des factures
+      operationId: listInvoices
+      parameters:
+        - name: after
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200': { description: Liste paginée }
+        '401': { description: Non authentifié }
+    post:
+      tags: [Invoices]
+      summary: Créer une facture
+      operationId: createInvoice
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201': { description: Créée }
+        '400': { description: Données invalides }
+        '401': { description: Non authentifié }
+
+  /invoices/search:
+    post:
+      tags: [Invoices]
+      summary: Rechercher des factures
+      operationId: searchInvoices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_progress_invoice: { type: boolean }
+      responses:
+        '200': { description: Résultats }
+        '401': { description: Non authentifié }
+
+  /invoices/{id}:
+    get:
+      tags: [Invoices]
+      summary: Détail d'une facture
+      operationId: getInvoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvée }
+    put:
+      tags: [Invoices]
+      summary: Modifier une facture
+      operationId: updateInvoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvée }
+
+  # ---- Orders (commandes) ----
+  /orders:
+    get:
+      tags: [Orders]
+      summary: Liste des commandes
+      operationId: listOrders
+      parameters:
+        - name: after
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200': { description: Liste paginée }
+        '401': { description: Non authentifié }
+    post:
+      tags: [Orders]
+      summary: Créer une commande
+      operationId: createOrder
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201': { description: Créée }
+        '401': { description: Non authentifié }
+
+  /orders/search:
+    post:
+      tags: [Orders]
+      summary: Rechercher des commandes
+      operationId: searchOrders
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: Résultats }
+        '401': { description: Non authentifié }
+
+  /orders/{id}:
+    get:
+      tags: [Orders]
+      summary: Détail d'une commande
+      operationId: getOrder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvée }
+    put:
+      tags: [Orders]
+      summary: Modifier une commande
+      operationId: updateOrder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvée }
+
+  # ---- Deliveries (livraisons) ----
+  /deliveries:
+    get:
+      tags: [Deliveries]
+      summary: Liste des livraisons
+      operationId: listDeliveries
+      parameters:
+        - name: after
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200': { description: Liste paginée }
+        '401': { description: Non authentifié }
+
+  /deliveries/search:
+    post:
+      tags: [Deliveries]
+      summary: Rechercher des livraisons
+      operationId: searchDeliveries
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: Résultats }
+        '401': { description: Non authentifié }
+
+  /deliveries/{id}:
+    get:
+      tags: [Deliveries]
+      summary: Détail d'une livraison
+      operationId: getDelivery
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvée }
+
+  # ---- Credit-notes (avoirs) ----
+  /credit-notes:
+    get:
+      tags: [Credit-notes]
+      summary: Liste des avoirs
+      operationId: listCreditNotes
+      parameters:
+        - name: after
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200': { description: Liste paginée }
+        '401': { description: Non authentifié }
+    post:
+      tags: [Credit-notes]
+      summary: Créer un avoir
+      operationId: createCreditNote
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201': { description: Créé }
+        '401': { description: Non authentifié }
+
+  /credit-notes/{id}:
+    get:
+      tags: [Credit-notes]
+      summary: Détail d'un avoir
+      operationId: getCreditNote
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvé }
+
+  # ---- Proposals ----
+  /proposals/models:
+    get:
+      tags: [Proposals]
+      summary: Liste des modèles de proposition
+      operationId: listProposalModels
+      responses:
+        '200': { description: Liste }
+        '401': { description: Non authentifié }
+
+  /proposals/models/search:
+    post:
+      tags: [Proposals]
+      summary: Rechercher des modèles de proposition
+      operationId: searchProposalModels
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: Résultats }
+        '401': { description: Non authentifié }
+
+  /proposals/models/{id}:
+    get:
+      tags: [Proposals]
+      summary: Détail d'un modèle de proposition
+      operationId: getProposalModel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvé }
+
+  /proposals/models/{id}/generate-document:
+    post:
+      tags: [Proposals]
+      summary: Générer un document à partir d'un modèle
+      operationId: generateProposalDocument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201': { description: Document créé }
+        '401': { description: Non authentifié }
+
+  /proposals/documents/{id}:
+    get:
+      tags: [Proposals]
+      summary: Détail d'un document de proposition
+      operationId: getProposalDocument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvé }
+
+  # ---- Items (catalogue) ----
+  /items:
+    get:
+      tags: [Items]
+      summary: Liste des produits / services
+      operationId: listItems
+      parameters:
+        - name: after
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200': { description: Liste paginée }
+        '401': { description: Non authentifié }
+    post:
+      tags: [Items]
+      summary: Créer un produit / service
+      operationId: createItem
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201': { description: Créé }
+        '401': { description: Non authentifié }
+
+  /items/search:
+    post:
+      tags: [Items]
+      summary: Rechercher des produits (nom, référence, archivé)
+      operationId: searchItems
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                reference: { type: string }
+                archived: { type: boolean }
+      responses:
+        '200': { description: Résultats }
+        '401': { description: Non authentifié }
+
+  /items/{id}:
+    get:
+      tags: [Items]
+      summary: Détail d'un produit / service
+      operationId: getItem
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvé }
+    put:
+      tags: [Items]
+      summary: Modifier un produit / service
+      operationId: updateItem
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvé }
+
+  /items/{id}/declinations:
+    get:
+      tags: [Items]
+      summary: Liste des déclinaisons d'un produit
+      operationId: listItemDeclinations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Liste déclinaisons }
+        '404': { description: Non trouvé }
+    post:
+      tags: [Items]
+      summary: Rechercher / filtrer déclinaisons
+      operationId: searchItemDeclinations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: Résultats }
+        '404': { description: Non trouvé }
+
+  # ---- Units ----
+  /units:
+    get:
+      tags: [Units]
+      summary: Liste des unités
+      operationId: listUnits
+      parameters:
+        - name: after
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200': { description: Liste paginée }
+        '401': { description: Non authentifié }
+    post:
+      tags: [Units]
+      summary: Créer une unité
+      operationId: createUnit
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201': { description: Créée }
+        '401': { description: Non authentifié }
+
+  /units/{id}:
+    get:
+      tags: [Units]
+      summary: Détail d'une unité
+      operationId: getUnit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvée }
+    put:
+      tags: [Units]
+      summary: Modifier une unité
+      operationId: updateUnit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvée }
+
+  # ---- Taxes ----
+  /taxes:
+    get:
+      tags: [Taxes]
+      summary: Liste des taxes
+      operationId: listTaxes
+      parameters:
+        - name: after
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200': { description: Liste paginée }
+        '401': { description: Non authentifié }
+    post:
+      tags: [Taxes]
+      summary: Créer une taxe
+      operationId: createTax
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_active: { type: boolean }
+      responses:
+        '201': { description: Créée }
+        '401': { description: Non authentifié }
+
+  /taxes/{id}:
+    get:
+      tags: [Taxes]
+      summary: Détail d'une taxe
+      operationId: getTax
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvée }
+    put:
+      tags: [Taxes]
+      summary: Modifier une taxe
+      operationId: updateTax
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvée }
+
+  # ---- Opportunities ----
+  /opportunities:
+    get:
+      tags: [Opportunities]
+      summary: Liste des opportunités
+      operationId: listOpportunities
+      parameters:
+        - name: after
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200': { description: Liste paginée }
+        '401': { description: Non authentifié }
+
+  /opportunities/{id}:
+    get:
+      tags: [Opportunities]
+      summary: Détail d'une opportunité
+      operationId: getOpportunity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvée }
+    patch:
+      tags: [Opportunities]
+      summary: Mise à jour partielle d'une opportunité
+      operationId: patchOpportunity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvée }
+
+  # ---- Webhooks ----
+  /webhooks:
+    get:
+      tags: [Webhooks]
+      summary: Liste des webhooks
+      operationId: listWebhooks
+      responses:
+        '200': { description: Liste }
+        '401': { description: Non authentifié }
+    post:
+      tags: [Webhooks]
+      summary: Créer un webhook
+      operationId: createWebhook
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201': { description: Créé }
+        '401': { description: Non authentifié }
+
+  /webhooks/{id}:
+    get:
+      tags: [Webhooks]
+      summary: Détail d'un webhook
+      operationId: getWebhook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Détail }
+        '404': { description: Non trouvé }
+    put:
+      tags: [Webhooks]
+      summary: Modifier un webhook
+      operationId: updateWebhook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+        '404': { description: Non trouvé }
+    delete:
+      tags: [Webhooks]
+      summary: Supprimer un webhook
+      operationId: deleteWebhook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Supprimé }
+        '404': { description: Non trouvé }
+
+  # ---- Search ----
+  /search:
+    post:
+      tags: [Search]
+      summary: Recherche globale (filtre archived, etc.)
+      operationId: search
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: Résultats }
+        '401': { description: Non authentifié }
+
+  # ---- Account / paramètres ----
+  /account/addresses:
+    get:
+      tags: [Account]
+      summary: Adresses du compte
+      operationId: getAccountAddresses
+      responses:
+        '200': { description: Liste des adresses }
+        '401': { description: Non authentifié }
+
+  /bank-accounts:
+    get:
+      tags: [Account]
+      summary: Liste des comptes bancaires
+      operationId: listBankAccounts
+      responses:
+        '200': { description: Liste }
+        '401': { description: Non authentifié }
+
+  /payment-terms:
+    get:
+      tags: [Account]
+      summary: Délais de paiement
+      operationId: getPaymentTerms
+      responses:
+        '200': { description: Liste }
+        '401': { description: Non authentifié }
+
+  /settings/email:
+    get:
+      tags: [Account]
+      summary: Paramètres email
+      operationId: getEmailSettings
+      responses:
+        '200': { description: Paramètres }
+        '401': { description: Non authentifié }

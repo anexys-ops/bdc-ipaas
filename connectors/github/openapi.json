@@ -1,0 +1,71 @@
+{
+  "connector_meta": {
+    "id": "github",
+    "name": "GitHub",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/github.com",
+    "category": "Développement",
+    "auth_type": "oauth2",
+    "docs_url": "https://docs.github.com/en/rest",
+    "config_instructions": "1) OAuth : https://github.com/settings/developers → OAuth Apps → New. Saisissez l’URL de callback et les scopes (repo, read:user). Récupérez Client ID et Secret. 2) Personal Access Token (alternative) : Settings → Developer settings → Personal access tokens → Generate. Scopes : repo, read:org. 3) URL de base : https://api.github.com. En-tête : Authorization: Bearer <token>. Doc : https://docs.github.com/en/rest/overview/authenticating-to-the-rest-api"
+  },
+  "auth_config": {
+    "token_url": "https://github.com/login/oauth/access_token",
+    "scopes": ["repo", "read:user"]
+  },
+  "operations": [
+    {
+      "id": "list_repositories",
+      "label": "Récupérer les dépôts",
+      "type": "source",
+      "method": "GET",
+      "path": "/user/repos",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "full_name": { "type": "string" },
+          "private": { "type": "boolean" },
+          "html_url": { "type": "string" },
+          "created_at": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_issues",
+      "label": "Récupérer les issues",
+      "type": "source",
+      "method": "GET",
+      "path": "/repos/{owner}/{repo}/issues",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "number": { "type": "number" },
+          "title": { "type": "string" },
+          "state": { "type": "string" },
+          "user": { "type": "object" },
+          "created_at": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_issue",
+      "label": "Créer une issue",
+      "type": "destination",
+      "method": "POST",
+      "path": "/repos/{owner}/{repo}/issues",
+      "input_schema": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string" },
+          "body": { "type": "string" },
+          "labels": { "type": "array" },
+          "assignees": { "type": "array" }
+        }
+      }
+    }
+  ]
+}

@@ -61,24 +61,41 @@ model FlowVersion {
   createdAt DateTime @default(now())
 }
 
+enum DestinationWriteMode {
+  CREATE   // Toujours créer un nouvel enregistrement
+  UPDATE   // Chercher par searchFields puis PATCH si trouvé, sinon créer ou ignorer (selon config)
+}
+
 model FlowDestination {
-  id          String    @id @default(uuid())
-  flowId      String
-  flow        Flow      @relation(fields: [flowId], references: [id])
-  connectorId String
-  connector   Connector @relation(fields: [connectorId], references: [id])
+  id           String                @id @default(uuid())
+  flowId       String
+  flow         Flow                  @relation(fields: [flowId], references: [id])
+  connectorId  String
+  connector    Connector             @relation(fields: [connectorId], references: [id])
   mappingId   String?
-  mapping     Mapping?  @relation(fields: [mappingId], references: [id])
-  orderIndex  Int       @default(0)
-  isActive    Boolean   @default(true)
+  mapping      Mapping?              @relation(fields: [mappingId], references: [id])
+  orderIndex   Int                   @default(0)
+  isActive     Boolean               @default(true)
+  writeMode    DestinationWriteMode  @default(CREATE)
+  searchFields Json?                 // Champs pour rechercher un enregistrement existant (mode UPDATE), ex: ["email", "externalId"]
 }
 
 model Mapping {
   id                String            @id @default(uuid())
   name              String
+  description       String?
   sourceSchema      Json
   destinationSchema Json
   rules             Json
+  writeMode         String            @default("CREATE") // CREATE | UPDATE | UPSERT | SKIP
+  matchField        String?           // Champ pour identifier un doublon (ex: email)
+  filterConfig      Json?             // Filtre historique: { field, since, until }
+  dryRunPassed      Boolean           @default(false)
+  isProduction      Boolean           @default(false)
+  sourceConnectorId      String?
+  sourceOperationId      String?
+  destinationConnectorId String?
+  destinationOperationId String?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   destinations      FlowDestination[]
@@ -145,4 +162,19 @@ model AgentToken {
   isActive   Boolean   @default(true)
   lastSeenAt DateTime?
   createdAt  DateTime  @default(now())
+}
+
+model EdifactMessage {
+  id           String    @id @default(uuid())
+  type         String // ORDERS, INVOIC, DESADV, etc.
+  direction    String // INBOUND / OUTBOUND
+  sender       String
+  receiver     String
+  rawContent   String
+  parsedData   Json?
+  reference    String?
+  receivedAt   DateTime  @default(now())
+  processedAt  DateTime?
+  status       String    @default("RECEIVED") // RECEIVED, PROCESSED, ERROR
+  errorMessage String?
 }

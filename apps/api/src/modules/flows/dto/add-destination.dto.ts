@@ -1,6 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsOptional, IsNumber, IsObject, IsArray, ValidateNested } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsUUID, IsOptional, IsNumber, IsObject, IsArray, ValidateNested, IsEnum, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export type DestinationWriteMode = 'CREATE' | 'UPDATE';
 
 export class MappingRuleDto {
   @ApiProperty({ description: 'Champ destination' })
@@ -51,4 +53,15 @@ export class AddDestinationDto {
   @IsOptional()
   @IsObject()
   mappingConfig?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ enum: ['CREATE', 'UPDATE'], description: 'CREATE = toujours créer ; UPDATE = chercher par searchFields puis PATCH si trouvé' })
+  @IsOptional()
+  @IsEnum(['CREATE', 'UPDATE'])
+  writeMode?: DestinationWriteMode;
+
+  @ApiPropertyOptional({ description: 'Champs pour rechercher un enregistrement existant (mode UPDATE). Ex: ["email", "externalId"]', type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  searchFields?: string[];
 }

@@ -3,10 +3,11 @@
     "id": "ftp-sftp",
     "name": "FTP / SFTP / CSV",
     "version": "1.0",
-    "icon": "ftp.svg",
+    "icon": "https://logo.clearbit.com/box.com",
     "category": "Fichiers",
     "auth_type": "basic",
-    "docs_url": null
+    "docs_url": "https://en.wikipedia.org/wiki/File_Transfer_Protocol",
+    "config_instructions": "FTP : indiquez l'URL du serveur (ex: ftp://ftp.example.com), l'identifiant et le mot de passe. SFTP : utilisez une URL de type sftp://host ou l'URL de base avec host et port (ex: sftp://serveur.example.com:22). Authentification par mot de passe : renseignez username et password. Authentification par clé privée : renseignez username et le chemin ou contenu de la clé privée (selon implémentation). Pour un chemin local (sans serveur), l'URL de base peut rester vide et seul le chemin du fichier dans l'opération est utilisé."
   },
   "auth_config": {
     "protocol_param": "protocol",
@@ -14,8 +15,43 @@
     "port_param": "port",
     "username_param": "username",
     "password_param": "password",
-    "private_key_param": "private_key"
+    "private_key_param": "private_key",
+    "base_url_param": "base_url"
   },
+  "config_fields": [
+    {
+      "key": "base_url",
+      "label": "URL du serveur (FTP/SFTP)",
+      "type": "text",
+      "required": false,
+      "placeholder": "ftp://ftp.example.com ou sftp://serveur.example.com:22",
+      "description": "URL du serveur FTP ou SFTP. Optionnel pour chemin local (agent desktop)."
+    },
+    {
+      "key": "username",
+      "label": "Identifiant",
+      "type": "text",
+      "required": true,
+      "placeholder": "Utilisateur FTP/SFTP",
+      "description": "Identifiant de connexion au serveur."
+    },
+    {
+      "key": "password",
+      "label": "Mot de passe",
+      "type": "password",
+      "required": false,
+      "placeholder": "Mot de passe (vide si clé privée)",
+      "description": "Mot de passe. Laisser vide si vous utilisez une clé privée SFTP."
+    },
+    {
+      "key": "private_key",
+      "label": "Clé privée (SFTP)",
+      "type": "password",
+      "required": false,
+      "placeholder": "Contenu de la clé privée ou chemin",
+      "description": "Optionnel. Pour SFTP en authentification par clé : contenu de la clé privée ou chemin vers le fichier."
+    }
+  ],
   "operations": [
     {
       "id": "read_csv_file",

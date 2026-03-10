@@ -4,7 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaClient } from '../../generated/tenant';
+import { PrismaClient, DestinationWriteMode } from '../../generated/tenant';
 import { TenantDatabaseService } from '../tenants/tenant-database.service';
 import { TenantsService } from '../tenants/tenants.service';
 import {
@@ -230,6 +230,8 @@ export class FlowsService {
         connectorId: dto.connectorId,
         mappingId,
         orderIndex: dto.orderIndex ?? (maxOrder._max.orderIndex ?? -1) + 1,
+        writeMode: dto.writeMode === 'UPDATE' ? DestinationWriteMode.UPDATE : DestinationWriteMode.CREATE,
+        searchFields: dto.searchFields && dto.searchFields.length > 0 ? (dto.searchFields as unknown as object) : undefined,
       },
     });
 
@@ -299,6 +301,8 @@ export class FlowsService {
       connectorId: string;
       mappingId: string | null;
       orderIndex: number;
+      writeMode: string;
+      searchFields: unknown;
     }>;
   }): Record<string, unknown> {
     return {
@@ -311,6 +315,8 @@ export class FlowsService {
         connectorId: d.connectorId,
         mappingId: d.mappingId,
         orderIndex: d.orderIndex,
+        writeMode: d.writeMode,
+        searchFields: d.searchFields,
       })),
     };
   }
@@ -338,6 +344,8 @@ export class FlowsService {
       mappingId: string | null;
       orderIndex: number;
       isActive: boolean;
+      writeMode: string;
+      searchFields: unknown;
     }>;
   }): FlowResponseDto {
     return {
@@ -362,6 +370,8 @@ export class FlowsService {
         mappingId: d.mappingId,
         orderIndex: d.orderIndex,
         isActive: d.isActive,
+        writeMode: d.writeMode ?? 'CREATE',
+        searchFields: Array.isArray(d.searchFields) ? (d.searchFields as string[]) : null,
       })),
     };
   }

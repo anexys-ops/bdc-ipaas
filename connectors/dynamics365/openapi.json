@@ -1,0 +1,70 @@
+{
+  "connector_meta": {
+    "id": "dynamics365",
+    "name": "Microsoft Dynamics 365",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/microsoft.com",
+    "category": "ERP / CRM",
+    "auth_type": "oauth2",
+    "docs_url": "https://learn.microsoft.com/en-us/dynamics365/customerengagement/on-premises/developer/web-api/overview",
+    "config_instructions": "Azure Portal : Inscription d’application → Nouvelle inscription. API permissions : Dynamics CRM (user_impersonation). OAuth2 avec client_id, client_secret, resource = URL de votre instance D365. URL de base : https://votre-org.crm4.dynamics.com/api/data/v9.2. En-tête : Authorization: Bearer <token>"
+  },
+  "auth_config": {
+    "token_url": "https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token",
+    "scopes": ["https://votre-org.crm4.dynamics.com/.default"]
+  },
+  "operations": [
+    {
+      "id": "list_contacts",
+      "label": "Récupérer les contacts",
+      "type": "source",
+      "method": "GET",
+      "path": "/contacts",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "contactid": { "type": "string" },
+          "firstname": { "type": "string" },
+          "lastname": { "type": "string" },
+          "emailaddress1": { "type": "string" },
+          "telephone1": { "type": "string" },
+          "parentcustomerid_account@odata.bind": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_accounts",
+      "label": "Récupérer les comptes",
+      "type": "source",
+      "method": "GET",
+      "path": "/accounts",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "accountid": { "type": "string" },
+          "name": { "type": "string" },
+          "telephone1": { "type": "string" },
+          "address1_city": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_contact",
+      "label": "Créer un contact",
+      "type": "destination",
+      "method": "POST",
+      "path": "/contacts",
+      "input_schema": {
+        "type": "object",
+        "required": ["firstname", "lastname"],
+        "properties": {
+          "firstname": { "type": "string" },
+          "lastname": { "type": "string" },
+          "emailaddress1": { "type": "string" },
+          "telephone1": { "type": "string" },
+          "parentcustomerid_account@odata.bind": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

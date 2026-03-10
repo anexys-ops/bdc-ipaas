@@ -1,0 +1,72 @@
+{
+  "connector_meta": {
+    "id": "pipedrive",
+    "name": "Pipedrive",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/pipedrive.com",
+    "category": "CRM / Ventes",
+    "auth_type": "api_key",
+    "docs_url": "https://developers.pipedrive.com/docs/api/v1",
+    "config_instructions": "1) Pipedrive : Paramètres (Settings) → Personnalisation (Personal preferences) → API. 2) Section « API token » : générez un jeton (Generate new token) et copiez-le. 3) URL de base : https://api.pipedrive.com/v1. Le token est passé en paramètre de requête : ?api_token=<votre_token>. Doc : https://developers.pipedrive.com/docs/api/v1"
+  },
+  "auth_config": {
+    "api_key_header": "Authorization",
+    "base_url_param": "base_url"
+  },
+  "operations": [
+    {
+      "id": "list_persons",
+      "label": "Récupérer les personnes (contacts)",
+      "type": "source",
+      "method": "GET",
+      "path": "/persons",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "email": { "type": "array" },
+          "phone": { "type": "array" },
+          "org_id": { "type": "number" },
+          "add_time": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_deals",
+      "label": "Récupérer les deals",
+      "type": "source",
+      "method": "GET",
+      "path": "/deals",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "title": { "type": "string" },
+          "value": { "type": "number" },
+          "currency": { "type": "string" },
+          "status": { "type": "string" },
+          "person_id": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "create_person",
+      "label": "Créer une personne",
+      "type": "destination",
+      "method": "POST",
+      "path": "/persons",
+      "input_schema": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "org_id": { "type": "number" }
+        }
+      }
+    }
+  ]
+}

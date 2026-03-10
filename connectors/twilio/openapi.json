@@ -1,0 +1,53 @@
+{
+  "connector_meta": {
+    "id": "twilio",
+    "name": "Twilio",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/twilio.com",
+    "category": "SMS / Télécom",
+    "auth_type": "basic",
+    "docs_url": "https://www.twilio.com/docs/usage/api",
+    "config_instructions": "Twilio : Console → Account → API keys & tokens. Utilisez Account SID comme identifiant et Auth Token comme mot de passe (authentification HTTP Basic). URL de base : https://api.twilio.com/2010-04-01"
+  },
+  "auth_config": {
+    "username_param": "account_sid",
+    "password_param": "auth_token",
+    "base_url_param": "base_url"
+  },
+  "operations": [
+    {
+      "id": "list_messages",
+      "label": "Récupérer les messages SMS",
+      "type": "source",
+      "method": "GET",
+      "path": "/Accounts/{AccountSid}/Messages.json",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "sid": { "type": "string" },
+          "body": { "type": "string" },
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "status": { "type": "string" },
+          "date_created": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "send_sms",
+      "label": "Envoyer un SMS",
+      "type": "destination",
+      "method": "POST",
+      "path": "/Accounts/{AccountSid}/Messages.json",
+      "input_schema": {
+        "type": "object",
+        "required": ["To", "From", "Body"],
+        "properties": {
+          "To": { "type": "string" },
+          "From": { "type": "string" },
+          "Body": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

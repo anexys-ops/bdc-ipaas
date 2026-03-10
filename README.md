@@ -30,19 +30,22 @@ Plateforme iPaaS (Integration Platform as a Service) multi-tenant.
 # Installer les dépendances
 pnpm install
 
-# Démarrer les services Docker (PostgreSQL, Redis)
+# Démarrer les services Docker (PostgreSQL, Redis) — requis pour l'API
 docker compose -f docker/docker-compose.dev.yml up -d
 
-# Générer les clients Prisma
+# Générer les clients Prisma et appliquer les migrations
 cd apps/api
 pnpm run prisma:generate
-
-# Appliquer les migrations
 pnpm run prisma:migrate
+cd ../..
 
-# Démarrer l'API en mode développement
-pnpm run dev
+# Démarrer l'API + Frontend (agent optionnel : pnpm dev:all)
+pnpm dev
 ```
+
+**Alternative (tout-en-un)** : depuis la racine, `./scripts/dev.sh` démarre Docker, applique les migrations puis lance `pnpm dev` (nécessite Docker dans le PATH).
+
+**Frontend seul** (sans base) : `pnpm dev:frontend` — interface sur http://localhost:5173
 
 ## Variables d'environnement
 

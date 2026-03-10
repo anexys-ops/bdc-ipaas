@@ -1,0 +1,52 @@
+{
+  "connector_meta": {
+    "id": "mailchimp",
+    "name": "Mailchimp",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/mailchimp.com",
+    "category": "Email marketing",
+    "auth_type": "api_key",
+    "docs_url": "https://mailchimp.com/developer/marketing/api/",
+    "config_instructions": "Mailchimp : Compte (icône profil) → Extras → API keys. Créez une clé (Generate A Key). L’URL de base inclut le datacenter : https://{dc}.api.mailchimp.com/3.0 (remplacez {dc} par ex. us21 selon votre compte, indiqué dans la clé). En-tête : Authorization: Bearer <api_key> ou Basic avec apikey comme username."
+  },
+  "auth_config": {
+    "api_key_header": "Authorization",
+    "base_url_param": "base_url"
+  },
+  "operations": [
+    {
+      "id": "list_members",
+      "label": "Récupérer les membres d’une liste",
+      "type": "source",
+      "method": "GET",
+      "path": "/lists/{list_id}/members",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email_address": { "type": "string" },
+          "status": { "type": "string" },
+          "merge_fields": { "type": "object" },
+          "timestamp_signup": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "add_list_member",
+      "label": "Ajouter un membre à une liste",
+      "type": "destination",
+      "method": "POST",
+      "path": "/lists/{list_id}/members",
+      "input_schema": {
+        "type": "object",
+        "required": ["email_address"],
+        "properties": {
+          "email_address": { "type": "string" },
+          "status": { "type": "string", "enum": ["subscribed", "unsubscribed", "cleaned", "pending"] },
+          "merge_fields": { "type": "object" }
+        }
+      }
+    }
+  ]
+}

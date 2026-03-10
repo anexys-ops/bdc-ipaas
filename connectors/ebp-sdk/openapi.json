@@ -1,0 +1,18 @@
+{
+  "connector_meta": {
+    "id": "ebp-sdk",
+    "name": "EBP SDK",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/ebp.fr",
+    "category": "ERP / Comptabilité",
+    "auth_type": "agent",
+    "docs_url": "https://developer.ebp.com/",
+    "config_instructions": "Connexion via un agent à installer. EBP SDK utilise l’agent pour se connecter à votre installation EBP. Téléchargez l’agent pour Windows ou Mac et associez-le à votre compte.",
+    "agent_downloads": {
+      "windows": "bdc-ipaas-agent-ebp-sdk-1.0.0-win.exe",
+      "mac": "bdc-ipaas-agent-ebp-sdk-1.0.0-mac.dmg"
+    }
+  },
+  "auth_config": {},
+  "operations": []
+}

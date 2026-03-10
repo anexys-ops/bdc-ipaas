@@ -1,0 +1,766 @@
+{
+  "connector_meta": {
+    "id": "hubspot",
+    "name": "HubSpot",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/hubspot.com",
+    "category": "CRM / Marketing",
+    "auth_type": "oauth2",
+    "docs_url": "https://developers.hubspot.com/docs/api/overview",
+    "config_instructions": "1) HubSpot : Paramètres (Settings) → Intégrations → Private Apps (ou OAuth). 2) Private App : créez une app, définissez les scopes (crm.objects.contacts.read/write, crm.objects.companies.read/write, etc.), récupérez le token. 3) OAuth : créez une app sur https://developers.hubspot.com, configurez redirect_uri et scopes, récupérez Client ID et Secret ; après autorisation utilisez l’access_token. URL de base : https://api.hubapi.com. Doc : https://developers.hubspot.com/docs/api/overview"
+  },
+  "auth_config": {
+    "token_url": "https://api.hubapi.com/oauth/v1/token",
+    "scopes": ["crm.objects.contacts.read", "crm.objects.contacts.write", "crm.objects.companies.read", "crm.objects.companies.write", "crm.objects.deals.read", "crm.objects.deals.write", "crm.objects.line_items.read", "crm.objects.line_items.write", "crm.objects.quotes.read", "crm.objects.quotes.write", "crm.objects.products.read", "crm.objects.products.write", "crm.objects.notes.read", "crm.objects.notes.write", "sales-email-read", "tickets"]
+  },
+  "operations": [
+    {
+      "id": "list_contacts",
+      "label": "Récupérer les contacts",
+      "type": "source",
+      "method": "GET",
+      "path": "/crm/v3/objects/contacts",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "firstname": { "type": "string" },
+              "lastname": { "type": "string" },
+              "email": { "type": "string" },
+              "phone": { "type": "string" },
+              "company": { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_contact",
+      "label": "Obtenir un contact",
+      "type": "source",
+      "method": "GET",
+      "path": "/crm/v3/objects/contacts/{contactId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["contactId"],
+        "properties": {
+          "contactId": { "type": "string", "description": "ID du contact HubSpot" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "firstname": { "type": "string" },
+              "lastname": { "type": "string" },
+              "email": { "type": "string" },
+              "phone": { "type": "string" },
+              "company": { "type": "string" },
+              "address": { "type": "string" },
+              "city": { "type": "string" },
+              "zip": { "type": "string" },
+              "country": { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_contact",
+      "label": "Créer un contact",
+      "type": "destination",
+      "method": "POST",
+      "path": "/crm/v3/objects/contacts",
+      "input_schema": {
+        "type": "object",
+        "required": ["properties"],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "firstname": { "type": "string" },
+              "lastname": { "type": "string" },
+              "email": { "type": "string" },
+              "phone": { "type": "string" },
+              "company": { "type": "string" }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": { "type": "object" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "update_contact",
+      "label": "Modifier un contact",
+      "type": "destination",
+      "method": "PATCH",
+      "path": "/crm/v3/objects/contacts/{contactId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["contactId", "properties"],
+        "properties": {
+          "contactId": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "firstname": { "type": "string" },
+              "lastname": { "type": "string" },
+              "email": { "type": "string" },
+              "phone": { "type": "string" },
+              "company": { "type": "string" }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": { "type": "object" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "delete_contact",
+      "label": "Supprimer un contact",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/crm/v3/objects/contacts/{contactId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["contactId"],
+        "properties": {
+          "contactId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "search_contacts",
+      "label": "Rechercher des contacts",
+      "type": "source",
+      "method": "POST",
+      "path": "/crm/v3/objects/contacts/search",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Terme de recherche" },
+          "filterGroups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "filters": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "propertyName": { "type": "string" },
+                      "operator": { "type": "string", "enum": ["EQ", "NEQ", "LT", "LTE", "GT", "GTE", "CONTAINS_TOKEN"] },
+                      "value": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "sorts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "propertyName": { "type": "string" },
+                "direction": { "type": "string", "enum": ["ASCENDING", "DESCENDING"] }
+              }
+            }
+          },
+          "limit": { "type": "integer", "default": 10 }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "properties": { "type": "object" },
+                "createdAt": { "type": "string" },
+                "updatedAt": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_companies",
+      "label": "Récupérer les sociétés",
+      "type": "source",
+      "method": "GET",
+      "path": "/crm/v3/objects/companies",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "domain": { "type": "string" },
+              "phone": { "type": "string" },
+              "city": { "type": "string" },
+              "industry": { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_company",
+      "label": "Obtenir une société",
+      "type": "source",
+      "method": "GET",
+      "path": "/crm/v3/objects/companies/{companyId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["companyId"],
+        "properties": {
+          "companyId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "domain": { "type": "string" },
+              "phone": { "type": "string" },
+              "address": { "type": "string" },
+              "city": { "type": "string" },
+              "industry": { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "string" },
+          "updatedAt": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_company",
+      "label": "Créer une société",
+      "type": "destination",
+      "method": "POST",
+      "path": "/crm/v3/objects/companies",
+      "input_schema": {
+        "type": "object",
+        "required": ["properties"],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "domain": { "type": "string" },
+              "phone": { "type": "string" },
+              "city": { "type": "string" },
+              "industry": { "type": "string" }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": { "type": "object" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "update_company",
+      "label": "Modifier une société",
+      "type": "destination",
+      "method": "PATCH",
+      "path": "/crm/v3/objects/companies/{companyId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["companyId", "properties"],
+        "properties": {
+          "companyId": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "domain": { "type": "string" },
+              "phone": { "type": "string" },
+              "city": { "type": "string" },
+              "industry": { "type": "string" }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": { "type": "object" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_deals",
+      "label": "Récupérer les deals",
+      "type": "source",
+      "method": "GET",
+      "path": "/crm/v3/objects/deals",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "dealname": { "type": "string" },
+              "amount": { "type": "number" },
+              "dealstage": { "type": "string" },
+              "pipeline": { "type": "string" },
+              "closedate": { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "get_deal",
+      "label": "Obtenir un deal",
+      "type": "source",
+      "method": "GET",
+      "path": "/crm/v3/objects/deals/{dealId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["dealId"],
+        "properties": {
+          "dealId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "dealname": { "type": "string" },
+              "amount": { "type": "number" },
+              "dealstage": { "type": "string" },
+              "pipeline": { "type": "string" },
+              "closedate": { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "string" },
+          "updatedAt": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_deal",
+      "label": "Créer un deal",
+      "type": "destination",
+      "method": "POST",
+      "path": "/crm/v3/objects/deals",
+      "input_schema": {
+        "type": "object",
+        "required": ["properties"],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "dealname": { "type": "string" },
+              "amount": { "type": "number" },
+              "dealstage": { "type": "string" },
+              "pipeline": { "type": "string" },
+              "closedate": { "type": "string" }
+            }
+          },
+          "associations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "to": { "type": "object", "properties": { "id": { "type": "string" } } },
+                "types": { "type": "array", "items": { "type": "object" } }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": { "type": "object" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "update_deal",
+      "label": "Modifier un deal",
+      "type": "destination",
+      "method": "PATCH",
+      "path": "/crm/v3/objects/deals/{dealId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["dealId", "properties"],
+        "properties": {
+          "dealId": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "dealname": { "type": "string" },
+              "amount": { "type": "number" },
+              "dealstage": { "type": "string" },
+              "pipeline": { "type": "string" },
+              "closedate": { "type": "string" }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": { "type": "object" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_products",
+      "label": "Récupérer les produits",
+      "type": "source",
+      "method": "GET",
+      "path": "/crm/v3/objects/products",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "price": { "type": "number" },
+              "description": { "type": "string" },
+              "hs_sku": { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_product",
+      "label": "Créer un produit",
+      "type": "destination",
+      "method": "POST",
+      "path": "/crm/v3/objects/products",
+      "input_schema": {
+        "type": "object",
+        "required": ["properties"],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "price": { "type": "number" },
+              "description": { "type": "string" },
+              "hs_sku": { "type": "string" }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": { "type": "object" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "update_product",
+      "label": "Modifier un produit",
+      "type": "destination",
+      "method": "PATCH",
+      "path": "/crm/v3/objects/products/{productId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["productId", "properties"],
+        "properties": {
+          "productId": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "price": { "type": "number" },
+              "description": { "type": "string" },
+              "hs_sku": { "type": "string" }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": { "type": "object" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_quotes",
+      "label": "Récupérer les devis",
+      "type": "source",
+      "method": "GET",
+      "path": "/crm/v3/objects/quotes",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "hs_title": { "type": "string" },
+              "hs_status": { "type": "string" },
+              "hs_total": { "type": "number" },
+              "hs_expiration_date": { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_quote",
+      "label": "Créer un devis",
+      "type": "destination",
+      "method": "POST",
+      "path": "/crm/v3/objects/quotes",
+      "input_schema": {
+        "type": "object",
+        "required": ["properties"],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "hs_title": { "type": "string" },
+              "hs_status": { "type": "string", "enum": ["DRAFT", "PRESENTED", "ACCEPTED", "REJECTED"] },
+              "hs_total": { "type": "number" },
+              "hs_expiration_date": { "type": "string", "format": "date-time" }
+            }
+          },
+          "associations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "to": { "type": "object", "properties": { "id": { "type": "string" } } },
+                "types": { "type": "array" }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": { "type": "object" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_line_items",
+      "label": "Récupérer les lignes de produit",
+      "type": "source",
+      "method": "GET",
+      "path": "/crm/v3/objects/line_items",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "quantity": { "type": "number" },
+              "price": { "type": "number" },
+              "hs_sku": { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_line_item",
+      "label": "Créer une ligne de produit",
+      "type": "destination",
+      "method": "POST",
+      "path": "/crm/v3/objects/line_items",
+      "input_schema": {
+        "type": "object",
+        "required": ["properties"],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "quantity": { "type": "number" },
+              "price": { "type": "number" },
+              "hs_sku": { "type": "string" }
+            }
+          },
+          "associations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "to": { "type": "object", "properties": { "id": { "type": "string" } } },
+                "types": { "type": "array" }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": { "type": "object" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_invoices",
+      "label": "Récupérer les factures (HubSpot Payments)",
+      "type": "source",
+      "method": "GET",
+      "path": "/crm/v3/objects/invoices",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "hs_invoice_number": { "type": "string" },
+              "hs_status": { "type": "string" },
+              "hs_total": { "type": "number" },
+              "hs_currency_code": { "type": "string" },
+              "hs_due_date": { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "create_note",
+      "label": "Créer une note",
+      "type": "destination",
+      "method": "POST",
+      "path": "/crm/v3/objects/notes",
+      "input_schema": {
+        "type": "object",
+        "required": ["properties"],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "hs_note_body": { "type": "string" },
+              "hs_timestamp": { "type": "string", "format": "date-time" }
+            }
+          },
+          "associations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "to": { "type": "object", "properties": { "id": { "type": "string" } } },
+                "types": { "type": "array" }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": { "type": "object" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "id": "list_activities",
+      "label": "Récupérer les activités",
+      "type": "source",
+      "method": "GET",
+      "path": "/crm/v3/objects/notes",
+      "pagination": "cursor",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "hs_note_body": { "type": "string" },
+              "hs_timestamp": { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  ]
+}

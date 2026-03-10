@@ -1,0 +1,481 @@
+# Sellsy API v1 — RPC (méthode unique POST avec method + params)
+# Doc source: https://docs.sellsy.com/api/v1/documentation/methods
+# Périmètre: Catalogue, Documents, Clients (Customers)
+openapi: 3.0.3
+info:
+  title: Sellsy API v1 (RPC)
+  description: |
+    API v1 Sellsy en mode RPC : un seul endpoint POST. Chaque appel envoie
+    `method` (ex. Catalogue.getList, Document.getOne, Client.create) et `params`.
+    Documentation extraite de la doc officielle pour **Catalogue**, **Documents** et **Clients**.
+  version: "1.0"
+  contact:
+    name: Sellsy
+    url: https://www.sellsy.com
+  license:
+    name: Propriétaire
+    url: https://www.sellsy.com
+
+servers:
+  - url: https://api.sellsy.com
+    description: API Sellsy (v1 RPC — chemin exact à confirmer selon SDK)
+
+tags:
+  - name: RPC
+    description: Endpoint unique pour toutes les méthodes
+  - name: Catalogue
+    description: Produits et services (items, déclinaisons, catégories, prix, codes-barres)
+  - name: Document
+    description: Devis, factures, commandes, modèles, livraisons, proforma
+  - name: Client
+    description: Clients (tiers), contacts, adresses
+
+security:
+  - Bearer: []
+
+components:
+  securitySchemes:
+    Bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: token
+      description: Token d'accès si fourni par Sellsy pour v1
+
+  schemas:
+    RpcRequest:
+      type: object
+      required:
+        - method
+        - params
+      properties:
+        method:
+          type: string
+          description: Nom de la méthode RPC (Namespace.method)
+          example: "Catalogue.getList"
+        params:
+          type: object
+          description: Paramètres de la méthode (structure selon method)
+          additionalProperties: true
+
+    RpcResponse:
+      type: object
+      properties:
+        response:
+          description: Données retournées (structure selon la méthode)
+        error:
+          type: string
+          description: Message d'erreur si échec
+        status:
+          type: string
+          enum: [success, error]
+
+    # ---- Catalogue ----
+    CatalogueGetListParams:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [item, service]
+          description: item ou service
+        order:
+          type: object
+          properties:
+            direction:
+              type: string
+              enum: [ASC, DESC]
+              default: ASC
+            order:
+              type: string
+              enum: [item_name, item_tradename, item_qt, item_taxrate]
+              default: item_name
+        pagination:
+          type: object
+          properties:
+            pagenum:
+              type: integer
+              default: 1
+            nbperpage:
+              type: integer
+              default: 10
+        search:
+          type: object
+          properties:
+            name: { type: string }
+            tags: { type: string }
+            inPos: { type: string, enum: [Y, N] }
+            rateCategory: { type: integer }
+            useDeclination: { type: string, enum: [Y, N] }
+            combineDecli: { type: string, enum: [Y, N] }
+            actif: { type: string, enum: [Y, N] }
+            categoryid: { type: integer }
+            stockAvailable: { type: string, enum: [Y, N] }
+            stockEnabled: { type: string, enum: [Y, N] }
+            alertstock: { type: string }
+            containsMode: { type: string, enum: [all-term, atleast-term, exact] }
+            decliValues: { type: object }
+            barcode: { type: string }
+            thirdid: { type: integer }
+            shopID: { type: integer }
+            tillID: { type: integer }
+
+    CatalogueGetOneParams:
+      type: object
+      required: [type, id]
+      properties:
+        type: { type: string, enum: [item, service] }
+        id: { type: integer }
+        includeDecli: { type: string, enum: [Y, N], default: N }
+        includeAssociatedItems: { type: string, enum: [Y, N] }
+        langID: { type: integer }
+
+    CatalogueGetOneByRefParams:
+      type: object
+      required: [type, ref]
+      properties:
+        type: { type: string, enum: [item, service] }
+        ref: { type: string }
+        includeDecli: { type: string, enum: [Y, N], default: N }
+        includeAssociatedItems: { type: string, enum: [Y, N] }
+        langID: { type: integer }
+
+    CatalogueCreateParams:
+      type: object
+      required: [type]
+      properties:
+        type: { type: string, enum: [item, service] }
+        item:
+          type: object
+          properties:
+            name: { type: string }
+            tradename: { type: string }
+            notes: { type: string }
+            tags: { type: string }
+            unitAmount: { type: number }
+            purchaseAmount: { type: number }
+            unit: { type: string }
+            qt: { type: number, default: 1 }
+            unitAmountIsTaxesFree: { type: string, enum: [Y, N] }
+            taxid: { type: integer }
+            taxrate: { type: number }
+            categoryid: { type: integer }
+            actif: { type: string, enum: [Y, N] }
+            inPos: { type: string, enum: [Y, N] }
+        service:
+          type: object
+          description: Même structure que item pour type=service
+
+    CatalogueUpdateParams:
+      type: object
+      required: [type, id]
+      properties:
+        type: { type: string, enum: [item, service] }
+        id: { type: integer }
+        item: { type: object }
+        service: { type: object }
+
+    CatalogueDeleteParams:
+      type: object
+      required: [type, id]
+      properties:
+        type: { type: string, enum: [item, service] }
+        id: { type: integer }
+
+    CatalogueGetCategoriesParams:
+      type: object
+      properties: {}
+
+    CatalogueGetPricesParams:
+      type: object
+      required: [type, id]
+      properties:
+        type: { type: string, enum: [item, service] }
+        id: { type: integer }
+        declid: { type: integer, default: 0 }
+
+    # ---- Document ----
+    DocumentGetListParams:
+      type: object
+      required: [doctype]
+      properties:
+        doctype:
+          type: string
+          enum: [invoice, estimate, proforma, delivery, order, model]
+          description: Type de document
+        includePayments:
+          type: string
+          enum: [Y, N]
+          default: N
+          description: Inclure les paiements (factures uniquement)
+        order:
+          type: object
+          properties:
+            direction: { type: string, enum: [ASC, DESC], default: ASC }
+            order:
+              type: string
+              enum: [doc_ident, doc_thirdname, doc_displayedDate, doc_totalAmountTaxesFree]
+              default: doc_displayedDate
+        pagination:
+          type: object
+          properties:
+            nbperpage: { type: integer, default: 10 }
+            pagenum: { type: integer, default: 1 }
+        search:
+          type: object
+          properties:
+            ident: { type: string }
+            steps: { type: array, items: { type: string } }
+            thirds: { type: array, items: { type: integer } }
+            owner: { type: integer }
+            shops:
+              type: array
+              items: { type: integer }
+            tags: { type: string }
+            periodecreated_start: { type: integer }
+            periodecreated_end: { type: integer }
+            periodecreationDate_start: { type: integer }
+            periodecreationDate_end: { type: integer }
+            periodeexpired_start: { type: integer }
+            periodeexpired_end: { type: integer }
+
+    DocumentGetOneParams:
+      type: object
+      required: [doctype, docid]
+      properties:
+        doctype: { type: string, enum: [invoice, estimate, proforma, delivery, order, model] }
+        docid: { type: integer }
+
+    DocumentCreateParams:
+      type: object
+      description: Structure complexe (doctype + document + rows). Voir doc officielle.
+      additionalProperties: true
+
+    DocumentUpdateParams:
+      type: object
+      required: [doctype, docid]
+      properties:
+        doctype: { type: string }
+        docid: { type: integer }
+      additionalProperties: true
+
+    DocumentValidateParams:
+      type: object
+      required: [doctype, docid]
+      properties:
+        doctype: { type: string }
+        docid: { type: integer }
+
+    DocumentGetPaymentListParams:
+      type: object
+      required: [doctype, docid]
+      properties:
+        doctype: { type: string }
+        docid: { type: integer }
+
+    DocumentGetNextIdentParams:
+      type: object
+      required: [doctype]
+      properties:
+        doctype: { type: string, enum: [invoice, estimate, proforma, delivery, order] }
+
+    # ---- Client ----
+    ClientGetListParams:
+      type: object
+      properties:
+        order:
+          type: object
+          properties:
+            direction: { type: string, enum: [ASC, DESC], default: ASC }
+            order: { type: string, enum: [third_id, name], default: third_id }
+        pagination:
+          type: object
+          properties:
+            nbperpage: { type: integer, default: 10 }
+            pagenum: { type: integer, default: 1 }
+        search:
+          type: object
+          properties:
+            type: { type: string, enum: [corporation, person] }
+            contains: { type: string }
+            containstel: { type: string }
+            name: { type: string }
+            ident: { type: string }
+            email: { type: string }
+            web: { type: string }
+            tags: { type: string }
+            periodecreated_start: { type: integer }
+            periodecreated_end: { type: integer }
+            containssiret: { type: string }
+            containssiren: { type: string }
+            actif: { type: string, enum: [Y, N] }
+
+    ClientGetOneParams:
+      type: object
+      required: [clientid]
+      properties:
+        clientid: { type: integer }
+
+    ClientGetAddressParams:
+      type: object
+      required: [clientid, addressid]
+      properties:
+        clientid: { type: integer }
+        addressid: { type: integer }
+
+    ClientGetContactParams:
+      type: object
+      required: [clientid, contactid]
+      properties:
+        clientid: { type: integer }
+        contactid: { type: integer }
+
+    ClientCreateParams:
+      type: object
+      properties:
+        third:
+          type: object
+          properties:
+            name: { type: string }
+            ident: { type: string }
+            type: { type: string, enum: [corporation, person], default: corporation }
+            email: { type: string }
+            tel: { type: string }
+            web: { type: string }
+            siret: { type: string }
+            siren: { type: string }
+            vat: { type: string }
+            tags: { type: string }
+        contact:
+          type: object
+          description: Obligatoire si type=person
+          properties:
+            name: { type: string }
+            forename: { type: string }
+            email: { type: string }
+            tel: { type: string }
+            mobile: { type: string }
+        address:
+          type: object
+          properties:
+            name: { type: string }
+            part1: { type: string }
+            part2: { type: string }
+            zip: { type: string }
+            town: { type: string }
+            countrycode: { type: string, default: FR }
+
+    ClientUpdateParams:
+      type: object
+      required: [clientid]
+      properties:
+        clientid: { type: integer }
+        third: { type: object }
+        contact: { type: object }
+        address: { type: object }
+
+    ClientDeleteParams:
+      type: object
+      required: [clientid]
+      properties:
+        clientid: { type: integer }
+
+    ClientAddAddressParams:
+      type: object
+      required: [clientid, address]
+      properties:
+        clientid: { type: integer }
+        address: { type: object }
+
+    ClientAddContactParams:
+      type: object
+      required: [clientid, contact]
+      properties:
+        clientid: { type: integer }
+        contact: { type: object }
+
+paths:
+  /:
+    post:
+      tags: [RPC]
+      summary: Appel RPC (toutes les méthodes v1)
+      description: |
+        Envoyer un seul corps JSON : `method` (string) et `params` (object).
+        Méthodes documentées ici : Catalogue.*, Document.*, Client.*.
+        Réponse : `{ "response": ..., "error": "", "status": "success" }`.
+      operationId: rpcCall
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RpcRequest'
+            examples:
+              Catalogue_getList:
+                summary: Catalogue.getList (liste produits/services)
+                value:
+                  method: Catalogue.getList
+                  params:
+                    type: item
+                    order: { direction: ASC, order: item_name }
+                    pagination: { pagenum: 1, nbperpage: 10 }
+              Catalogue_getOne:
+                summary: Catalogue.getOne
+                value:
+                  method: Catalogue.getOne
+                  params:
+                    type: item
+                    id: 249439
+                    includeDecli: N
+              Document_getList_invoice:
+                summary: Document.getList (factures)
+                value:
+                  method: Document.getList
+                  params:
+                    doctype: invoice
+                    pagination: { pagenum: 1, nbperpage: 10 }
+              Document_getList_estimate:
+                summary: Document.getList (devis)
+                value:
+                  method: Document.getList
+                  params:
+                    doctype: estimate
+                    pagination: { pagenum: 1, nbperpage: 10 }
+              Document_getOne:
+                summary: Document.getOne
+                value:
+                  method: Document.getOne
+                  params:
+                    doctype: invoice
+                    docid: 11027
+              Client_getList:
+                summary: Client.getList
+                value:
+                  method: Client.getList
+                  params:
+                    pagination: { pagenum: 1, nbperpage: 10 }
+              Client_getOne:
+                summary: Client.getOne
+                value:
+                  method: Client.getOne
+                  params:
+                    clientid: 2739
+              Client_create:
+                summary: Client.create
+                value:
+                  method: Client.create
+                  params:
+                    third:
+                      name: Ma Société
+                      type: corporation
+                      email: contact@example.com
+      responses:
+        '200':
+          description: Réponse RPC (response + error + status)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RpcResponse'
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès refusé

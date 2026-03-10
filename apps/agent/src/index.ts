@@ -2,7 +2,9 @@
 import { Command } from 'commander';
 import { AgentService } from './service/agent.service';
 import { createLogger, format, transports } from 'winston';
-import Conf from 'conf';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const Conf = require('conf') as new (opts: { projectName: string }) => { get: (key: string) => unknown; set: (key: string, value: unknown) => void };
 
 const logger = createLogger({
   level: 'info',

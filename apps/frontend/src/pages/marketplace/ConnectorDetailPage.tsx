@@ -1,11 +1,16 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Loader2, Package, Check } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Package, Check, FileText } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
+import { SchemaFieldsList } from '../../components/connector/SchemaFieldsList';
 import { marketplaceApi } from '../../api/marketplace';
+import { getConnectorLogoUrl } from '../../lib/connector-logos';
+import { AgentDownloadCard, isAgentConnector } from '../../components/connector/AgentDownloadCard';
 
 export function ConnectorDetailPage() {
   const { type } = useParams<{ type: string }>();
+  const [logoError, setLogoError] = useState(false);
 
   const { data: connector, isLoading, error } = useQuery({
     queryKey: ['marketplace', type],
@@ -15,105 +20,172 @@ export function ConnectorDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+      <div className="min-h-screen page-bg-mesh flex items-center justify-center">
+        <div className="glass-card p-10 flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+          <p className="text-sm text-slate-400">Chargement du connecteur...</p>
+        </div>
       </div>
     );
   }
 
   if (error || !connector) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Connecteur non trouvé</p>
-          <Link to="/marketplace" className="text-primary-600 mt-2 inline-block">
-            Retour au marketplace
+      <div className="min-h-screen page-bg-mesh flex items-center justify-center p-4">
+        <Card className="max-w-md text-center py-10">
+          <Package className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-slate-800">Connecteur introuvable</h2>
+          <p className="text-sm text-slate-500 mt-1">Cette ressource n’existe pas ou a été déplacée.</p>
+          <Link to="/marketplace" className="mt-6 inline-block">
+            <Button variant="outline">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour au marketplace
+            </Button>
           </Link>
-        </div>
+        </Card>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <Link
-            to="/marketplace"
-            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Retour au marketplace
-          </Link>
+  const logoUrl = getConnectorLogoUrl(connector.id, connector.icon);
 
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center text-3xl">
-                🔌
+  return (
+    <div className="page-bg-mesh">
+      {/* Fil d'Ariane */}
+      <div className="border-b border-slate-200/80 bg-white/50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <nav className="flex items-center gap-2 text-sm text-slate-600 mb-6">
+            <Link to="/marketplace" className="hover:text-primary-600 inline-flex items-center gap-1">
+              <ArrowLeft className="w-4 h-4" /> Marketplace
+            </Link>
+            <span className="text-slate-400">/</span>
+            <span className="text-slate-800 font-medium truncate">{connector.name}</span>
+          </nav>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
+            <div className="flex gap-4">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-primary-50 flex items-center justify-center border border-primary-200/60 shrink-0 overflow-hidden p-1">
+                {logoUrl && !logoError ? (
+                  <img
+                    src={logoUrl}
+                    alt=""
+                    className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
+                    onError={() => setLogoError(true)}
+                  />
+                ) : (
+                  <span className="text-4xl" aria-hidden>🔌</span>
+                )}
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{connector.name}</h1>
-                <p className="text-gray-500">{connector.category}</p>
+              <div className="min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-700 tracking-tight">
+                  {connector.name}
+                </h1>
+                <p className="text-slate-600 mt-0.5">{connector.category}</p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-slate-500">v{connector.version}</span>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
+                      connector.authType === 'oauth2'
+                        ? 'bg-violet-100 text-violet-600 border border-violet-200/60'
+                        : connector.authType === 'api_key'
+                          ? 'bg-amber-100 text-amber-600 border border-amber-200/60'
+                          : 'bg-slate-100 text-slate-600 border border-slate-200/60'
+                    }`}
+                  >
+                    {connector.authType}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
               {connector.docsUrl && (
                 <a
                   href={connector.docsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-slate-600 hover:text-slate-800 text-sm font-medium transition-colors"
                 >
-                  Documentation <ExternalLink className="w-4 h-4 ml-1" />
+                  <FileText className="w-4 h-4" />
+                  Documentation
+                  <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                 </a>
               )}
-              <Link to="/login">
-                <Button>Configurer</Button>
+              <Link
+                to={`/connectors/new?type=${encodeURIComponent(connector.id)}&from=marketplace`}
+              >
+                <Button>
+                  Configurer ce connecteur
+                </Button>
               </Link>
             </div>
           </div>
-
-          <div className="mt-4 flex items-center gap-4">
-            <span className="text-sm text-gray-500">Version {connector.version}</span>
-            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-              connector.authType === 'oauth2' 
-                ? 'bg-purple-100 text-purple-700'
-                : connector.authType === 'api_key'
-                ? 'bg-yellow-100 text-yellow-700'
-                : 'bg-gray-100 text-gray-700'
-            }`}>
-              Auth: {connector.authType}
-            </span>
-          </div>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Contenu : doc + opérations */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {connector.configInstructions && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-slate-800 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary-500" />
+                Récupérer la clé API / configurer l’accès
+              </CardTitle>
+              <p className="text-sm text-slate-600 mt-2 whitespace-pre-line">{connector.configInstructions}</p>
+            </CardHeader>
+          </Card>
+        )}
+
+        {isAgentConnector(connector.id) && (
+          <div className="mb-8">
+            <AgentDownloadCard
+              connectorName={connector.name}
+              connectorId={connector.id}
+              version={connector.version || '1.0'}
+            />
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {connector.sourceOperations.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                  Opérations Source ({connector.sourceOperations.length})
+                <CardTitle className="flex items-center gap-2 text-slate-800">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  Endpoints Source (récupération)
+                  <span className="text-slate-400 font-normal text-sm">
+                    ({connector.sourceOperations.length})
+                  </span>
                 </CardTitle>
+                <p className="text-sm text-slate-500 mt-1">
+                  Choisissez l’endpoint puis consultez les champs JSON retournés.
+                </p>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   {connector.sourceOperations.map((op) => (
-                    <li key={op.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                      <Check className="w-5 h-5 text-green-600 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-gray-900">{op.label}</p>
-                        {op.description && (
-                          <p className="text-sm text-gray-500 mt-1">{op.description}</p>
-                        )}
-                        <span className="text-xs text-gray-400 mt-1 inline-block">
-                          {op.method}
-                        </span>
+                    <li
+                      key={op.id}
+                      className="p-4 rounded-xl bg-slate-50/80 border border-slate-100 space-y-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-slate-800">{op.label}</p>
+                          {op.description && (
+                            <p className="text-sm text-slate-500 mt-0.5">{op.description}</p>
+                          )}
+                          <p className="text-xs font-mono text-primary-600 mt-1.5 bg-white px-2 py-1 rounded border border-slate-200">
+                            {op.method} {op.path ?? op.id}
+                          </p>
+                        </div>
                       </div>
+                      <SchemaFieldsList
+                        schema={op.outputSchema}
+                        title="Champs retournés (JSON)"
+                        variant="output"
+                        className="ml-8 pl-3 border-l-2 border-emerald-200"
+                      />
                     </li>
                   ))}
                 </ul>
@@ -124,25 +196,42 @@ export function ConnectorDetailPage() {
           {connector.destinationOperations.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-                  Opérations Destination ({connector.destinationOperations.length})
+                <CardTitle className="flex items-center gap-2 text-slate-800">
+                  <span className="w-2.5 h-2.5 rounded-full bg-primary-500" />
+                  Endpoints Destination (envoi)
+                  <span className="text-slate-400 font-normal text-sm">
+                    ({connector.destinationOperations.length})
+                  </span>
                 </CardTitle>
+                <p className="text-sm text-slate-500 mt-1">
+                  Choisissez l’endpoint puis consultez les champs JSON à remplir.
+                </p>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   {connector.destinationOperations.map((op) => (
-                    <li key={op.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                      <Check className="w-5 h-5 text-blue-600 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-gray-900">{op.label}</p>
-                        {op.description && (
-                          <p className="text-sm text-gray-500 mt-1">{op.description}</p>
-                        )}
-                        <span className="text-xs text-gray-400 mt-1 inline-block">
-                          {op.method}
-                        </span>
+                    <li
+                      key={op.id}
+                      className="p-4 rounded-xl bg-slate-50/80 border border-slate-100 space-y-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-primary-500 mt-0.5 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-slate-800">{op.label}</p>
+                          {op.description && (
+                            <p className="text-sm text-slate-500 mt-0.5">{op.description}</p>
+                          )}
+                          <p className="text-xs font-mono text-primary-600 mt-1.5 bg-white px-2 py-1 rounded border border-slate-200">
+                            {op.method} {op.path ?? op.id}
+                          </p>
+                        </div>
                       </div>
+                      <SchemaFieldsList
+                        schema={op.inputSchema}
+                        title="Champs à remplir (JSON)"
+                        variant="input"
+                        className="ml-8 pl-3 border-l-2 border-primary-200"
+                      />
                     </li>
                   ))}
                 </ul>
@@ -153,22 +242,41 @@ export function ConnectorDetailPage() {
           {connector.triggerOperations.length > 0 && (
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-orange-500"></span>
-                  Déclencheurs ({connector.triggerOperations.length})
+                <CardTitle className="flex items-center gap-2 text-slate-800">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                  Endpoints Déclencheurs
+                  <span className="text-slate-400 font-normal text-sm">
+                    ({connector.triggerOperations.length})
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <ul className="space-y-4">
                   {connector.triggerOperations.map((op) => (
-                    <li key={op.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                      <Check className="w-5 h-5 text-orange-600 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-gray-900">{op.label}</p>
-                        {op.description && (
-                          <p className="text-sm text-gray-500 mt-1">{op.description}</p>
-                        )}
+                    <li
+                      key={op.id}
+                      className="p-4 rounded-xl bg-slate-50/80 border border-slate-100 space-y-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-slate-800">{op.label}</p>
+                          {op.description && (
+                            <p className="text-sm text-slate-500 mt-0.5">{op.description}</p>
+                          )}
+                          {op.path && (
+                            <p className="text-xs font-mono text-amber-700 mt-1.5 bg-white px-2 py-1 rounded border border-slate-200">
+                              {op.method} {op.path}
+                            </p>
+                          )}
+                        </div>
                       </div>
+                      <SchemaFieldsList
+                        schema={op.configSchema ?? op.inputSchema}
+                        title="Config / champs"
+                        variant="input"
+                        className="ml-8 pl-3 border-l-2 border-amber-200"
+                      />
                     </li>
                   ))}
                 </ul>

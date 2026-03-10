@@ -1,0 +1,116 @@
+{
+  "description": "Opérations REST à exécuter pour tester chaque type de ressource (même logique que v1). Base URL : https://api.sellsy.com/v2. Auth : Bearer token.",
+  "baseUrl": "https://api.sellsy.com/v2",
+  "auth": "Bearer <access_token>",
+  "contentType": "application/json",
+  "operations": [
+    {
+      "id": "companies_list",
+      "label": "Companies — Liste des sociétés",
+      "method": "GET",
+      "path": "/companies",
+      "query": { "limit": 10 }
+    },
+    {
+      "id": "individuals_list",
+      "label": "Individuals — Liste des particuliers",
+      "method": "GET",
+      "path": "/individuals",
+      "query": { "limit": 10 }
+    },
+    {
+      "id": "contacts_list",
+      "label": "Contacts — Liste des contacts",
+      "method": "GET",
+      "path": "/contacts",
+      "query": { "limit": 10 }
+    },
+    {
+      "id": "estimates_list",
+      "label": "Documents — Liste des devis",
+      "method": "GET",
+      "path": "/estimates",
+      "query": { "limit": 10 }
+    },
+    {
+      "id": "invoices_list",
+      "label": "Documents — Liste des factures",
+      "method": "GET",
+      "path": "/invoices",
+      "query": { "limit": 10 }
+    },
+    {
+      "id": "orders_list",
+      "label": "Documents — Liste des commandes",
+      "method": "GET",
+      "path": "/orders",
+      "query": { "limit": 10 }
+    },
+    {
+      "id": "deliveries_list",
+      "label": "Documents — Liste des livraisons",
+      "method": "GET",
+      "path": "/deliveries",
+      "query": { "limit": 10 }
+    },
+    {
+      "id": "credit_notes_list",
+      "label": "Documents — Liste des avoirs",
+      "method": "GET",
+      "path": "/credit-notes",
+      "query": { "limit": 10 }
+    },
+    {
+      "id": "proposals_models_list",
+      "label": "Proposals — Liste des modèles de proposition",
+      "method": "GET",
+      "path": "/proposals/models"
+    },
+    {
+      "id": "items_list",
+      "label": "Catalogue — Liste des produits / services",
+      "method": "GET",
+      "path": "/items",
+      "query": { "limit": 10 }
+    },
+    {
+      "id": "units_list",
+      "label": "Catalogue — Liste des unités",
+      "method": "GET",
+      "path": "/units",
+      "query": { "limit": 10 }
+    },
+    {
+      "id": "taxes_list",
+      "label": "Catalogue — Liste des taxes",
+      "method": "GET",
+      "path": "/taxes",
+      "query": { "limit": 10 }
+    },
+    {
+      "id": "opportunities_list",
+      "label": "Opportunités — Liste",
+      "method": "GET",
+      "path": "/opportunities",
+      "query": { "limit": 10 }
+    },
+    {
+      "id": "account_addresses",
+      "label": "Compte — Adresses",
+      "method": "GET",
+      "path": "/account/addresses"
+    },
+    {
+      "id": "bank_accounts",
+      "label": "Compte — Comptes bancaires",
+      "method": "GET",
+      "path": "/bank-accounts"
+    },
+    {
+      "id": "payment_terms",
+      "label": "Compte — Délais de paiement",
+      "method": "GET",
+      "path": "/payment-terms"
+    }
+  ]
+}

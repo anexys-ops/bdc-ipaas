@@ -9,23 +9,51 @@ datasource db {
 }
 
 model Tenant {
-  id               String           @id @default(uuid())
-  slug             String           @unique
-  name             String
-  dbName           String           @unique
-  dbConnectionHash String
-  plan             Plan             @default(FREE)
-  isActive         Boolean          @default(true)
-  stripeCustomerId String?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  users            User[]
-  usageMetrics     UsageMetric[]
-  billingInvoices  BillingInvoice[]
+  id                   String                @id @default(uuid())
+  slug                 String                @unique
+  name                 String
+  dbName               String                @unique
+  dbConnectionHash     String
+  plan                 Plan                  @default(FREE)
+  isActive             Boolean                @default(true)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  users                User[]
+  usageMetrics         UsageMetric[]
+  billingInvoices      BillingInvoice[]
+  notificationSettings NotificationSettings?
+  notificationLogs     NotificationLog[]
+}
+
+model NotificationSettings {
+  id               String   @id @default(uuid())
+  tenantId         String   @unique
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  emailEnabled     Boolean  @default(true)
+  emailRecipients  String[] @default([])
+  webhookEnabled   Boolean  @default(false)
+  webhookUrl       String?
+  alertOnFailure   Boolean  @default(true)
+  alertOnQuota80   Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model NotificationLog {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  type      String // EMAIL / WEBHOOK
+  subject   String
+  status    String // SENT / FAILED
+  sentAt    DateTime @default(now())
 }
 
 enum Plan {
   FREE
+  STARTER
   PRO
   ENTERPRISE
 }

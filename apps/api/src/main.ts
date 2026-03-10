@@ -1,11 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { AppLoggerService } from './common/logger';
 
 async function bootstrap(): Promise<void> {
-  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
+  app.useLogger(app.get(AppLoggerService));
 
   app.setGlobalPrefix('api/v1');
 
@@ -38,8 +39,9 @@ async function bootstrap(): Promise<void> {
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
 
-  logger.log(`Application ANEXYS iPaaS démarrée sur le port ${port}`);
-  logger.log(`Documentation Swagger disponible sur /api/docs`);
+  const logger = app.get(AppLoggerService);
+  logger.log(`Application ANEXYS iPaaS démarrée sur le port ${port}`, 'Bootstrap');
+  logger.log(`Documentation Swagger disponible sur /api/docs`, 'Bootstrap');
 }
 
 bootstrap();

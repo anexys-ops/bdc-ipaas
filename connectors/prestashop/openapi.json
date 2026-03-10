@@ -3,17 +3,44 @@
     "id": "prestashop",
     "name": "PrestaShop",
     "version": "1.7",
-    "icon": "prestashop.svg",
+    "icon": "https://logo.clearbit.com/prestashop.com",
     "category": "E-commerce",
-    "auth_type": "api_key",
-    "docs_url": "https://devdocs.prestashop-project.org/8/webservice/"
+    "auth_type": "basic",
+    "docs_url": "https://devdocs.prestashop-project.org/8/webservice/",
+    "config_instructions": "PrestaShop : 1) Activer le Web Service : Paramètres avancés → Web Service → activer et cocher « Activer le webservice ». 2) Créer une clé API : Ajouter une clé, définir les permissions (lecture/écriture selon besoin). Copier la clé (ex: UCCLLQ9N2ARSHWCXLT74KUKSSK34BFKX). 3) Authentification : PrestaShop utilise HTTP Basic ; l'identifiant = la clé API, le mot de passe = vide. 4) URL de base = URL de la boutique (ex: https://votre-boutique.com). L'API est sous /api/. Doc : https://devdocs.prestashop-project.org/8/webservice/tutorials/testing-access/"
   },
   "auth_config": {
     "auth_method": "basic",
-    "username_param": "api_key",
-    "password_value": "",
+    "username_param": "username",
+    "password_param": "password",
     "base_url_param": "shop_url"
   },
+  "config_fields": [
+    {
+      "key": "shop_url",
+      "label": "URL de la boutique",
+      "type": "text",
+      "required": true,
+      "placeholder": "https://votre-boutique.com",
+      "description": "URL racine de la boutique PrestaShop (sans slash final). L'API sera appelée sur /api/."
+    },
+    {
+      "key": "username",
+      "label": "Clé API (identifiant Web Service)",
+      "type": "password",
+      "required": true,
+      "placeholder": "Votre clé API PrestaShop",
+      "description": "Clé générée dans Paramètres avancés → Web Service. Utilisée comme identifiant en Basic Auth."
+    },
+    {
+      "key": "password",
+      "label": "Mot de passe (laisser vide)",
+      "type": "password",
+      "required": false,
+      "placeholder": "(vide)",
+      "description": "PrestaShop n'utilise pas de mot de passe : laisser vide."
+    }
+  ],
   "operations": [
     {
       "id": "list_customers",
@@ -33,6 +60,120 @@
           "newsletter": { "type": "boolean" },
           "active": { "type": "boolean" },
           "date_add": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "get_customer",
+      "label": "Obtenir un client",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/customers/{customerId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["customerId"],
+        "properties": {
+          "customerId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "id_default_group": { "type": "string" },
+          "firstname": { "type": "string" },
+          "lastname": { "type": "string" },
+          "email": { "type": "string" },
+          "birthday": { "type": "string" },
+          "newsletter": { "type": "boolean" },
+          "active": { "type": "boolean" },
+          "date_add": { "type": "string" },
+          "date_upd": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_customer",
+      "label": "Créer un client",
+      "type": "destination",
+      "method": "POST",
+      "path": "/api/customers",
+      "input_schema": {
+        "type": "object",
+        "required": ["email", "lastname", "firstname"],
+        "properties": {
+          "firstname": { "type": "string" },
+          "lastname": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "passwd": { "type": "string" },
+          "id_default_group": { "type": "string" },
+          "birthday": { "type": "string" },
+          "newsletter": { "type": "boolean" },
+          "active": { "type": "boolean" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "update_customer",
+      "label": "Modifier un client",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/api/customers/{customerId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["customerId"],
+        "properties": {
+          "customerId": { "type": "string" },
+          "firstname": { "type": "string" },
+          "lastname": { "type": "string" },
+          "email": { "type": "string" },
+          "id_default_group": { "type": "string" },
+          "birthday": { "type": "string" },
+          "newsletter": { "type": "boolean" },
+          "active": { "type": "boolean" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "delete_customer",
+      "label": "Supprimer un client",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/api/customers/{customerId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["customerId"],
+        "properties": {
+          "customerId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_customer_groups",
+      "label": "Récupérer les groupes de clients",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/groups",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "reduction": { "type": "number" },
+          "price_display_method": { "type": "string" }
         }
       }
     },
@@ -58,22 +199,31 @@
       }
     },
     {
-      "id": "list_orders",
-      "label": "Récupérer les commandes",
+      "id": "get_product",
+      "label": "Obtenir un produit",
       "type": "source",
       "method": "GET",
-      "path": "/api/orders",
-      "pagination": "offset",
+      "path": "/api/products/{productId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["productId"],
+        "properties": {
+          "productId": { "type": "string" }
+        }
+      },
       "output_schema": {
         "type": "object",
         "properties": {
           "id": { "type": "string" },
           "reference": { "type": "string" },
-          "id_customer": { "type": "string" },
-          "total_paid": { "type": "number" },
-          "total_products_wt": { "type": "number" },
-          "current_state": { "type": "string" },
-          "date_add": { "type": "string" }
+          "id_category_default": { "type": "string" },
+          "name": { "type": "string" },
+          "price": { "type": "number" },
+          "quantity": { "type": "number" },
+          "ean13": { "type": "string" },
+          "active": { "type": "boolean" },
+          "description_short": { "type": "string" },
+          "description": { "type": "string" }
         }
       }
     },
@@ -95,6 +245,597 @@
           "active": { "type": "boolean", "default": true },
           "description_short": { "type": "string" },
           "id_category_default": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "reference": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "update_product",
+      "label": "Modifier un produit",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/api/products/{productId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["productId"],
+        "properties": {
+          "productId": { "type": "string" },
+          "reference": { "type": "string" },
+          "name": { "type": "string" },
+          "price": { "type": "number" },
+          "quantity": { "type": "number" },
+          "ean13": { "type": "string" },
+          "active": { "type": "boolean" },
+          "description_short": { "type": "string" },
+          "id_category_default": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "delete_product",
+      "label": "Supprimer un produit",
+      "type": "destination",
+      "method": "DELETE",
+      "path": "/api/products/{productId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["productId"],
+        "properties": {
+          "productId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_product_features",
+      "label": "Récupérer les caractéristiques produit",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/product_features",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "public_name": { "type": "string" },
+          "url_name": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_product_options",
+      "label": "Récupérer les options produit",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/product_option_values",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "id_attribute_group": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_combinations",
+      "label": "Récupérer les combinaisons (variantes)",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/combinations",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "id_product": { "type": "string" },
+          "reference": { "type": "string" },
+          "ean13": { "type": "string" },
+          "quantity": { "type": "number" },
+          "price": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_categories",
+      "label": "Récupérer les catégories",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/categories",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "id_parent": { "type": "string" },
+          "name": { "type": "string" },
+          "active": { "type": "boolean" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "get_category",
+      "label": "Obtenir une catégorie",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/categories/{categoryId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["categoryId"],
+        "properties": {
+          "categoryId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "id_parent": { "type": "string" },
+          "name": { "type": "string" },
+          "active": { "type": "boolean" },
+          "description": { "type": "string" },
+          "link_rewrite": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_category",
+      "label": "Créer une catégorie",
+      "type": "destination",
+      "method": "POST",
+      "path": "/api/categories",
+      "input_schema": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "id_parent": { "type": "string", "default": "2" },
+          "name": { "type": "string" },
+          "active": { "type": "boolean", "default": true },
+          "description": { "type": "string" },
+          "link_rewrite": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "update_category",
+      "label": "Modifier une catégorie",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/api/categories/{categoryId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["categoryId"],
+        "properties": {
+          "categoryId": { "type": "string" },
+          "id_parent": { "type": "string" },
+          "name": { "type": "string" },
+          "active": { "type": "boolean" },
+          "description": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_orders",
+      "label": "Récupérer les commandes",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/orders",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "reference": { "type": "string" },
+          "id_customer": { "type": "string" },
+          "total_paid": { "type": "number" },
+          "total_products_wt": { "type": "number" },
+          "current_state": { "type": "string" },
+          "date_add": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "get_order",
+      "label": "Obtenir une commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/orders/{orderId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["orderId"],
+        "properties": {
+          "orderId": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "reference": { "type": "string" },
+          "id_customer": { "type": "string" },
+          "total_paid": { "type": "number" },
+          "total_products_wt": { "type": "number" },
+          "current_state": { "type": "string" },
+          "date_add": { "type": "string" },
+          "payment": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_order",
+      "label": "Créer une commande",
+      "type": "destination",
+      "method": "POST",
+      "path": "/api/orders",
+      "input_schema": {
+        "type": "object",
+        "required": ["id_cart", "id_customer", "current_state"],
+        "properties": {
+          "id_cart": { "type": "string" },
+          "id_customer": { "type": "string" },
+          "current_state": { "type": "string" },
+          "payment": { "type": "string" },
+          "total_paid": { "type": "number" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "reference": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "update_order",
+      "label": "Modifier une commande",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/api/orders/{orderId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["orderId"],
+        "properties": {
+          "orderId": { "type": "string" },
+          "current_state": { "type": "string" },
+          "payment": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_order_states",
+      "label": "Récupérer les états de commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/order_states",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "color": { "type": "string" },
+          "paid": { "type": "boolean" },
+          "shipped": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "list_order_histories",
+      "label": "Récupérer l'historique des commandes",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/order_histories",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "id_order": { "type": "string" },
+          "id_order_state": { "type": "string" },
+          "date_add": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_order_details",
+      "label": "Récupérer les détails de commande",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/order_details",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "id_order": { "type": "string" },
+          "product_id": { "type": "string" },
+          "product_name": { "type": "string" },
+          "product_quantity": { "type": "number" },
+          "unit_price_tax_incl": { "type": "number" },
+          "total_price_tax_incl": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_cart_rules",
+      "label": "Récupérer les règles panier (promotions)",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/cart_rules",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "code": { "type": "string" },
+          "reduction_percent": { "type": "number" },
+          "reduction_amount": { "type": "number" },
+          "active": { "type": "boolean" },
+          "date_from": { "type": "string" },
+          "date_to": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_cart_rule",
+      "label": "Créer une règle panier (promotion)",
+      "type": "destination",
+      "method": "POST",
+      "path": "/api/cart_rules",
+      "input_schema": {
+        "type": "object",
+        "required": ["name", "code"],
+        "properties": {
+          "name": { "type": "string" },
+          "code": { "type": "string" },
+          "reduction_percent": { "type": "number" },
+          "reduction_amount": { "type": "number" },
+          "active": { "type": "boolean", "default": true },
+          "date_from": { "type": "string" },
+          "date_to": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_taxes",
+      "label": "Récupérer les taxes",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/taxes",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "rate": { "type": "number" },
+          "active": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "list_tax_rules",
+      "label": "Récupérer les règles de taxe",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/tax_rules",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "id_tax_rules_group": { "type": "string" },
+          "id_country": { "type": "string" },
+          "id_tax": { "type": "string" },
+          "zipcode_from": { "type": "string" },
+          "zipcode_to": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_tax_rule_groups",
+      "label": "Récupérer les groupes de règles de taxe",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/tax_rule_groups",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "active": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "list_specific_prices",
+      "label": "Récupérer les prix spécifiques (tarifs)",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/specific_prices",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "id_product": { "type": "string" },
+          "id_shop": { "type": "string" },
+          "id_currency": { "type": "string" },
+          "id_country": { "type": "string" },
+          "id_group": { "type": "string" },
+          "price": { "type": "number" },
+          "reduction": { "type": "number" },
+          "reduction_type": { "type": "string" },
+          "from": { "type": "string" },
+          "to": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_specific_price",
+      "label": "Créer un prix spécifique",
+      "type": "destination",
+      "method": "POST",
+      "path": "/api/specific_prices",
+      "input_schema": {
+        "type": "object",
+        "required": ["id_product", "price"],
+        "properties": {
+          "id_product": { "type": "string" },
+          "id_shop": { "type": "string" },
+          "id_currency": { "type": "string" },
+          "id_country": { "type": "string" },
+          "id_group": { "type": "string" },
+          "price": { "type": "number" },
+          "reduction": { "type": "number" },
+          "reduction_type": { "type": "string", "enum": ["amount", "percentage"] },
+          "from": { "type": "string", "format": "date-time" },
+          "to": { "type": "string", "format": "date-time" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "id_product": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_stock_availables",
+      "label": "Récupérer les stocks disponibles",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/stock_availables",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "id_product": { "type": "string" },
+          "id_product_attribute": { "type": "string" },
+          "id_shop": { "type": "string" },
+          "id_warehouse": { "type": "string" },
+          "quantity": { "type": "number" },
+          "out_of_stock": { "type": "integer" }
+        }
+      }
+    },
+    {
+      "id": "update_stock",
+      "label": "Mettre à jour le stock",
+      "type": "destination",
+      "method": "PUT",
+      "path": "/api/stock_availables/{stockAvailableId}",
+      "input_schema": {
+        "type": "object",
+        "required": ["stockAvailableId", "quantity"],
+        "properties": {
+          "stockAvailableId": { "type": "string" },
+          "quantity": { "type": "number" },
+          "out_of_stock": { "type": "integer" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "quantity": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "list_warehouses",
+      "label": "Récupérer les entrepôts",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/warehouses",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "reference": { "type": "string" },
+          "active": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "list_currencies",
+      "label": "Récupérer les devises",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/currencies",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "iso_code": { "type": "string" },
+          "conversion_rate": { "type": "number" },
+          "active": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "list_countries",
+      "label": "Récupérer les pays",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/countries",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "iso_code": { "type": "string" },
+          "id_zone": { "type": "string" },
+          "active": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "id": "list_zones",
+      "label": "Récupérer les zones",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/zones",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "active": { "type": "boolean" }
         }
       }
     }

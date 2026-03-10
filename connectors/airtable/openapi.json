@@ -1,0 +1,49 @@
+{
+  "connector_meta": {
+    "id": "airtable",
+    "name": "Airtable",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/airtable.com",
+    "category": "Base de données / No-code",
+    "auth_type": "api_key",
+    "docs_url": "https://airtable.com/developers/web/api/introduction",
+    "config_instructions": "1) Rendez-vous sur https://airtable.com/create/tokens (Developer Hub). 2) Créez un « Personal access token », donnez-lui un nom. 3) Ajoutez les scopes : data.records:read, data.records:write, schema.bases:read. 4) Choisissez les bases autorisées (ou toutes). 5) Créez le token et copiez-le immédiatement (il ne sera plus affiché). 6) URL de base : https://api.airtable.com/v0. En-tête : Authorization: Bearer <votre_token>. Doc : https://airtable.com/developers/web/api/introduction"
+  },
+  "auth_config": {
+    "api_key_header": "Authorization",
+    "base_url_param": "base_url"
+  },
+  "operations": [
+    {
+      "id": "list_records",
+      "label": "Récupérer les enregistrements d’une table",
+      "type": "source",
+      "method": "GET",
+      "path": "/{baseId}/{tableIdOrName}",
+      "pagination": "offset",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "fields": { "type": "object" },
+          "createdTime": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_record",
+      "label": "Créer un enregistrement",
+      "type": "destination",
+      "method": "POST",
+      "path": "/{baseId}/{tableIdOrName}",
+      "input_schema": {
+        "type": "object",
+        "required": ["fields"],
+        "properties": {
+          "fields": { "type": "object" },
+          "typecast": { "type": "boolean" }
+        }
+      }
+    }
+  ]
+}

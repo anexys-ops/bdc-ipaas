@@ -3,16 +3,35 @@
     "id": "ebp",
     "name": "EBP",
     "version": "1.0",
-    "icon": "ebp.svg",
+    "icon": "https://logo.clearbit.com/ebp.com",
     "category": "ERP / Comptabilité",
     "auth_type": "api_key",
     "modes": ["saas_api", "desktop_csv"],
-    "docs_url": "https://developer.ebp.com/"
+    "docs_url": "https://developer.ebp.com/",
+    "config_instructions": "EBP (SaaS ou Desktop) : 1) Accéder à l’API depuis l’espace EBP (SaaS) ou la configuration du logiciel. 2) Créer ou récupérer une clé API (X-API-Key) dans les paramètres d’intégration / développeur. 3) URL de base : endpoint fourni dans la documentation EBP (ex: https://api.ebp.com/v1 pour SaaS). Conserver la clé en secret. Tester avec une requête GET sur l’URL de base en envoyant l’en-tête X-API-Key."
   },
   "auth_config": {
     "api_key_header": "X-API-Key",
     "base_url_param": "base_url"
   },
+  "config_fields": [
+    {
+      "key": "base_url",
+      "label": "URL de base de l’API",
+      "type": "text",
+      "required": true,
+      "placeholder": "https://api.ebp.com/v1",
+      "description": "Endpoint de l’API EBP fourni dans la doc (SaaS ou votre instance). Sans slash final."
+    },
+    {
+      "key": "api_key",
+      "label": "Clé API (X-API-Key)",
+      "type": "password",
+      "required": true,
+      "placeholder": "Votre clé API EBP",
+      "description": "Clé API créée dans EBP (paramètres d’intégration). Envoyée dans l’en-tête X-API-Key."
+    }
+  ],
   "operations": [
     {
       "id": "list_customers",
