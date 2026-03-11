@@ -1,0 +1,20 @@
+# Démarrage automatique de la stack bdc-ipaas au boot
+# Installer: sudo cp /opt/bdc-ipaas/docker/anexys-ipaas.service /etc/systemd/system/
+# Puis:     sudo systemctl daemon-reload && sudo systemctl enable anexys-ipaas.service
+
+[Unit]
+Description=Stack ANEXYS iPaaS (Docker Compose)
+Documentation=https://github.com/anexys-ops/bdc-ipaas
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/bdc-ipaas
+ExecStart=/usr/bin/docker compose -f docker/docker-compose.prod.yml --env-file .env.production up -d
+ExecStop=/usr/bin/docker compose -f docker/docker-compose.prod.yml --env-file .env.production down
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

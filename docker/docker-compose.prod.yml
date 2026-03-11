@@ -41,6 +41,9 @@ services:
       REDIS_URL: redis://redis:6379
       FRONTEND_URL: ${FRONTEND_URL:-https://ultimate.edicloud.app}
       CONNECTORS_PATH: /app/connectors
+      # Forcer le moteur Prisma OpenSSL 3 sur Alpine (évite libssl.so.1.1)
+      PRISMA_QUERY_ENGINE_LIBRARY: /app/apps/api/dist/generated/master/libquery_engine-linux-musl-openssl-3.0.x.so.node
+      VAULT_KEY: ${VAULT_KEY}
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }

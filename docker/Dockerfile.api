@@ -12,6 +12,9 @@ RUN npm install -g pnpm && pnpm install --frozen-lockfile
 COPY apps/api apps/api
 COPY connectors connectors
 
+# Build des packages workspace dont l'API dépend (ex. @anexys/edifact)
+RUN pnpm --filter @anexys/edifact build
+
 WORKDIR /app/apps/api
 RUN npx prisma generate --schema=./src/prisma/schema.prisma
 RUN npx prisma generate --schema=./src/prisma/tenant.prisma
