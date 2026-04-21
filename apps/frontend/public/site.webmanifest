@@ -1,0 +1,17 @@
+{
+  "name": "Ultimate Edicloud",
+  "short_name": "Ultimate",
+  "description": "Plateforme iPaaS pour l'intégration ERP, EDI et e-commerce",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

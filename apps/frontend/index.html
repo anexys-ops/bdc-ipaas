@@ -1,12 +1,102 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta property="og:image" content="https://ultimate.edicloud.app/hero-integration.png" />
+    <meta name="theme-color" content="#0ea5e9" />
+
+    <!-- SEO Primary -->
+    <title>Ultimate Edicloud — Plateforme iPaaS | Connecteur ERP, EDI, E-commerce</title>
+    <meta name="description" content="Ultimate Edicloud est la plateforme iPaaS française pour automatiser vos échanges de données : connectez ERP (Sage, CEGID), e-commerce (Shopify), CRM et flux EDI avec un marketplace de connecteurs prêts à l'emploi." />
+    <meta name="keywords" content="iPaaS, intégration ERP, connecteur EDI, Sage, CEGID, Shopify, flux de données, automatisation SI, marketplace connecteurs, synchronisation ERP e-commerce, plateforme intégration française, ETL, API connector" />
+    <meta name="author" content="ANEXYS — Ultimate Edicloud" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="https://ultimate.edicloud.app/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ultimate.edicloud.app/" />
+    <meta property="og:title" content="Ultimate Edicloud — Plateforme iPaaS | Connecteur ERP, EDI, E-commerce" />
+    <meta property="og:description" content="Connectez ERP, e-commerce, CRM et flux EDI avec Ultimate Edicloud. Marketplace de connecteurs prêts à l'emploi, supervision temps réel, hébergement France." />
+    <meta property="og:image" content="https://ultimate.edicloud.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Ultimate Edicloud — Plateforme iPaaS pour l'intégration ERP et EDI" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="Ultimate Edicloud" />
+
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <title>Ultimate Edicloud — Intégrations connectées</title>
+    <meta name="twitter:site" content="@ultimateedicloud" />
+    <meta name="twitter:title" content="Ultimate Edicloud — Plateforme iPaaS française" />
+    <meta name="twitter:description" content="Connectez ERP, EDI, e-commerce et CRM. Marketplace de connecteurs, supervision en temps réel." />
+    <meta name="twitter:image" content="https://ultimate.edicloud.app/og-image.png" />
+
+    <!-- Structured Data — SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://ultimate.edicloud.app/#app",
+          "name": "Ultimate Edicloud",
+          "alternateName": "Ultimate — Le Connecteur",
+          "applicationCategory": "BusinessApplication",
+          "applicationSubCategory": "iPaaS, ERP Integration, EDI, Data Integration",
+          "operatingSystem": "Web",
+          "url": "https://ultimate.edicloud.app",
+          "description": "Plateforme iPaaS française pour automatiser les échanges de données entre ERP, e-commerce, CRM et systèmes EDI",
+          "inLanguage": "fr",
+          "offers": {
+            "@type": "Offer",
+            "category": "SaaS",
+            "priceCurrency": "EUR",
+            "availability": "https://schema.org/InStock"
+          },
+          "featureList": [
+            "Connecteurs ERP (Sage, CEGID, Dolibarr)",
+            "Intégration e-commerce (Shopify, WooCommerce)",
+            "Flux EDI automatisés",
+            "Marketplace de connecteurs",
+            "Supervision temps réel",
+            "API REST"
+          ],
+          "provider": {
+            "@type": "Organization",
+            "@id": "https://anexys.fr/#org",
+            "name": "ANEXYS",
+            "url": "https://anexys.fr",
+            "logo": "https://ultimate.edicloud.app/favicon.svg"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://ultimate.edicloud.app/#website",
+          "url": "https://ultimate.edicloud.app",
+          "name": "Ultimate Edicloud",
+          "description": "Plateforme iPaaS pour l'intégration ERP, EDI et e-commerce",
+          "inLanguage": "fr",
+          "publisher": {"@id": "https://anexys.fr/#org"},
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://ultimate.edicloud.app/marketplace?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

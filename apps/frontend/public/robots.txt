@@ -1,0 +1,28 @@
+# Ultimate Edicloud — robots.txt
+User-agent: *
+Allow: /
+Allow: /marketplace
+Allow: /marketplace/
+Allow: /tarifs
+Allow: /avis
+Allow: /signup-trial
+Allow: /reserver-demo
+
+# Protect private app routes
+Disallow: /dashboard
+Disallow: /flux
+Disallow: /planifier
+Disallow: /monitoring
+Disallow: /hub
+Disallow: /connectors
+Disallow: /settings
+Disallow: /backoffice
+Disallow: /gateway
+
+# Protect API
+Disallow: /api/
+
+# Crawl delay for bots
+Crawl-delay: 1
+
+Sitemap: https://ultimate.edicloud.app/sitemap.xml
