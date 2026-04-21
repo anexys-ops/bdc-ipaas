@@ -244,7 +244,7 @@ export function ConnectorNewPage() {
   if (!type) {
     if (loadingCategories) {
       return (
-        <div className="min-h-screen app-shell flex items-center justify-center p-4">
+        <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center p-4">
           <div className="glass-card px-10 py-8 flex flex-col items-center gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
             <p className="text-sm text-slate-600 font-medium">Chargement du catalogue…</p>
@@ -256,7 +256,7 @@ export function ConnectorNewPage() {
     const totalShown = visibleCategories.reduce((acc, c) => acc + c.filteredConnectors.length, 0);
 
     return (
-      <div className="min-h-screen app-shell">
+      <div className="flex-1 min-h-0 w-full">
         <section className="py-8 sm:py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Link
@@ -390,14 +390,14 @@ export function ConnectorNewPage() {
 
   if (loadingDetail || !connectorDetail) {
     return (
-      <div className="min-h-screen page-bg-mesh flex items-center justify-center">
+      <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen page-bg-mesh">
+    <div className="flex-1 min-h-0 w-full flex flex-col">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BackButton
           to={searchParams.get('from') === 'marketplace' ? '/marketplace' : `${basePath}/new`}

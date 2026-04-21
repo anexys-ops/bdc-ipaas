@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { AppMainNav } from './AppMainNav';
 import { AppFooter } from './AppFooter';
 import { AppHeaderBrand } from './AppHeaderBrand';
+import { AppPageBackground } from './AppPageBackground';
 
 interface PrivateLayoutProps {
   children?: React.ReactNode;
@@ -167,7 +168,10 @@ export function PrivateLayout({ children }: PrivateLayoutProps) {
           </div>
         </div>
       </header>
-      <main className="flex-1 min-h-0">{children ?? <Outlet />}</main>
+      <main className="flex-1 min-h-0 relative overflow-hidden flex flex-col">
+        <AppPageBackground />
+        <div className="relative z-[1] flex-1 min-h-0 flex flex-col">{children ?? <Outlet />}</div>
+      </main>
       <AppFooter />
     </div>
   );

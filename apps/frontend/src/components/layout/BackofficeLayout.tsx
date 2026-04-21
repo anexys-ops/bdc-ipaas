@@ -234,7 +234,7 @@ export function BackofficeLayout() {
           </nav>
         </div>
       </aside>
-      <main className="flex-1 min-w-0 bg-slate-50 border-l border-slate-100/80">
+      <main className="flex-1 min-w-0 bg-transparent border-l border-slate-100/80">
         <div className="px-4 py-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between text-xs text-slate-600 bg-white/90 border-b border-slate-200/80">
           <p className="min-w-0 leading-snug">
             Espace réservé au rôle <strong className="text-slate-800">SUPER_ADMIN</strong> — les liens « support » rejouent les

@@ -59,7 +59,7 @@ export function DashboardPage() {
   const connectorsCount = Array.isArray(connectors) ? connectors.length : 0;
 
   return (
-    <div className="min-h-screen page-bg-dashboard">
+    <div className="flex-1 min-h-0 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         {/* Hero */}
         <div className="mb-8 sm:mb-10">

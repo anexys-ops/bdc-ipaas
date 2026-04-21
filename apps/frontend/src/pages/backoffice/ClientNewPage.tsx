@@ -97,7 +97,7 @@ export function ClientNewPage() {
   const isStep2Valid = adminEmail.includes('@') && adminPassword.length >= 8;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="flex-1 min-h-0 w-full">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BackButton to="/backoffice/clients" className="mb-6">Retour aux clients</BackButton>
 

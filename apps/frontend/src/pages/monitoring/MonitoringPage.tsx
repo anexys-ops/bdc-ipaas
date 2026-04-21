@@ -50,7 +50,7 @@ export function MonitoringPage() {
   };
 
   return (
-    <div className="min-h-screen page-bg-mesh">
+    <div className="flex-1 min-h-0 w-full flex flex-col">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">

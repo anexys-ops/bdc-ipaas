@@ -19,4 +19,7 @@ export const authApi = {
   refresh: () => apiClient.post<{ accessToken: string }>('/auth/refresh', undefined, { skipAuth: true }),
 
   logout: () => apiClient.post<void>('/auth/logout'),
+
+  keycloakLogin: (keycloakAccessToken: string) =>
+    apiClient.post<AuthResponse>('/auth/keycloak', { keycloakAccessToken }, { skipAuth: true }),
 };

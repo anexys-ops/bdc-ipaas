@@ -256,7 +256,7 @@ export function MarketplacePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen page-bg-marketplace flex items-center justify-center p-4">
+      <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center p-4">
         <div className="glass-card px-10 py-8 flex flex-col items-center gap-4 shadow-glass-lg border-2 border-slate-200/80">
           <Loader2 className="w-10 h-10 animate-spin text-primary-500" aria-hidden />
           <p className="text-sm text-slate-600 font-medium">Chargement du catalogue…</p>
@@ -267,7 +267,7 @@ export function MarketplacePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen page-bg-marketplace flex items-center justify-center p-4">
+      <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center p-4">
         <Card className="max-w-md text-center border-2 border-slate-200 bg-white shadow-lg">
           <CardContent className="pt-6">
             <Package className="w-12 h-12 text-slate-400 mx-auto mb-4" />
@@ -285,7 +285,7 @@ export function MarketplacePage() {
   );
 
   return (
-    <div className="min-h-screen page-bg-marketplace">
+    <div className="flex-1 min-h-0 w-full flex flex-col">
       {/* Brique EDIFACT / EDI – au-dessus de tout */}
       <section className="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-5 sm:py-6 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4">

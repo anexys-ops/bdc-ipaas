@@ -49,15 +49,8 @@ export function ReserverDemoPage() {
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 page-bg-mesh relative overflow-hidden">
-      <div className="flex-1 flex items-center justify-center p-4 py-8 relative min-h-0">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary-200/50 rounded-full blur-3xl animate-float" />
-          <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-pastel-lavender/60 rounded-full blur-3xl animate-float" style={{ animationDelay: '-3s' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-pastel-mint/40 rounded-full blur-3xl" />
-        </div>
-
-        <Card className="relative w-full max-w-md bg-white/95 border border-slate-200/80 shadow-lg animate-fadeIn">
+    <div className="flex flex-1 flex-col min-h-0 items-center justify-center p-4 py-8 relative z-[1]">
+      <Card className="relative w-full max-w-md bg-white/95 border border-slate-200/80 shadow-lg animate-fadeIn">
           <CardHeader className="text-center">
             <div className="mx-auto w-14 h-14 bg-gradient-to-br from-primary-400 to-primary-300 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
               <Calendar className="w-7 h-7 text-white" />
@@ -130,7 +123,6 @@ export function ReserverDemoPage() {
             </p>
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }

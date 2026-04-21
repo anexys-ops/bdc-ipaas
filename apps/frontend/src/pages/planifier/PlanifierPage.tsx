@@ -153,7 +153,7 @@ export function PlanifierPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen page-bg-mesh flex items-center justify-center">
+      <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center">
         <div className="glass-card p-10 flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
           <p className="text-sm text-slate-400">Chargement des planifications…</p>
@@ -164,7 +164,7 @@ export function PlanifierPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen page-bg-mesh flex items-center justify-center p-4">
+      <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center p-4">
         <Card className="max-w-md text-center py-10">
           <p className="text-sm text-red-500">Erreur lors du chargement des planifications.</p>
         </Card>

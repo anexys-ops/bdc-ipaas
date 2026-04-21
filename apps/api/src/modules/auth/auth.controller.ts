@@ -21,7 +21,7 @@ import { AuthService } from './auth.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { Plan } from '../tenants/dto/create-tenant.dto';
 import { TenantUserRole } from '../tenants/dto/create-tenant-user.dto';
-import { LoginDto, AuthResponseDto, RefreshResponseDto, SignupTrialDto } from './dto';
+import { LoginDto, AuthResponseDto, RefreshResponseDto, SignupTrialDto, KeycloakLoginDto } from './dto';
 import { Public, Audit } from '../../common/decorators';
 import { JwtAuthGuard } from '../../common/guards';
 import { CurrentUser } from '../../common/decorators';
@@ -97,6 +97,36 @@ export class AuthController {
     @Req() request: Request,
   ): Promise<AuthResponseDto> {
     const { response: authResponse, refreshToken } = await this.authService.login(loginDto);
+
+    this.setRefreshTokenCookie(response, refreshToken);
+
+    await this.auditService.log({
+      tenantId: authResponse.user.tenantId,
+      userId: authResponse.user.id,
+      action: 'LOGIN',
+      resource: 'auth',
+      ipAddress: request.ip ?? request.socket?.remoteAddress,
+      userAgent: request.get('user-agent') ?? undefined,
+    });
+
+    return authResponse;
+  }
+
+  @Post('keycloak')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Échange un access token Keycloak contre une session applicative (JWT + cookie refresh)' })
+  @ApiResponse({ status: 200, description: 'Session créée', type: AuthResponseDto })
+  @ApiResponse({ status: 400, description: 'Keycloak non configuré ou corps invalide' })
+  @ApiResponse({ status: 401, description: 'Jeton Keycloak invalide ou utilisateur inconnu' })
+  async loginWithKeycloak(
+    @Body() dto: KeycloakLoginDto,
+    @Res({ passthrough: true }) response: Response,
+    @Req() request: Request,
+  ): Promise<AuthResponseDto> {
+    const { response: authResponse, refreshToken } = await this.authService.loginWithKeycloak(
+      dto.keycloakAccessToken,
+    );
 
     this.setRefreshTokenCookie(response, refreshToken);
 

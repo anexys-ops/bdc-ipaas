@@ -259,7 +259,7 @@ export function ClientDetailPage() {
 
   if (isLoading || !tenant) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex-1 min-h-0 w-full flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
@@ -267,7 +267,7 @@ export function ClientDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="flex-1 min-h-0 w-full flex items-center justify-center p-4">
         <Card className="max-w-md text-center py-10">
           <p className="text-sm text-red-500">Client introuvable.</p>
           <div className="mt-4">
@@ -279,7 +279,7 @@ export function ClientDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="flex-1 min-h-0 w-full">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BackButton to="/backoffice/clients" className="mb-6">
           Retour aux clients

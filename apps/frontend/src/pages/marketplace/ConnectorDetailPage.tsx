@@ -19,7 +19,7 @@ export function ConnectorDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen page-bg-mesh flex items-center justify-center">
+      <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center">
         <div className="glass-card p-10 flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
           <p className="text-sm text-slate-600">Chargement du connecteur…</p>
@@ -30,7 +30,7 @@ export function ConnectorDetailPage() {
 
   if (error || !connector) {
     return (
-      <div className="min-h-screen page-bg-mesh flex items-center justify-center p-4">
+      <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center p-4">
         <Card className="max-w-md text-center py-10">
           <Package className="w-12 h-12 text-slate-400 mx-auto mb-4" />
           <h2 className="text-lg font-semibold text-slate-800">Connecteur introuvable</h2>
@@ -49,7 +49,7 @@ export function ConnectorDetailPage() {
   const logoUrl = resolveMarketplaceLogoUrl(connector.id, connector.icon, connector.libraryLogoId);
 
   return (
-    <div className="page-bg-mesh">
+    <div className="flex-1 min-h-0 w-full flex flex-col">
       {/* Fil d'Ariane */}
       <div className="border-b border-slate-200/80 bg-white/50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

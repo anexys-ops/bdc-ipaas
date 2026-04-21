@@ -140,7 +140,7 @@ export function ConfiguredConnectorDetailPage() {
 
   if (isLoading || !connector) {
     return (
-      <div className="min-h-screen page-bg-mesh flex items-center justify-center">
+      <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
@@ -148,7 +148,7 @@ export function ConfiguredConnectorDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen page-bg-mesh flex items-center justify-center p-4">
+      <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center p-4">
         <Card className="max-w-md text-center py-10">
           <p className="text-sm text-red-500">Connecteur introuvable.</p>
           <div className="mt-4">
@@ -164,7 +164,7 @@ export function ConfiguredConnectorDetailPage() {
   const triggerOps = connectorDetail?.triggerOperations ?? [];
 
   return (
-    <div className="min-h-screen page-bg-mesh">
+    <div className="flex-1 min-h-0 w-full flex flex-col">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BackButton to={basePath} className="mb-6">
           Retour aux connecteurs

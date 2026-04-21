@@ -5,7 +5,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AuditService } from '../audit/audit.service';
 import { TenantsService } from '../tenants/tenants.service';
-import { LoginDto } from './dto';
+import { LoginDto, KeycloakLoginDto } from './dto';
 import type { AuthenticatedUser } from './interfaces';
 
 describe('AuthController', () => {
@@ -30,6 +30,10 @@ describe('AuthController', () => {
     login: jest.fn().mockResolvedValue({
       response: mockAuthResponse,
       refreshToken: 'refresh-token-123',
+    }),
+    loginWithKeycloak: jest.fn().mockResolvedValue({
+      response: mockAuthResponse,
+      refreshToken: 'refresh-token-kc',
     }),
     refreshAccessToken: jest.fn().mockResolvedValue({ accessToken: mockAuthResponse.accessToken }),
     logout: jest.fn().mockResolvedValue(undefined),
@@ -101,6 +105,18 @@ describe('AuthController', () => {
         ),
       ).rejects.toThrow(UnauthorizedException);
       expect(mockResponse.cookie).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /auth/keycloak', () => {
+    it('retourne 200 et pose le cookie refresh', async () => {
+      const dto: KeycloakLoginDto = { keycloakAccessToken: 'kc-access-token' };
+      const result = await controller.loginWithKeycloak(dto, mockResponse, mockRequest);
+
+      expect(result).toEqual(mockAuthResponse);
+      expect(authService.loginWithKeycloak).toHaveBeenCalledWith('kc-access-token');
+      expect(mockResponse.cookie).toHaveBeenCalled();
+      expect(auditService.log).toHaveBeenCalled();
     });
   });
 

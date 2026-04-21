@@ -85,7 +85,7 @@ export function FlowsPage() {
 
   if (!canView) {
     return (
-      <div className="min-h-screen page-bg-mesh">
+      <div className="flex-1 min-h-0 w-full flex flex-col">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <Card className="border border-slate-200/80 bg-white/95">
             <CardHeader>
@@ -109,7 +109,7 @@ export function FlowsPage() {
   }
 
   return (
-    <div className="min-h-screen page-bg-mesh relative">
+    <div className="flex-1 min-h-0 w-full flex flex-col relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>

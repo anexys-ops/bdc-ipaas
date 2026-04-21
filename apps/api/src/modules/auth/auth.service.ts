@@ -7,6 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import * as jose from 'jose';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LoginDto, AuthResponseDto, RefreshResponseDto, UserResponseDto } from './dto';
@@ -181,6 +182,115 @@ export class AuthService {
       },
       refreshToken,
     };
+  }
+
+  /**
+   * Vérifie un access token Keycloak (JWKS), rattache l’email à un utilisateur
+   * applicatif et ouvre une session JWT + refresh comme le login classique.
+   */
+  async loginWithKeycloak(
+    keycloakAccessToken: string,
+  ): Promise<{ response: AuthResponseDto; refreshToken: string }> {
+    const rawIssuer = this.configService.get<string>('KEYCLOAK_ISSUER')?.trim();
+    if (!rawIssuer) {
+      throw new BadRequestException('Keycloak n\'est pas configuré (KEYCLOAK_ISSUER manquant)');
+    }
+    const issuer = rawIssuer.replace(/\/$/, '');
+    const emailNormalized = await this.verifyKeycloakAccessToken(keycloakAccessToken, issuer);
+
+    const user = await this.prisma.user.findFirst({
+      where: { email: emailNormalized },
+      include: { tenant: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Aucun utilisateur applicatif associé à ce compte Keycloak');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Compte désactivé');
+    }
+
+    if (!user.tenant.isActive) {
+      throw new UnauthorizedException('Votre organisation a été désactivée');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    const accessToken = this.generateAccessToken(user, user.tenant.slug);
+    const { token: refreshToken } = await this.createRefreshToken(user.id);
+
+    this.logger.log(`Connexion Keycloak réussie pour userId: ${user.id}`);
+
+    return {
+      response: {
+        accessToken,
+        user: this.mapUserToResponse(user, user.tenant.slug),
+      },
+      refreshToken,
+    };
+  }
+
+  private async verifyKeycloakAccessToken(token: string, issuer: string): Promise<string> {
+    const wellKnownUrl = `${issuer}/.well-known/openid-configuration`;
+    let discovery: { jwks_uri?: string };
+    try {
+      const res = await fetch(wellKnownUrl);
+      if (!res.ok) {
+        throw new UnauthorizedException('Impossible de joindre la configuration OpenID de Keycloak');
+      }
+      discovery = (await res.json()) as { jwks_uri?: string };
+    } catch (e) {
+      this.logger.warn(`Keycloak discovery failed: ${String((e as Error)?.message ?? e)}`);
+      throw new UnauthorizedException('Configuration Keycloak inaccessible');
+    }
+
+    if (!discovery.jwks_uri) {
+      throw new UnauthorizedException('Réponse Keycloak invalide (jwks_uri manquant)');
+    }
+
+    const JWKS = jose.createRemoteJWKSet(new URL(discovery.jwks_uri));
+    const clientId = this.configService.get<string>('KEYCLOAK_CLIENT_ID')?.trim();
+
+    let payload: jose.JWTPayload;
+    try {
+      const { payload: p } = await jose.jwtVerify(token, JWKS, {
+        issuer,
+      });
+      payload = p;
+    } catch (e) {
+      this.logger.warn(`Keycloak JWT verify failed: ${String((e as Error)?.message ?? e)}`);
+      throw new UnauthorizedException('Jeton Keycloak invalide ou expiré');
+    }
+
+    if (clientId) {
+      const azp = typeof payload.azp === 'string' ? payload.azp : undefined;
+      const aud = payload.aud;
+      const audList = Array.isArray(aud) ? aud : aud != null ? [String(aud)] : [];
+      const audOk = audList.includes(clientId);
+      if (azp !== clientId && !audOk) {
+        throw new UnauthorizedException('Jeton Keycloak non émis pour ce client applicatif');
+      }
+    }
+
+    const emailRaw =
+      typeof payload.email === 'string'
+        ? payload.email
+        : typeof payload.preferred_username === 'string'
+          ? payload.preferred_username
+          : null;
+
+    const emailNormalized = emailRaw?.trim().toLowerCase();
+    if (!emailNormalized || !emailNormalized.includes('@')) {
+      throw new UnauthorizedException(
+        'Le jeton Keycloak ne contient pas d\'email (claim email ou preferred_username)',
+      );
+    }
+
+    return emailNormalized;
   }
 
   /**
