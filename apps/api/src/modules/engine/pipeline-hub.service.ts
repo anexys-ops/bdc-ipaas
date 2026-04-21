@@ -33,15 +33,17 @@ export class PipelineHubService {
   ) {}
 
   async getOverview(): Promise<PipelineHubOverview> {
-    const [infra, queues] = await Promise.all([
+    const [infra, queues, gateMessages] = await Promise.all([
       this.pipelineInfra.getStatus(),
       this.engineService.getQueueStats(),
+      this.pipelineInfra.getRecentGateMessages(50),
     ]);
     const benthosEvents = await this.pipelineInfra.getRecentBenthosHeartbeats(100);
     const runtime: FlowsRuntimeStatus = {
       ...infra,
       queues,
       benthosEvents,
+      gateMessages,
     };
 
     const redisUrl = this.config.get<string>('REDIS_URL') ?? '';

@@ -389,7 +389,7 @@ export function FlowsPage() {
                             className="px-4 py-14 text-center text-slate-500 text-sm"
                           >
                             {(data.gateMessages?.length ?? 0) === 0
-                              ? 'Aucun message dans ingress:global pour l'instant.'
+                              ? "Aucun message dans ingress:global pour l'instant."
                               : 'Aucun résultat pour ce filtre.'}
                           </td>
                         </tr>
