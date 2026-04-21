@@ -98,6 +98,13 @@ export class MarketplaceConnectorDto {
   @ApiProperty({ description: 'Chemin du fichier API JSON (ex: connectors/dolibarr/openapi.json)', required: false })
   apiJsonPath?: string | null;
 
+  @ApiProperty({
+    description: 'Référence bibliothèque d’icône (admin / affichage). Null = résolution automatique harmonisée.',
+    required: false,
+    nullable: true,
+  })
+  libraryLogoId?: string | null;
+
   @ApiProperty({ description: 'Connecteur visible dans la marketplace (admin uniquement)', required: false })
   enabled?: boolean;
 }

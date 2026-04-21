@@ -748,4 +748,31 @@ export class EngineService {
       finishedAt: e.finishedAt ?? undefined,
     }));
   }
+
+  /**
+   * Rejoue un flux à partir d'une exécution terminée (nouvelle exécution, même flowId).
+   * Voir Linear BDC-83 — extension ultérieure : lien parent, replay depuis DLQ gateway.
+   */
+  async replayExecution(
+    tenantId: string,
+    executionId: string,
+    options: { isDryRun?: boolean } = {},
+  ): Promise<ExecutionResult> {
+    const prisma = await this.getTenantClient(tenantId);
+    const previous = await prisma.flowExecution.findUnique({
+      where: { id: executionId },
+    });
+    if (!previous) {
+      throw new NotFoundException(`Exécution non trouvée: ${executionId}`);
+    }
+    if (previous.status === 'PENDING' || previous.status === 'RUNNING') {
+      throw new BadRequestException(
+        'Impossible de rejouer une exécution encore en cours ou en attente',
+      );
+    }
+    return this.executeFlow(tenantId, previous.flowId, {
+      isDryRun: options.isDryRun ?? false,
+      triggerSource: `REPLAY:${executionId}`,
+    });
+  }
 }

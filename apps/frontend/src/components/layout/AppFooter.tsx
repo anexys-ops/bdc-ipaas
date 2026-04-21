@@ -40,6 +40,9 @@ export function AppFooter({ className, showQuickLinks = true }: AppFooterProps) 
             <Link to="/tarifs" className="text-slate-600 hover:text-primary-600 transition-colors">
               Tarifs
             </Link>
+            <Link to="/avis" className="text-slate-600 hover:text-primary-600 transition-colors">
+              Avis
+            </Link>
             <Link to="/login" className="text-slate-600 hover:text-primary-600 transition-colors">
               Connexion
             </Link>

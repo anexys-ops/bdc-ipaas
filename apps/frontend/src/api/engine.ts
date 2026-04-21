@@ -110,6 +110,11 @@ export const engineApi = {
     return apiClient.post<ExecutionResult>(`/flows/${flowId}/execute${qs}`, undefined);
   },
 
+  replayExecution: (executionId: string, dryRun?: boolean) => {
+    const qs = dryRun ? '?dryRun=true' : '';
+    return apiClient.post<ExecutionResult>(`/executions/${executionId}/replay${qs}`, undefined);
+  },
+
   getPipelineInfra: () => apiClient.get<PipelineInfraStatus>('/engine/pipeline-infra'),
 
   getFlowsRuntime: () => apiClient.get<FlowsRuntimeStatus>('/engine/flows-runtime'),

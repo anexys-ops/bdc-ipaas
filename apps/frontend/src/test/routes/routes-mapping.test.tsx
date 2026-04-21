@@ -58,7 +58,16 @@ describe('Mapping des routes', () => {
 
   describe('Cohérence des chemins', () => {
     it('toutes les routes statiques sont dans la liste canonique', () => {
-      const knownPaths = ['/dashboard', '/audit', '/flows', '/mappings', '/connectors', '/account', '/billing'];
+      const knownPaths = [
+        '/dashboard',
+        '/audit',
+        '/flows',
+        '/mappings',
+        '/connectors',
+        '/account',
+        '/billing',
+        '/billing/subscribe',
+      ];
       knownPaths.forEach((p) => {
         expect(ALL_STATIC_PATHS.some((r) => r === p || r.startsWith(p))).toBe(true);
       });

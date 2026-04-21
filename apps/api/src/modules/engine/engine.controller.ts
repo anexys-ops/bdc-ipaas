@@ -88,6 +88,22 @@ export class EngineController {
     return this.engineService.getExecutionLogs(tenant.id, executionId);
   }
 
+  @Post('executions/:executionId/replay')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OPERATOR', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Rejouer un flux à partir d\'une exécution terminée' })
+  @ApiResponse({ status: 201, description: 'Nouvelle exécution lancée' })
+  async replayExecution(
+    @CurrentTenant() tenant: { id: string },
+    @Param('executionId', ParseUUIDPipe) executionId: string,
+    @Query('dryRun') dryRun?: string,
+  ): Promise<ExecutionResult> {
+    return this.engineService.replayExecution(tenant.id, executionId, {
+      isDryRun: dryRun === 'true',
+    });
+  }
+
   @Get('queues/stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')

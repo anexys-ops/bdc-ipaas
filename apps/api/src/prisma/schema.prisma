@@ -174,13 +174,15 @@ model AuditLog {
 
 /// Métadonnées marketplace gérées depuis l'administration (étoiles, tarif, texte, fichier API, activation).
 model MarketplaceItem {
-  id           String   @id @default(uuid())
-  connectorId  String   @unique
-  stars        Int      @default(5)
-  priceLabel   String   @default("99€ HT")
-  description  String?
-  apiJsonPath  String?
-  enabled      Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(uuid())
+  connectorId    String   @unique
+  stars          Int      @default(5)
+  priceLabel     String   @default("99€ HT")
+  description    String?
+  apiJsonPath    String?
+  /// Référence optionnelle vers la bibliothèque d’icônes (ex: si:shopify, local:ebp).
+  libraryLogoId  String?
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }

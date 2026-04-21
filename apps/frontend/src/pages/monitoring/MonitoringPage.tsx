@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, Button, Input } from '../../components/ui';
 import {
   Activity,
@@ -9,6 +10,8 @@ import {
   Trash2,
   Save,
   Info,
+  ArrowRight,
+  Workflow,
 } from 'lucide-react';
 
 export type TypeErreurNotification = 'TOUTES' | 'ECHEC_UNIQUEMENT' | 'ECHEC_ET_PARTIEL' | 'AUCUNE';
@@ -58,6 +61,34 @@ export function MonitoringPage() {
             Configuration des alertes, adresses de notification et types d’erreur pour l’information.
           </p>
         </div>
+
+        <Card className="border border-primary-200/80 bg-primary-50/40 mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-slate-800 text-base">
+              <Workflow className="w-5 h-5 text-primary-600" />
+              Flux EDI & pipeline (Benthos / Redis)
+            </CardTitle>
+            <CardDescription>
+              La supervision temps réel des streams Redis, du routage token → destination et des DLQ est pilotée depuis
+              les vues <strong>Flux</strong> (événements Benthos, files BullMQ) et <strong>Hub pipeline</strong>. Les API
+              gateway dédiées (BDC-82) compléteront relance DLQ et export.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            <Link to="/flows" className="inline-flex">
+              <Button type="button" variant="outline" className="gap-2">
+                Ouvrir Flux
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link to="/hub/pipeline" className="inline-flex">
+              <Button type="button" className="gap-2">
+                Hub pipeline
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
 
         {/* Configuration des alertes */}
         <Card className="border border-slate-200/80 bg-white/95 mb-6">

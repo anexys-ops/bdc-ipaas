@@ -7,6 +7,7 @@ export interface MarketplaceItemResponse {
   priceLabel: string;
   description: string | null;
   apiJsonPath: string | null;
+  libraryLogoId: string | null;
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -26,6 +27,7 @@ export interface MarketplaceConnectorAdmin {
   priceLabel?: string;
   description?: string | null;
   apiJsonPath?: string | null;
+  libraryLogoId?: string | null;
   enabled?: boolean;
 }
 
@@ -35,6 +37,7 @@ export interface CreateMarketplaceItemDto {
   priceLabel?: string;
   description?: string;
   apiJsonPath?: string;
+  libraryLogoId?: string | null;
   enabled?: boolean;
 }
 
@@ -43,6 +46,7 @@ export interface UpdateMarketplaceItemDto {
   priceLabel?: string;
   description?: string;
   apiJsonPath?: string;
+  libraryLogoId?: string | null;
   enabled?: boolean;
 }
 

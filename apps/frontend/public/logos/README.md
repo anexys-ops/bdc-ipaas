@@ -6,6 +6,7 @@ Ce dossier contient les logos affichés pour chaque logiciel.
 - **Sage** (sage.svg, sage-100.svg, sage-x3.svg, sage-psc.svg) : Wikimedia Commons – Sage Group logo.
 - **EBP / Cegid** (ebp.svg, ebp-sdk.svg, ebp-saas.svg) : Wikimedia Commons – Cegid logo 2018 (EBP fait partie de Cegid).
 - **Dolibarr** (dolibarr.png) : Wikimedia Commons – logo officiel Dolibarr.
+- **Connecteurs SaaS courants** (SVG) : worldvectorlogo.com et/ou jsDelivr (simple-icons) pour Shopify, Salesforce, HubSpot, Stripe, Slack, Notion, Airtable, Google Sheets, WooCommerce, PrestaShop, Zendesk, Mailchimp, GitHub, Xero, QuickBooks, Pipedrive, Trello, Twilio, Asana, Odoo — voir ticket Linear BDC-81 pour la liste cible et les sources.
 
 **Placeholder :**
 - **Sellsy** (sellsy.svg) : placeholder texte ; remplacer par le logo officiel si besoin.

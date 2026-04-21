@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button } from '../../componen
 import { flowsApi } from '../../api/flows';
 import { engineApi } from '../../api/engine';
 import type { Flow } from '../../types';
-import { Loader2, Play, FlaskConical, FileInput, FileOutput, Activity, FileText, ExternalLink } from 'lucide-react';
+import { Loader2, Play, FlaskConical, FileInput, FileOutput, Activity, FileText, ExternalLink, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 function asPath(value: unknown): string {
@@ -67,6 +67,16 @@ export function BackofficeFileFlowsPage() {
       engineApi.executeFlow(flowId, dryRun),
     onSuccess: (_, vars) => {
       toast.success(vars.dryRun ? 'Dry-run lancé' : 'Exécution lancée');
+      queryClient.invalidateQueries({ queryKey: ['flow-executions', vars.flowId] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const replayMutation = useMutation({
+    mutationFn: ({ executionId, flowId, dryRun }: { executionId: string; flowId: string; dryRun: boolean }) =>
+      engineApi.replayExecution(executionId, dryRun),
+    onSuccess: (_, vars) => {
+      toast.success(vars.dryRun ? 'Replay (dry-run) lancé' : 'Replay lancé');
       queryClient.invalidateQueries({ queryKey: ['flow-executions', vars.flowId] });
     },
     onError: (err: Error) => toast.error(err.message),
@@ -161,6 +171,47 @@ export function BackofficeFileFlowsPage() {
                       >
                         <Play className="w-4 h-4 mr-1" />
                         Exécuter
+                      </Button>
+                      <Button
+                        variant="outline"
+                        title="Rejoue le même flux après correction (nouvelle exécution)"
+                        disabled={
+                          !last?.executionId ||
+                          last.status === 'PENDING' ||
+                          last.status === 'RUNNING' ||
+                          replayMutation.isPending
+                        }
+                        onClick={() =>
+                          last?.executionId &&
+                          replayMutation.mutate({
+                            executionId: last.executionId,
+                            flowId: flow.id,
+                            dryRun: false,
+                          })
+                        }
+                      >
+                        <RotateCcw className="w-4 h-4 mr-1" />
+                        Replay
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={
+                          !last?.executionId ||
+                          last.status === 'PENDING' ||
+                          last.status === 'RUNNING' ||
+                          replayMutation.isPending
+                        }
+                        onClick={() =>
+                          last?.executionId &&
+                          replayMutation.mutate({
+                            executionId: last.executionId,
+                            flowId: flow.id,
+                            dryRun: true,
+                          })
+                        }
+                      >
+                        <RotateCcw className="w-4 h-4 mr-1" />
+                        Replay dry-run
                       </Button>
                       <Link to={`/backoffice/planifier/${flow.id}/edit`}>
                         <Button variant="outline">Configurer</Button>

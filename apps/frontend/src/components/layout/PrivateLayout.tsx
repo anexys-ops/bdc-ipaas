@@ -47,13 +47,37 @@ export function PrivateLayout({ children }: PrivateLayoutProps) {
         <div className="max-w-[min(100rem,100%)] mx-auto px-2 sm:px-4 lg:px-6">
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 min-h-[3.5rem] py-2 overflow-visible">
             <Link to="/dashboard" className="flex items-center gap-2 shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-primary-500 flex items-center justify-center shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-violet-600 flex items-center justify-center shadow-sm">
                 <Zap className="w-5 h-5 text-white" />
               </div>
-              <span className="font-semibold text-slate-800 hidden sm:inline text-sm whitespace-nowrap">
-                Ultimate Edicloud
-              </span>
+              <div className="hidden sm:flex flex-col leading-tight shrink-0">
+                <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">
+                  Ultimate <span className="text-primary-600">Edicloud</span>
+                </span>
+                <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Le connecteur</span>
+              </div>
             </Link>
+
+            <nav
+              className="hidden xl:flex items-center gap-2 shrink-0 text-[11px] font-medium text-slate-500 border-l border-slate-200/90 pl-3 ml-1"
+              aria-label="Liens site public"
+            >
+              <Link to="/" className="hover:text-sky-600 transition-colors">
+                Site
+              </Link>
+              <span className="text-slate-300" aria-hidden>
+                ·
+              </span>
+              <Link to="/tarifs" className="hover:text-sky-600 transition-colors">
+                Tarifs
+              </Link>
+              <span className="text-slate-300" aria-hidden>
+                ·
+              </span>
+              <Link to="/avis" className="hover:text-sky-600 transition-colors">
+                Avis
+              </Link>
+            </nav>
 
             {/* Pas d'overflow ici : overflow-x-auto masque les sous-menus (position absolute sous le header). */}
             <div className="flex-1 min-w-0 overflow-visible min-h-0">
@@ -103,6 +127,16 @@ export function PrivateLayout({ children }: PrivateLayoutProps) {
                         <CreditCard className="w-4 h-4 text-slate-400" />
                         Facturation
                       </Link>
+                      {isAdmin && (
+                        <Link
+                          to="/billing/subscribe"
+                          onClick={closeMenu}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                        >
+                          <CreditCard className="w-4 h-4 text-sky-500" />
+                          Abonnement Stripe
+                        </Link>
+                      )}
                       <Link to="/billing/quota" onClick={closeMenu} className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
                         <PieChart className="w-4 h-4 text-slate-400" />
                         Quota et volumes

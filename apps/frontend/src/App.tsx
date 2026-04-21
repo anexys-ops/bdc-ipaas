@@ -39,6 +39,8 @@ import { GroupsPage } from './pages/groups/GroupsPage';
 import { MonitoringPage } from './pages/monitoring/MonitoringPage';
 import { PipelineHubPage } from './pages/hub/PipelineHubPage';
 import { TarifsPage } from './pages/tarifs/TarifsPage';
+import { AvisPage } from './pages/avis/AvisPage';
+import { SubscribePage } from './pages/billing/SubscribePage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -77,8 +79,13 @@ function MarketplaceLayout() {
 function App() {
   return (
     <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<HomePage />} />
+      {/* Pages marketing : même en-tête que marketplace (visiteur) */}
+      <Route path="/" element={<PublicLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="tarifs" element={<TarifsPage />} />
+        <Route path="avis" element={<AvisPage />} />
+      </Route>
+
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup-trial" element={<SignupTrialPage />} />
       <Route path="/reserver-demo" element={<ReserverDemoPage />} />
@@ -87,11 +94,6 @@ function App() {
       <Route path="/marketplace" element={<MarketplaceLayout />}>
         <Route index element={<MarketplacePage />} />
         <Route path=":type" element={<ConnectorDetailPage />} />
-      </Route>
-
-      {/* Pages accessibles sans connexion (header commun) */}
-      <Route element={<PublicLayout />}>
-        <Route path="/tarifs" element={<TarifsPage />} />
       </Route>
 
       {/* Routes privées avec menu commun */}
@@ -122,6 +124,7 @@ function App() {
         <Route path="/account" element={<AccountPage />} />
         <Route path="/settings/api-key" element={<ApiKeyPage />} />
         <Route path="/billing" element={<BillingPage />} />
+        <Route path="/billing/subscribe" element={<SubscribePage />} />
         <Route path="/billing/invoices" element={<InvoicesPage />} />
         <Route path="/billing/quota" element={<QuotaPage />} />
         <Route path="/monitoring" element={<MonitoringPage />} />

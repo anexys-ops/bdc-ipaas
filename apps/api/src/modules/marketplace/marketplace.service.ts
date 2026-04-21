@@ -87,6 +87,7 @@ export class MarketplaceService {
       priceLabel: DEFAULT_PRICE_LABEL,
       description: null,
       apiJsonPath: null,
+      libraryLogoId: null,
       enabled: true,
     };
     if (!overlay.enabled) {
@@ -133,6 +134,7 @@ export class MarketplaceService {
       priceLabel: overlay.priceLabel,
       description: overlay.description,
       apiJsonPath: overlay.apiJsonPath,
+      libraryLogoId: overlay.libraryLogoId ?? null,
       authConfig: connector.auth_config as Record<string, unknown>,
       configFields,
       configInstructions: connector.connector_meta.config_instructions,
@@ -336,7 +338,17 @@ export class MarketplaceService {
       };
       operations: Array<{ type: string }>;
     },
-    overlayMap: Map<string, { stars: number; priceLabel: string; description: string | null; apiJsonPath: string | null; enabled: boolean }>,
+    overlayMap: Map<
+      string,
+      {
+        stars: number;
+        priceLabel: string;
+        description: string | null;
+        apiJsonPath: string | null;
+        libraryLogoId: string | null;
+        enabled: boolean;
+      }
+    >,
     includeEnabled = false,
   ): MarketplaceConnectorDto {
     const sourceCount = connector.operations.filter((op) => op.type === 'source').length;
@@ -347,6 +359,7 @@ export class MarketplaceService {
       priceLabel: DEFAULT_PRICE_LABEL,
       description: null,
       apiJsonPath: null,
+      libraryLogoId: null,
       enabled: true,
     };
 
@@ -364,6 +377,7 @@ export class MarketplaceService {
       priceLabel: overlay.priceLabel,
       description: overlay.description,
       apiJsonPath: overlay.apiJsonPath,
+      libraryLogoId: overlay.libraryLogoId ?? null,
     };
     if (includeEnabled) {
       (dto as MarketplaceConnectorDto & { enabled: boolean }).enabled = overlay.enabled;

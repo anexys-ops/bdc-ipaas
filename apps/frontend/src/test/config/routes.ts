@@ -6,6 +6,8 @@ export const PUBLIC_ROUTES = [
   { path: '/', name: 'Accueil' },
   { path: '/login', name: 'Connexion' },
   { path: '/marketplace', name: 'Marketplace' },
+  { path: '/tarifs', name: 'Tarifs' },
+  { path: '/avis', name: 'Avis' },
 ] as const;
 
 export const PRIVATE_ROUTES = [
@@ -28,6 +30,7 @@ export const PRIVATE_ROUTES = [
   { path: '/account', name: 'Mon compte' },
   { path: '/settings/api-key', name: 'Clé API' },
   { path: '/billing', name: 'Facturation' },
+  { path: '/billing/subscribe', name: 'Abonnement Stripe' },
   { path: '/billing/invoices', name: 'Mes factures' },
   { path: '/billing/quota', name: 'Quota et volumes' },
 ] as const;

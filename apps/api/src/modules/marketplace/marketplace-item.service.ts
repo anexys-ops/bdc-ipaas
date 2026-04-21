@@ -14,15 +14,38 @@ export class MarketplaceItemService {
     return this.prisma.marketplaceItem.findUnique({ where: { connectorId } });
   }
 
-  async getOverlayMap(): Promise<Map<string, { stars: number; priceLabel: string; description: string | null; apiJsonPath: string | null; enabled: boolean }>> {
+  async getOverlayMap(): Promise<
+    Map<
+      string,
+      {
+        stars: number;
+        priceLabel: string;
+        description: string | null;
+        apiJsonPath: string | null;
+        libraryLogoId: string | null;
+        enabled: boolean;
+      }
+    >
+  > {
     const items = await this.prisma.marketplaceItem.findMany();
-    const map = new Map<string, { stars: number; priceLabel: string; description: string | null; apiJsonPath: string | null; enabled: boolean }>();
+    const map = new Map<
+      string,
+      {
+        stars: number;
+        priceLabel: string;
+        description: string | null;
+        apiJsonPath: string | null;
+        libraryLogoId: string | null;
+        enabled: boolean;
+      }
+    >();
     for (const item of items) {
       map.set(item.connectorId, {
         stars: item.stars,
         priceLabel: item.priceLabel,
         description: item.description,
         apiJsonPath: item.apiJsonPath,
+        libraryLogoId: item.libraryLogoId ?? null,
         enabled: item.enabled,
       });
     }
@@ -43,6 +66,7 @@ export class MarketplaceItemService {
         priceLabel: dto.priceLabel ?? '99€ HT',
         description: dto.description ?? null,
         apiJsonPath: dto.apiJsonPath ?? null,
+        libraryLogoId: dto.libraryLogoId?.trim() ? dto.libraryLogoId.trim() : null,
         enabled: dto.enabled ?? true,
       },
     });
@@ -63,6 +87,9 @@ export class MarketplaceItemService {
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.apiJsonPath !== undefined && { apiJsonPath: dto.apiJsonPath }),
         ...(dto.enabled !== undefined && { enabled: dto.enabled }),
+        ...(dto.libraryLogoId !== undefined && {
+          libraryLogoId: dto.libraryLogoId && dto.libraryLogoId.trim() ? dto.libraryLogoId.trim() : null,
+        }),
       },
     });
   }

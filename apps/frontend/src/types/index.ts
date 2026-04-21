@@ -31,6 +31,8 @@ export interface MarketplaceConnector {
   description?: string | null;
   /** Chemin du fichier API JSON */
   apiJsonPath?: string | null;
+  /** Référence bibliothèque d’icône (admin), ex. si:shopify ou local:ebp */
+  libraryLogoId?: string | null;
 }
 
 export interface MarketplaceCategory {

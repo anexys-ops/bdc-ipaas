@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsOptional, IsString, Min, Max } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, Min, Max, ValidateIf } from 'class-validator';
 
 export class CreateMarketplaceItemDto {
   @ApiProperty({ description: 'ID du connecteur (ex: dolibarr, taskit, isales)' })
@@ -35,6 +35,15 @@ export class CreateMarketplaceItemDto {
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
+
+  @ApiProperty({
+    description: 'Icône depuis la bibliothèque (ex: si:shopify, local:ebp). Laisser vide pour résolution automatique.',
+    required: false,
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== undefined && v !== null && v !== '')
+  @IsString()
+  libraryLogoId?: string;
 }
 
 export class UpdateMarketplaceItemDto {
@@ -67,6 +76,16 @@ export class UpdateMarketplaceItemDto {
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
+
+  @ApiProperty({
+    description: 'Icône depuis la bibliothèque (ex: si:shopify, local:ebp). Vide ou null pour résolution automatique.',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null && v !== undefined)
+  @IsString()
+  libraryLogoId?: string | null;
 }
 
 export class MarketplaceItemResponseDto {
@@ -90,6 +109,9 @@ export class MarketplaceItemResponseDto {
 
   @ApiProperty()
   enabled!: boolean;
+
+  @ApiProperty({ required: false, nullable: true })
+  libraryLogoId?: string | null;
 
   @ApiProperty()
   createdAt!: Date;
