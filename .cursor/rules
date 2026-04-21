@@ -14,3 +14,7 @@ RÈGLES OBLIGATOIRES :
 10. Erreurs : toujours utiliser les exceptions NestJS (BadRequestException, etc.)
 11. DTOs : toujours class-validator + class-transformer
 12. Logs : utiliser LoggerService NestJS, jamais console.log
+
+VERSIONNEMENT ET GIT (OBLIGATOIRE) :
+- À chaque `git push` ou modification majeure (fonctionnalité, rupture de comportement, refonte notable) : incrémenter la version semver dans `package.json` à la racine du monorepo **et** dans `apps/frontend/package.json` (patch par défaut ; minor/major si le changement le justifie), puis pousser sur la branche distante dans le même flux de travail.
+- La version affichée dans le footer du frontend provient de `apps/frontend/package.json` : toute release utilisateur-visible doit y refléter le bon numéro avant le push.
