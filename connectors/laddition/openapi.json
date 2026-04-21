@@ -1,0 +1,26 @@
+{
+  "connector_meta": {
+    "id": "laddition",
+    "name": "L'Addition",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/laddition.com",
+    "category": "POS",
+    "auth_type": "api_key",
+    "docs_url": null,
+    "config_instructions": "Référence Ultimate: https://docs.ultimate.edicloud.app/connectors/laddition — Configurer l'URL de base et la clé API selon la documentation du fournisseur."
+  },
+  "auth_config": {
+    "base_url_param": "base_url",
+    "api_key_header": "X-API-Key"
+  },
+  "operations": [
+    {
+      "id": "list_records",
+      "label": "Lister les enregistrements (placeholder)",
+      "type": "source",
+      "method": "GET",
+      "path": "/api/records",
+      "output_schema": { "type": "object", "properties": { "id": { "type": "string" }, "name": { "type": "string" } } }
+    }
+  ]
+}

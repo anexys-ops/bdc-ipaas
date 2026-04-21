@@ -219,4 +219,12 @@ export class ConnectorRegistryService implements OnModuleInit, OnModuleDestroy {
   count(): number {
     return this.connectors.size;
   }
+
+  /**
+   * Retourne le chemin du fichier openapi.json pour un connecteur (admin).
+   */
+  getOpenApiFilePath(connectorId: string): string | null {
+    const connector = this.connectors.get(connectorId);
+    return connector?.filePath ?? null;
+  }
 }

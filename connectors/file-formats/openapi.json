@@ -1,0 +1,173 @@
+{
+  "connector_meta": {
+    "id": "file-formats",
+    "name": "Fichiers plats (CSV, JSON, TXT)",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/notion.so",
+    "category": "Fichiers",
+    "auth_type": "none",
+    "docs_url": null,
+    "config_instructions": "Connecteur logique pour les formats CSV, JSON et texte brut. À combiner avec un connecteur de transport (FTP/SFTP, AS2, webhook fichier, agent local) : la source physique du fichier est définie par l’autre connecteur ou par le moteur (dossier surveillé, file d’attente Benthos)."
+  },
+  "auth_config": {},
+  "config_fields": [],
+  "operations": [
+    {
+      "id": "read_csv_file",
+      "label": "Lire un fichier CSV",
+      "type": "source",
+      "method": "FILE_READ",
+      "file_format": "csv",
+      "description": "Parse un fichier CSV (séparateur et encodage configurables)",
+      "config_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string", "description": "Chemin logique ou clé du fichier" },
+          "separator": { "type": "string", "default": ";", "description": "Séparateur de colonnes" },
+          "encoding": { "type": "string", "default": "utf-8", "enum": ["utf-8", "windows-1252", "iso-8859-1"] },
+          "hasHeader": { "type": "boolean", "default": true },
+          "skipLines": { "type": "number", "default": 0 }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "Dynamique — colonnes déduites du header CSV"
+      }
+    },
+    {
+      "id": "read_json_file",
+      "label": "Lire un fichier JSON",
+      "type": "source",
+      "method": "FILE_READ",
+      "file_format": "json",
+      "description": "Lit un document JSON (objet, tableau ou JSON Lines)",
+      "config_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "encoding": { "type": "string", "default": "utf-8", "enum": ["utf-8", "windows-1252", "iso-8859-1"] },
+          "jsonLines": { "type": "boolean", "default": false, "description": "Si true, une ligne = un objet JSON" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "Structure selon le fichier"
+      }
+    },
+    {
+      "id": "read_text_file",
+      "label": "Lire un fichier texte (TXT)",
+      "type": "source",
+      "method": "FILE_READ",
+      "file_format": "txt",
+      "description": "Lit un fichier texte brut ou ligne par ligne",
+      "config_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "encoding": { "type": "string", "default": "utf-8", "enum": ["utf-8", "windows-1252", "iso-8859-1"] },
+          "splitLines": { "type": "boolean", "default": true, "description": "Si true, une ligne = un enregistrement" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "Contenu texte ou lignes"
+      }
+    },
+    {
+      "id": "write_csv_file",
+      "label": "Écrire un fichier CSV",
+      "type": "destination",
+      "method": "FILE_WRITE",
+      "file_format": "csv",
+      "description": "Produit un fichier CSV (séparateur et encodage configurables)",
+      "config_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string", "description": "Dossier ou préfixe de sortie" },
+          "filename": { "type": "string", "description": "Nom du fichier ({date}, {time}, {flowId})" },
+          "separator": { "type": "string", "default": ";" },
+          "encoding": { "type": "string", "default": "utf-8" },
+          "includeHeader": { "type": "boolean", "default": true }
+        }
+      },
+      "input_schema": {
+        "type": "object",
+        "description": "Dynamique — colonnes du mapping"
+      }
+    },
+    {
+      "id": "write_json_file",
+      "label": "Écrire un fichier JSON",
+      "type": "destination",
+      "method": "FILE_WRITE",
+      "file_format": "json",
+      "description": "Sérialise les enregistrements en JSON ou JSON Lines",
+      "config_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "filename": { "type": "string" },
+          "jsonLines": { "type": "boolean", "default": false },
+          "pretty": { "type": "boolean", "default": false }
+        }
+      },
+      "input_schema": { "type": "object", "description": "Données à sérialiser" }
+    },
+    {
+      "id": "write_text_file",
+      "label": "Écrire un fichier texte (TXT)",
+      "type": "destination",
+      "method": "FILE_WRITE",
+      "file_format": "txt",
+      "description": "Écrit du texte brut ou des lignes concaténées",
+      "config_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "filename": { "type": "string" },
+          "lineSeparator": { "type": "string", "default": "\\n" }
+        }
+      },
+      "input_schema": { "type": "object", "description": "Contenu ou champ texte" }
+    },
+    {
+      "id": "watch_directory_formats",
+      "label": "Surveiller un dossier (CSV / JSON / TXT)",
+      "type": "trigger",
+      "method": "FILE_WATCH",
+      "description": "Déclenche le flux sur nouveaux fichiers selon le motif (formats plats)",
+      "config_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "pattern": { "type": "string", "default": "*.{csv,json,txt}", "description": "Glob (ex: *.csv ou *.{csv,json})" },
+          "moveAfter": { "type": "boolean", "default": true }
+        }
+      }
+    },
+    {
+      "id": "agent_watch",
+      "label": "Surveiller un dossier local (Agent Desktop)",
+      "type": "trigger",
+      "method": "AGENT_WATCH",
+      "description": "Nécessite l’agent installé sur le poste client",
+      "config_schema": {
+        "type": "object",
+        "required": ["agentId", "watchPath"],
+        "properties": {
+          "agentId": { "type": "string" },
+          "watchPath": { "type": "string" },
+          "pattern": { "type": "string", "default": "*.{csv,json,txt}" }
+        }
+      }
+    }
+  ]
+}

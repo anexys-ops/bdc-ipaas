@@ -1,0 +1,100 @@
+{
+  "connector_meta": {
+    "id": "as2",
+    "name": "AS2 (EDI)",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/docusign.com",
+    "category": "EDI",
+    "auth_type": "certificate",
+    "docs_url": "https://en.wikipedia.org/wiki/AS2",
+    "config_instructions": "AS2 : identifiez le partenaire (AS2 ID), l’URL d’endpoint, les certificats de signature et chiffrement. Les messages entrants sont typiquement poussés vers une file Redis (stream) consommée par Benthos avant exécution du flux. Liez ce connecteur à un flux dont triggerConfig définit stream / ingestionToken pour le routeur."
+  },
+  "auth_config": {
+    "partner_as2_id_param": "partner_as2_id",
+    "our_as2_id_param": "our_as2_id",
+    "signing_cert_param": "signing_certificate",
+    "signing_key_param": "signing_private_key",
+    "encryption_cert_param": "partner_encryption_certificate"
+  },
+  "config_fields": [
+    {
+      "key": "partner_as2_id",
+      "label": "AS2 ID partenaire",
+      "type": "text",
+      "required": true,
+      "placeholder": "PARTNER_AS2_ID",
+      "description": "Identifiant AS2 du partenaire distant."
+    },
+    {
+      "key": "our_as2_id",
+      "label": "Notre AS2 ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "MY_COMPANY_AS2",
+      "description": "Identifiant AS2 émetteur côté plateforme."
+    },
+    {
+      "key": "as2_endpoint_url",
+      "label": "URL endpoint AS2 partenaire (sortant)",
+      "type": "text",
+      "required": false,
+      "placeholder": "https://partenaire.example.com/as2/receive",
+      "description": "URL HTTPS pour envoyer des messages AS2 vers le partenaire."
+    },
+    {
+      "key": "inbound_path_hint",
+      "label": "Segment URL entrante (référence)",
+      "type": "text",
+      "required": false,
+      "placeholder": "mon-partenaire",
+      "description": "Suffixe logique pour l’URL d’ingestion (ex: /as2/mon-partenaire), aligné sur la passerelle."
+    }
+  ],
+  "operations": [
+    {
+      "id": "receive_as2_message",
+      "label": "Réception message AS2 (entrant)",
+      "type": "trigger",
+      "method": "WEBHOOK",
+      "description": "Point d’entrée logique : le contenu est validé AS2 puis publié sur le stream Redis configuré dans le flux (Benthos worker).",
+      "config_schema": {
+        "type": "object",
+        "properties": {
+          "documentType": { "type": "string", "description": "Ex: ORDERS, INVOIC, libellé métier" },
+          "expectsMime": { "type": "string", "default": "application/edifact", "description": "Type MIME attendu après décodage" }
+        }
+      }
+    },
+    {
+      "id": "read_as2_payload",
+      "label": "Lire le corps AS2 décodé (source)",
+      "type": "source",
+      "method": "FILE_READ",
+      "description": "Lit le fichier ou le buffer issu du décodage AS2 (EDI, XML, etc.)",
+      "config_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string", "description": "Chemin ou clé du payload décodé" },
+          "encoding": { "type": "string", "default": "utf-8" }
+        }
+      },
+      "output_schema": { "type": "object", "description": "Contenu brut ou structuré selon parseur aval" }
+    },
+    {
+      "id": "send_as2_message",
+      "label": "Envoyer un message AS2 (sortant)",
+      "type": "destination",
+      "method": "POST",
+      "description": "Envoie le document signé/chiffré vers l’endpoint AS2 du partenaire.",
+      "config_schema": {
+        "type": "object",
+        "properties": {
+          "contentType": { "type": "string", "default": "application/edifact" },
+          "filename": { "type": "string", "description": "Nom suggéré du fichier joint" }
+        }
+      },
+      "input_schema": { "type": "object", "description": "Corps binaire ou texte à encapsuler AS2" }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "connector_meta": {
+    "id": "pa-cegid",
+    "name": "Cegid",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/cegid.com",
+    "category": "PA",
+    "auth_type": "api_key",
+    "docs_url": null,
+    "config_instructions": "Plateforme d'agrément Cegid pour la facturation électronique."
+  },
+  "auth_config": {},
+  "config_fields": [
+    { "key": "base_url", "label": "URL de la PA", "type": "text", "required": true, "placeholder": "https://..." },
+    { "key": "api_key", "label": "Clé API", "type": "password", "required": true }
+  ],
+  "operations": [
+    {
+      "id": "submit_invoice",
+      "label": "Déposer une facture",
+      "type": "destination",
+      "method": "POST",
+      "description": "Envoi d'une facture au format facturation électronique vers la PA Cegid.",
+      "input_schema": { "type": "object", "properties": {} }
+    }
+  ]
+}

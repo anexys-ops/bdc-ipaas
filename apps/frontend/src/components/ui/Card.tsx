@@ -33,7 +33,7 @@ export function CardHeader({ className, children, ...props }: CardProps) {
 
 export function CardTitle({ className, children, ...props }: CardProps) {
   return (
-    <h3 className={clsx('text-lg font-semibold text-gray-900', className)} {...props}>
+    <h3 className={clsx('text-lg font-semibold text-slate-800', className)} {...props}>
       {children}
     </h3>
   );
@@ -41,7 +41,7 @@ export function CardTitle({ className, children, ...props }: CardProps) {
 
 export function CardDescription({ className, children, ...props }: CardProps) {
   return (
-    <p className={clsx('text-sm text-gray-500 mt-1', className)} {...props}>
+    <p className={clsx('text-sm text-slate-600 mt-1', className)} {...props}>
       {children}
     </p>
   );

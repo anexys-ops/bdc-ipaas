@@ -2,7 +2,14 @@ import { Controller, Get, Post, Delete, Body, Headers, Req, Param, UseGuards, Ra
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
 import { BillingService } from './billing.service';
-import { CreateSubscriptionDto, CreatePortalSessionDto, BillingResponseDto, InvoiceResponseDto, PlanInfoDto } from './dto/billing.dto';
+import {
+  CreateSubscriptionDto,
+  CreatePortalSessionDto,
+  CreateCheckoutSessionDto,
+  BillingResponseDto,
+  InvoiceResponseDto,
+  PlanInfoDto,
+} from './dto/billing.dto';
 import { JwtAuthGuard, RolesGuard } from '../../common/guards';
 import { CurrentTenant, Roles, Public } from '../../common/decorators';
 
@@ -41,6 +48,16 @@ export class BillingController {
     @Body() dto: CreatePortalSessionDto,
   ): Promise<{ url: string }> {
     return this.billingService.createPortalSession(tenant.id, dto.returnUrl);
+  }
+
+  @Post('checkout-session')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Créer une session Stripe Checkout (abonnement)' })
+  createCheckoutSession(
+    @CurrentTenant() tenant: { id: string },
+    @Body() dto: CreateCheckoutSessionDto,
+  ): Promise<{ url: string }> {
+    return this.billingService.createCheckoutSession(tenant.id, dto);
   }
 
   @Get('plans')

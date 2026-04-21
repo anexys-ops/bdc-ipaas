@@ -185,6 +185,20 @@ export class ConnectorsService {
       };
     }
 
+    if (
+      connectorDef.connector_meta.auth_type === 'none' ||
+      connectorDef.connector_meta.auth_type === 'certificate'
+    ) {
+      return {
+        success: true,
+        message:
+          connectorDef.connector_meta.auth_type === 'certificate'
+            ? 'AS2 / certificats : validez la configuration sur la passerelle et les secrets.'
+            : 'Connecteur sans authentification réseau à tester ici.',
+        durationMs: 0,
+      };
+    }
+
     const startTime = Date.now();
     try {
       const configToTest = await this.ensureOAuth2AccessToken(
@@ -245,6 +259,24 @@ export class ConnectorsService {
       return {
         success: true,
         message: 'Connecteur agent : l’agent doit être installé et connecté.',
+        durationMs: 0,
+      };
+    }
+
+    if (
+      connectorDef.connector_meta.auth_type === 'none' ||
+      connectorDef.connector_meta.auth_type === 'certificate'
+    ) {
+      await prisma.connector.update({
+        where: { id: connectorId },
+        data: { lastTestedAt: new Date(), lastTestOk: true },
+      });
+      return {
+        success: true,
+        message:
+          connectorDef.connector_meta.auth_type === 'certificate'
+            ? 'AS2 : vérifiez certificats et endpoint sur l’infra.'
+            : 'Connecteur prêt (pas de test réseau).',
         durationMs: 0,
       };
     }

@@ -50,6 +50,7 @@ Cela lance l’API sur le port **3000** et le frontend sur **5173**. Rechargez h
 ### 4. Vérifier l’API
 
 - Ouvrir http://localhost:3000/api/docs (Swagger) ou `curl http://localhost:3000/api/v1/marketplace`.
+- Tester le login : `./scripts/test-login.sh` (depuis la racine du repo). En cas de succès : `HTTP 200 - Connexion OK`.
 - Si le front tourne sur une autre machine ou un autre port, créer `apps/frontend/.env` avec :  
   `VITE_API_URL=http://<adresse-de-l-api>/api/v1`
 

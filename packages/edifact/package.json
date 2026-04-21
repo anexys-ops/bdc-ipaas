@@ -1,5 +1,5 @@
 {
-  "name": "@anexys/edifact",
+  "name": "@anexys/edi-core",
   "version": "1.0.0",
   "description": "EDIFACT parser and generator for ANEXYS iPaaS",
   "main": "dist/index.js",

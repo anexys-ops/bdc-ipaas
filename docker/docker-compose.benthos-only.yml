@@ -1,0 +1,30 @@
+# Stack minimale Benthos + Redis (laboratoire ou machine sans la stack complète).
+# Ports: Redis 6380 (hôte) pour éviter le conflit avec anexys-redis:6379.
+# Usage depuis ce dossier : docker compose -f docker-compose.benthos-only.yml up -d
+#
+# Pour la production intégrée au projet, utiliser le service `benthos` dans docker-compose.yml.
+
+services:
+  redis-benthos:
+    image: redis:7-alpine
+    container_name: anexys-redis-benthos-lab
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  benthos:
+    image: jeffail/benthos:4.27.0
+    container_name: anexys-benthos-lab
+    volumes:
+      - ./benthos/benthos-lab.yaml:/benthos.yaml:ro
+    command: ["-c", "/benthos.yaml"]
+    ports:
+      - "4195:4195"
+    depends_on:
+      redis-benthos:
+        condition: service_healthy

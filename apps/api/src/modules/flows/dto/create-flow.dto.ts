@@ -29,8 +29,14 @@ export class CreateFlowDto {
   triggerType!: TriggerType;
 
   @ApiProperty({
-    description: 'Configuration du déclencheur (cron expression, webhook config, etc.)',
-    example: { cron: '0 */6 * * *' },
+    description:
+      'Configuration du déclencheur. Pour une entrée via Benthos (Redis Stream) : { "ingressViaBenthos": true, "stream": "ingress:global", "ingestionToken": "..." } (token synchronisé vers le routeur Redis). FILE_WATCH : inputPath obligatoire ; outputPath optionnel (fichier intermédiaire simulé Benthos) ; optionnellement les mêmes clés Benthos.',
+    example: {
+      cron: '0 */6 * * *',
+      ingressViaBenthos: true,
+      stream: 'ingress:global',
+      ingestionToken: 'tenant_flow_secret',
+    },
   })
   @IsObject()
   triggerConfig!: Record<string, unknown>;

@@ -134,17 +134,26 @@ export class EdifactController {
   @ApiQuery({ name: 'type', required: false, description: 'Filtrer par type (ORDERS, INVOIC, etc.)' })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'pageSize', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'offset', required: false })
   @ApiResponse({ status: 200, description: 'Liste paginée', type: EdifactMessagesListDto })
   async getMessages(
     @CurrentTenant() tenant: { id: string },
     @Query('type') type?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
   ): Promise<EdifactMessagesListDto> {
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    const offsetNum = offset ? parseInt(offset, 10) : undefined;
+    const pageFromOffset = limitNum != null && limitNum > 0 && offsetNum != null
+      ? Math.floor(offsetNum / limitNum) + 1
+      : undefined;
     return this.edifactService.findMessages(tenant.id, {
       type: type || undefined,
-      page: page ? parseInt(page, 10) : undefined,
-      pageSize: pageSize ? parseInt(pageSize, 10) : undefined,
+      page: page ? parseInt(page, 10) : pageFromOffset,
+      pageSize: pageSize ? parseInt(pageSize, 10) : limitNum,
     });
   }
 

@@ -74,13 +74,17 @@ class ApiClient {
       }
 
       const error = await response.json().catch(() => ({ message: 'Erreur inconnue' }));
-      const message =
-        typeof error?.message === 'string'
-          ? error.message
-          : Array.isArray(error?.message)
-            ? error.message.join(', ')
-            : error?.message ?? `HTTP ${response.status}`;
-      throw new Error(message);
+      let message: string;
+      if (typeof error?.message === 'string') {
+        message = error.message;
+      } else if (Array.isArray(error?.message)) {
+        message = error.message.join(', ');
+      } else if (error?.message != null) {
+        message = String(error.message);
+      } else {
+        message = `Erreur ${response.status}`;
+      }
+      throw new Error(message || `Erreur ${response.status}`);
     }
 
     if (response.status === 204) {
@@ -98,6 +102,14 @@ class ApiClient {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  put<T>(endpoint: string, data?: unknown, options?: RequestOptions): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     });
   }

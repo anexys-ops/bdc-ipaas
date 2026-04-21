@@ -5,16 +5,16 @@ WORKDIR /app
 
 ARG VITE_API_URL=/api/v1
 
-# Install dependencies
-COPY package.json pnpm-lock.yaml* ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+# Install dependencies (contexte frontend seul : pas de pnpm-lock.yaml → npm)
+COPY package.json package-lock.json* ./
+RUN npm ci 2>/dev/null || npm install
 
-# Copy source files
+# Copy source files (.dockerignore exclut node_modules, dist)
 COPY . .
 
 # Build application
 ENV VITE_API_URL=${VITE_API_URL}
-RUN pnpm build
+RUN npm run build
 
 # Production stage
 FROM nginx:alpine AS production

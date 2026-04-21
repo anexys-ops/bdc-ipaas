@@ -1,61 +1,31 @@
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useRef, useEffect, useState } from 'react';
+import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/auth.store';
-import {
-  Zap,
-  LogOut,
-  LayoutDashboard,
-  GitBranch,
-  Package,
-  FileStack,
-  CalendarClock,
-  ShieldCheck,
-  Building2,
-  Store,
-  Settings,
-  User,
-  Key,
-  CreditCard,
-  FileText,
-  BarChart3,
-  MessageSquareText,
-  Users,
-  UserCog,
-} from 'lucide-react';
+import { Zap, LogOut, Settings, User, Key, CreditCard, ShieldCheck, UserCog, Users, PieChart } from 'lucide-react';
 import { authApi } from '../../api/auth';
 import { toast } from 'sonner';
+import { AppMainNav } from './AppMainNav';
+import { AppFooter } from './AppFooter';
 
-const navItems = [
-  { to: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-  { to: '/flows', label: 'Flux', icon: GitBranch },
-  { to: '/connectors', label: 'Connecteurs', icon: Package },
-  { to: '/mappings', label: 'Mappings', icon: FileStack },
-  { to: '/planifier', label: 'Planifier', icon: CalendarClock },
-  { to: '/edifact', label: 'EDIFACT', icon: MessageSquareText },
-] as const;
+interface PrivateLayoutProps {
+  children?: React.ReactNode;
+}
 
-export function PrivateLayout() {
+export function PrivateLayout({ children }: PrivateLayoutProps) {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
-  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
+      const target = event.target as Node;
+      if (menuRef.current && !menuRef.current.contains(target)) setMenuOpen(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const isActive = (path: string) => {
-    if (path === '/dashboard') return location.pathname === '/dashboard';
-    return location.pathname.startsWith(path);
-  };
 
   const handleLogout = async () => {
     setMenuOpen(false);
@@ -72,83 +42,49 @@ export function PrivateLayout() {
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <div className="min-h-screen page-bg-mesh">
-      <header className="sticky top-0 z-20 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between min-h-[4rem] py-3 sm:min-h-[4.5rem] sm:py-4">
-            <div className="flex items-center gap-8 sm:gap-10">
-              <Link to="/dashboard" className="flex items-center gap-2.5 shrink-0">
-                <div className="w-9 h-9 rounded-xl bg-primary-400 flex items-center justify-center shadow-sm">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-                <span className="font-semibold text-slate-800 hidden sm:inline text-base">ANEXYS</span>
-              </Link>
-              <nav className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-                {navItems.map(({ to, label, icon: Icon }) => (
-                  <Link
-                    key={to}
-                    to={to}
-                    className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors whitespace-nowrap ${
-                      isActive(to)
-                        ? 'text-primary-600 bg-primary-50'
-                        : 'text-slate-600 hover:text-primary-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    {label}
-                  </Link>
-                ))}
-                <Link
-                  to="/marketplace"
-                  className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors whitespace-nowrap ${
-                    location.pathname.startsWith('/marketplace')
-                      ? 'text-primary-600 bg-primary-50'
-                      : 'text-slate-600 hover:text-primary-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <Store className="w-4 h-4 shrink-0" />
-                  Marketplace
-                </Link>
-                {isSuperAdmin && (
-                  <Link
-                    to="/backoffice"
-                    className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors whitespace-nowrap ${
-                      isActive('/backoffice')
-                        ? 'text-primary-600 bg-primary-50'
-                        : 'text-slate-600 hover:text-primary-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Building2 className="w-4 h-4 shrink-0" />
-                    Administration
-                  </Link>
-                )}
-              </nav>
+    <div className="min-h-screen app-shell flex flex-col">
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm overflow-visible">
+        <div className="max-w-[min(100rem,100%)] mx-auto px-2 sm:px-4 lg:px-6">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 min-h-[3.5rem] py-2 overflow-visible">
+            <Link to="/dashboard" className="flex items-center gap-2 shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-primary-500 flex items-center justify-center shadow-sm">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-semibold text-slate-800 hidden sm:inline text-sm whitespace-nowrap">
+                Ultimate Edicloud
+              </span>
+            </Link>
+
+            {/* Pas d'overflow ici : overflow-x-auto masque les sous-menus (position absolute sous le header). */}
+            <div className="flex-1 min-w-0 overflow-visible min-h-0">
+              <AppMainNav role={user?.role} />
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-sm text-slate-600 hidden md:inline font-medium">
+            <div className="flex items-center gap-2 shrink-0 pl-2 sm:pl-3 border-l border-slate-200/80">
+              <span className="text-xs sm:text-sm text-slate-600 hidden md:inline font-medium max-w-[8rem] lg:max-w-[12rem] xl:max-w-[14rem] truncate" title={user?.email}>
                 {user?.firstName} {user?.lastName}
               </span>
               <div className="relative" ref={menuRef}>
                 <button
                   type="button"
                   onClick={() => setMenuOpen((o) => !o)}
-                  className="flex items-center justify-center w-10 h-10 rounded-xl text-slate-500 hover:text-primary-600 hover:bg-primary-50 border border-slate-200 hover:border-primary-200 transition-colors"
+                  className="flex items-center justify-center w-9 h-9 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-primary-50 border border-slate-200/80 transition-colors"
                   aria-expanded={menuOpen}
                   aria-haspopup="true"
-                  aria-label="Menu administration et compte"
+                  aria-label="Paramètres et compte"
                 >
                   <Settings className="w-5 h-5" />
                 </button>
                 {menuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-slate-200 bg-white shadow-lg py-2 z-30">
-                    <div className="px-4 py-2 border-b border-slate-100">
-                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Compte & paramètres</p>
+                  <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-slate-200 bg-white shadow-xl py-2 z-50">
+                    <div className="px-3 py-2 border-b border-slate-100">
+                      <p className="text-xs font-semibold text-slate-800">Configuration</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">Compte, accès API et facturation</p>
                     </div>
                     <Link
                       to="/account"
                       onClick={closeMenu}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                      className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
                     >
                       <User className="w-4 h-4 text-slate-400" />
                       Mon compte
@@ -156,103 +92,46 @@ export function PrivateLayout() {
                     <Link
                       to="/settings/api-key"
                       onClick={closeMenu}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                      className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
                     >
                       <Key className="w-4 h-4 text-slate-400" />
-                      Ma clé API
+                      Clé API
                     </Link>
                     <div className="border-t border-slate-100 mt-1 pt-1">
-                      <p className="px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Gestion</p>
-                      <Link
-                        to="/audit"
-                        onClick={closeMenu}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-                      >
-                        <ShieldCheck className="w-4 h-4 text-slate-400" />
-                        Audit
+                      <p className="px-3 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Facturation</p>
+                      <Link to="/billing" onClick={closeMenu} className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                        <CreditCard className="w-4 h-4 text-slate-400" />
+                        Facturation
                       </Link>
-                      <Link
-                        to="/groups"
-                        onClick={closeMenu}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-                      >
+                      <Link to="/billing/quota" onClick={closeMenu} className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                        <PieChart className="w-4 h-4 text-slate-400" />
+                        Quota et volumes
+                      </Link>
+                    </div>
+                    <div className="border-t border-slate-100 mt-1 pt-1">
+                      <p className="px-3 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Organisation</p>
+                      {isAdmin && (
+                        <Link to="/audit" onClick={closeMenu} className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                          <ShieldCheck className="w-4 h-4 text-slate-400" />
+                          Journal d&apos;audit
+                        </Link>
+                      )}
+                      <Link to="/groups" onClick={closeMenu} className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
                         <UserCog className="w-4 h-4 text-slate-400" />
                         Groupes
                       </Link>
-                      <Link
-                        to="/users"
-                        onClick={closeMenu}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-                      >
+                      <Link to="/users" onClick={closeMenu} className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
                         <Users className="w-4 h-4 text-slate-400" />
                         Utilisateurs
                       </Link>
                     </div>
                     <div className="border-t border-slate-100 mt-1 pt-1">
-                      <p className="px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Facturation</p>
-                      <Link
-                        to="/billing"
-                        onClick={closeMenu}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-                      >
-                        <CreditCard className="w-4 h-4 text-slate-400" />
-                        Facturation
-                      </Link>
-                      <Link
-                        to="/billing/invoices"
-                        onClick={closeMenu}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-                      >
-                        <FileText className="w-4 h-4 text-slate-400" />
-                        Mes factures
-                      </Link>
-                      <Link
-                        to="/billing/quota"
-                        onClick={closeMenu}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-                      >
-                        <BarChart3 className="w-4 h-4 text-slate-400" />
-                        Mon quota et volumes
-                      </Link>
-                    </div>
-                    {isSuperAdmin && (
-                      <>
-                        <div className="border-t border-slate-100 mt-1 pt-1">
-                          <p className="px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Administration</p>
-                          <Link
-                            to="/backoffice"
-                            onClick={closeMenu}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-                          >
-                            <Building2 className="w-4 h-4 text-slate-400" />
-                            Dashboard gestion
-                          </Link>
-                          <Link
-                            to="/backoffice/clients"
-                            onClick={closeMenu}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-                          >
-                            <Building2 className="w-4 h-4 text-slate-400" />
-                            Clients
-                          </Link>
-                          <Link
-                            to="/backoffice/invoices"
-                            onClick={closeMenu}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-                          >
-                            <FileText className="w-4 h-4 text-slate-400" />
-                            Factures clients
-                          </Link>
-                        </div>
-                      </>
-                    )}
-                    <div className="border-t border-slate-100 mt-1 pt-1">
                       <button
                         type="button"
                         onClick={handleLogout}
-                        className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600"
+                        className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600"
                       >
-                        <LogOut className="w-4 h-4 text-slate-400" />
+                        <LogOut className="w-4 h-4" />
                         Déconnexion
                       </button>
                     </div>
@@ -263,9 +142,8 @@ export function PrivateLayout() {
           </div>
         </div>
       </header>
-      <main>
-        <Outlet />
-      </main>
+      <main className="flex-1 min-h-0">{children ?? <Outlet />}</main>
+      <AppFooter />
     </div>
   );
 }

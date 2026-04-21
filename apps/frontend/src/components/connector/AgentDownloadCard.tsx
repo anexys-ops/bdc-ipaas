@@ -55,7 +55,7 @@ export function AgentDownloadCard({
           <div className="flex flex-col gap-3 shrink-0 sm:min-w-[200px]">
             <a
               href={PLACEHOLDER_DOWNLOAD}
-              className="inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl font-semibold text-sm bg-slate-800 text-white hover:bg-slate-700 border-2 border-slate-700 shadow-sm transition-colors"
+              className="inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl font-semibold text-sm bg-primary-600 text-white hover:bg-primary-500 border-2 border-primary-600 shadow-sm transition-colors"
               download={windowsFile}
             >
               <Monitor className="w-5 h-5" />

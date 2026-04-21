@@ -1,0 +1,18 @@
+# Variante lab : Redis du compose benthos-only (service redis-benthos).
+
+http:
+  enabled: true
+  address: 0.0.0.0:4195
+
+input:
+  generate:
+    interval: "@every 60s"
+    mapping: 'root = {"ts":timestamp_unix(),"source":"benthos-lab","kind":"heartbeat"}'
+
+pipeline:
+  processors: []
+
+output:
+  redis_list:
+    url: redis://redis-benthos:6379
+    key: benthos_heartbeat

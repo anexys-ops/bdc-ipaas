@@ -8,34 +8,59 @@ import {
   ConnectorOperationDto,
   ConfigFieldDto,
 } from './dto';
+import { SAGE_CONNECTOR_IDS, SAGE_OPERATIONS_FALLBACK } from './sage-operations.fallback';
+import { MarketplaceItemService } from './marketplace-item.service';
+
+const DEFAULT_STARS = 5;
+const DEFAULT_PRICE_LABEL = '99€ HT';
 
 /**
  * Service Marketplace pour exposer les connecteurs disponibles.
  */
 @Injectable()
 export class MarketplaceService {
-  constructor(private readonly registryService: ConnectorRegistryService) {}
+  constructor(
+    private readonly registryService: ConnectorRegistryService,
+    private readonly marketplaceItemService: MarketplaceItemService,
+  ) {}
 
   /**
-   * Récupère tous les connecteurs disponibles.
+   * Récupère tous les connecteurs disponibles (avec overlay admin), uniquement les connecteurs activés.
    */
-  getAll(): MarketplaceConnectorDto[] {
+  async getAll(): Promise<MarketplaceConnectorDto[]> {
     const connectors = this.registryService.getAll();
-
-    return connectors.map((c) => this.mapToDto(c));
+    const overlayMap = await this.marketplaceItemService.getOverlayMap();
+    return connectors
+      .filter((c) => {
+        const overlay = overlayMap.get(c.connector_meta.id);
+        return overlay === undefined || overlay.enabled;
+      })
+      .map((c) => this.mapToDto(c, overlayMap, false));
   }
 
   /**
-   * Récupère les connecteurs groupés par catégorie.
+   * Récupère tous les connecteurs pour l’admin (avec overlay dont enabled), sans filtre.
    */
-  getByCategories(): MarketplaceCategoryDto[] {
+  async getAllForAdmin(): Promise<MarketplaceConnectorDto[]> {
     const connectors = this.registryService.getAll();
+    const overlayMap = await this.marketplaceItemService.getOverlayMap();
+    return connectors.map((c) => this.mapToDto(c, overlayMap, true));
+  }
+
+  /**
+   * Récupère les connecteurs groupés par catégorie (avec overlay admin), uniquement les connecteurs activés.
+   */
+  async getByCategories(): Promise<MarketplaceCategoryDto[]> {
+    const connectors = this.registryService.getAll();
+    const overlayMap = await this.marketplaceItemService.getOverlayMap();
     const categoriesMap = new Map<string, MarketplaceConnectorDto[]>();
 
     for (const connector of connectors) {
+      const overlay = overlayMap.get(connector.connector_meta.id);
+      if (overlay !== undefined && !overlay.enabled) continue;
       const category = connector.connector_meta.category;
       const existing = categoriesMap.get(category) ?? [];
-      existing.push(this.mapToDto(connector));
+      existing.push(this.mapToDto(connector, overlayMap, false));
       categoriesMap.set(category, existing);
     }
 
@@ -47,19 +72,38 @@ export class MarketplaceService {
   }
 
   /**
-   * Récupère le détail d'un connecteur par son type/ID.
+   * Récupère le détail d'un connecteur par son type/ID (avec overlay admin).
    */
-  getDetail(connectorType: string): MarketplaceConnectorDetailDto {
+  async getDetail(connectorType: string): Promise<MarketplaceConnectorDetailDto> {
     const connector = this.registryService.getById(connectorType);
 
     if (!connector) {
       throw new NotFoundException(`Connecteur non trouvé: ${connectorType}`);
     }
 
-    const sourceOps = connector.operations.filter((op) => op.type === 'source');
-    const destOps = connector.operations.filter((op) => op.type === 'destination');
-    const triggerOps = connector.operations.filter((op) => op.type === 'trigger');
+    const overlayMap = await this.marketplaceItemService.getOverlayMap();
+    const overlay = overlayMap.get(connectorType) ?? {
+      stars: DEFAULT_STARS,
+      priceLabel: DEFAULT_PRICE_LABEL,
+      description: null,
+      apiJsonPath: null,
+      enabled: true,
+    };
+    if (!overlay.enabled) {
+      throw new NotFoundException(`Connecteur non trouvé: ${connectorType}`);
+    }
 
+    const operations =
+      connector.operations.length === 0 &&
+      (SAGE_CONNECTOR_IDS as readonly string[]).includes(connector.connector_meta.id)
+        ? SAGE_OPERATIONS_FALLBACK
+        : connector.operations;
+
+    const sourceOps = operations.filter((op) => op.type === 'source');
+    const destOps = operations.filter((op) => op.type === 'destination');
+    const triggerOps = operations.filter((op) => op.type === 'trigger');
+
+    const authType = connector.connector_meta.auth_type;
     const configFields =
       connector.config_fields && connector.config_fields.length > 0
         ? connector.config_fields.map((f) => ({
@@ -70,10 +114,9 @@ export class MarketplaceService {
             placeholder: f.placeholder,
             description: f.description,
           }))
-        : this.buildConfigFields(
-            connector.connector_meta.auth_type,
-            connector.auth_config,
-          );
+        : authType === 'none'
+          ? []
+          : this.buildConfigFields(authType, connector.auth_config);
 
     const meta = connector.connector_meta as { agent_downloads?: { windows?: string; mac?: string } };
     return {
@@ -86,6 +129,10 @@ export class MarketplaceService {
       docsUrl: connector.connector_meta.docs_url,
       sourceOperationsCount: sourceOps.length,
       destinationOperationsCount: destOps.length,
+      stars: overlay.stars,
+      priceLabel: overlay.priceLabel,
+      description: overlay.description,
+      apiJsonPath: overlay.apiJsonPath,
       authConfig: connector.auth_config as Record<string, unknown>,
       configFields,
       configInstructions: connector.connector_meta.config_instructions,
@@ -211,6 +258,12 @@ export class MarketplaceService {
       case 'agent': {
         break;
       }
+      case 'certificate': {
+        break;
+      }
+      case 'none': {
+        break;
+      }
       default: {
         fields.push(
           {
@@ -247,7 +300,13 @@ export class MarketplaceService {
       throw new NotFoundException(`Connecteur non trouvé: ${connectorType}`);
     }
 
-    const operation = connector.operations.find((op) => op.id === operationId);
+    const operations =
+      connector.operations.length === 0 &&
+      (SAGE_CONNECTOR_IDS as readonly string[]).includes(connector.connector_meta.id)
+        ? SAGE_OPERATIONS_FALLBACK
+        : connector.operations;
+
+    const operation = operations.find((op) => op.id === operationId);
 
     if (!operation) {
       throw new NotFoundException(`Opération non trouvée: ${operationId}`);
@@ -261,25 +320,38 @@ export class MarketplaceService {
   }
 
   /**
-   * Mappe un connecteur chargé vers le DTO Marketplace.
+   * Mappe un connecteur chargé vers le DTO Marketplace (avec overlay admin).
+   * @param includeEnabled si true, ajoute le champ enabled au DTO (pour l’admin).
    */
-  private mapToDto(connector: {
-    connector_meta: {
-      id: string;
-      name: string;
-      version: string;
-      icon: string;
-      category: string;
-      auth_type: string;
-      docs_url: string | null;
-    };
-    operations: Array<{ type: string }>;
-  }): MarketplaceConnectorDto {
+  private mapToDto(
+    connector: {
+      connector_meta: {
+        id: string;
+        name: string;
+        version: string;
+        icon: string;
+        category: string;
+        auth_type: string;
+        docs_url: string | null;
+      };
+      operations: Array<{ type: string }>;
+    },
+    overlayMap: Map<string, { stars: number; priceLabel: string; description: string | null; apiJsonPath: string | null; enabled: boolean }>,
+    includeEnabled = false,
+  ): MarketplaceConnectorDto {
     const sourceCount = connector.operations.filter((op) => op.type === 'source').length;
     const destCount = connector.operations.filter((op) => op.type === 'destination').length;
+    const id = connector.connector_meta.id;
+    const overlay = overlayMap.get(id) ?? {
+      stars: DEFAULT_STARS,
+      priceLabel: DEFAULT_PRICE_LABEL,
+      description: null,
+      apiJsonPath: null,
+      enabled: true,
+    };
 
-    return {
-      id: connector.connector_meta.id,
+    const dto: MarketplaceConnectorDto = {
+      id,
       name: connector.connector_meta.name,
       version: connector.connector_meta.version,
       icon: connector.connector_meta.icon,
@@ -288,7 +360,15 @@ export class MarketplaceService {
       docsUrl: connector.connector_meta.docs_url,
       sourceOperationsCount: sourceCount,
       destinationOperationsCount: destCount,
+      stars: overlay.stars,
+      priceLabel: overlay.priceLabel,
+      description: overlay.description,
+      apiJsonPath: overlay.apiJsonPath,
     };
+    if (includeEnabled) {
+      (dto as MarketplaceConnectorDto & { enabled: boolean }).enabled = overlay.enabled;
+    }
+    return dto;
   }
 
   /**

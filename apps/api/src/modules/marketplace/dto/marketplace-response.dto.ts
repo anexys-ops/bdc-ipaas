@@ -85,6 +85,21 @@ export class MarketplaceConnectorDto {
 
   @ApiProperty({ description: 'Nombre d\'opérations destination' })
   destinationOperationsCount!: number;
+
+  @ApiProperty({ description: 'Note en étoiles (1-5), gérée en admin', required: false })
+  stars?: number;
+
+  @ApiProperty({ description: 'Tarif affiché (ex: 99€ HT), géré en admin', required: false })
+  priceLabel?: string;
+
+  @ApiProperty({ description: 'Texte/description complémentaire, géré en admin', required: false })
+  description?: string | null;
+
+  @ApiProperty({ description: 'Chemin du fichier API JSON (ex: connectors/dolibarr/openapi.json)', required: false })
+  apiJsonPath?: string | null;
+
+  @ApiProperty({ description: 'Connecteur visible dans la marketplace (admin uniquement)', required: false })
+  enabled?: boolean;
 }
 
 export class AgentDownloadsDto {

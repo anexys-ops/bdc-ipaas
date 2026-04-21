@@ -18,8 +18,8 @@ import {
   Package,
   Box,
 } from 'lucide-react';
-import { APP_VERSION } from '../../appVersion';
 import { Button } from '../../components/ui';
+import { AppFooter } from '../../components/layout';
 
 const VALUE_PROPS = [
   {
@@ -305,28 +305,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Footer minimal */}
-      <footer className="border-t border-slate-200/80 py-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-            <div className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-primary-500" />
-              <span className="text-slate-600 text-sm">ANEXYS iPaaS</span>
-            </div>
-            <span className="text-slate-400 text-xs tabular-nums" title="Version du frontend (package.json)">
-              v{APP_VERSION}
-            </span>
-          </div>
-          <div className="flex items-center gap-6 text-sm">
-            <Link to="/marketplace" className="text-slate-600 hover:text-primary-600 transition-colors">
-              Marketplace
-            </Link>
-            <Link to="/login" className="text-slate-600 hover:text-primary-600 transition-colors">
-              Connexion
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <AppFooter className="bg-slate-50/95" />
     </div>
   );
 }

@@ -8,7 +8,6 @@ import {
   Param,
   Query,
   UseGuards,
-  ParseUUIDPipe,
   ParseIntPipe,
   DefaultValuePipe,
 } from '@nestjs/common';
@@ -106,7 +105,7 @@ export class ConnectorsController {
   @ApiResponse({ status: 404, description: 'Connecteur non trouvé' })
   async getConfig(
     @CurrentTenant() tenant: { id: string },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
   ): Promise<{ config: Record<string, unknown> }> {
     const config = await this.connectorsService.getDecryptedConfig(tenant.id, id);
     return { config };
@@ -118,7 +117,7 @@ export class ConnectorsController {
   @ApiResponse({ status: 404, description: 'Connecteur non trouvé' })
   async findOne(
     @CurrentTenant() tenant: { id: string },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
   ): Promise<ConnectorResponseDto> {
     return this.connectorsService.findOne(tenant.id, id);
   }
@@ -131,7 +130,7 @@ export class ConnectorsController {
   @ApiResponse({ status: 404, description: 'Connecteur non trouvé' })
   async update(
     @CurrentTenant() tenant: { id: string },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: UpdateConnectorDto,
   ): Promise<ConnectorResponseDto> {
     return this.connectorsService.update(tenant.id, id, dto);
@@ -145,7 +144,7 @@ export class ConnectorsController {
   @ApiResponse({ status: 404, description: 'Connecteur non trouvé' })
   async delete(
     @CurrentTenant() tenant: { id: string },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
   ): Promise<void> {
     await this.connectorsService.delete(tenant.id, id);
   }
@@ -157,7 +156,7 @@ export class ConnectorsController {
   @ApiResponse({ status: 404, description: 'Connecteur non trouvé' })
   async testConnection(
     @CurrentTenant() tenant: { id: string },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
   ): Promise<TestConnectorResponseDto> {
     return this.connectorsService.testConnection(tenant.id, id);
   }
@@ -169,7 +168,7 @@ export class ConnectorsController {
   @ApiResponse({ status: 404, description: 'Connecteur non trouvé' })
   async operationPreview(
     @CurrentTenant() tenant: { id: string },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Param('operationId') operationId: string,
     @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
   ): Promise<OperationPreviewResponseDto> {

@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '../../components/ui';
 import { BackButton } from '../../components/layout';
 import { SchemaFieldsList } from '../../components/connector/SchemaFieldsList';
 import { connectorsApi } from '../../api/connectors';
 import { marketplaceApi } from '../../api/marketplace';
+import { isFileOperation } from '../../lib/file-only-mode';
 import type { OperationPreviewResult } from '../../api/connectors';
 import type { ConfigField } from '../../types';
 import { Loader2, XCircle, CheckCircle2, Users, RefreshCw, Pencil, Trash2, Eye, ChevronRight } from 'lucide-react';
@@ -21,6 +22,9 @@ function configToFormValues(config: Record<string, unknown>): Record<string, str
 
 export function ConfiguredConnectorDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const isBackoffice = location.pathname.startsWith('/backoffice/');
+  const basePath = isBackoffice ? '/backoffice/connectors' : '/connectors';
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [previewOperationId, setPreviewOperationId] = useState<string | null>(null);
@@ -109,7 +113,7 @@ export function ConfiguredConnectorDetailPage() {
     onSuccess: () => {
       toast.success('Connecteur supprimé');
       queryClient.invalidateQueries({ queryKey: ['connectors'] });
-      navigate('/connectors');
+      navigate(basePath);
     },
     onError: (err: Error) => {
       toast.error(err.message ?? 'Erreur à la suppression');
@@ -148,21 +152,21 @@ export function ConfiguredConnectorDetailPage() {
         <Card className="max-w-md text-center py-10">
           <p className="text-sm text-red-500">Connecteur introuvable.</p>
           <div className="mt-4">
-            <BackButton to="/connectors">Retour aux connecteurs</BackButton>
+            <BackButton to={basePath}>Retour aux connecteurs</BackButton>
           </div>
         </Card>
       </div>
     );
   }
 
-  const sourceOps = connectorDetail?.sourceOperations ?? [];
-  const destOps = connectorDetail?.destinationOperations ?? [];
+  const sourceOps = (connectorDetail?.sourceOperations ?? []).filter(isFileOperation);
+  const destOps = (connectorDetail?.destinationOperations ?? []).filter(isFileOperation);
   const triggerOps = connectorDetail?.triggerOperations ?? [];
 
   return (
     <div className="min-h-screen page-bg-mesh">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton to="/connectors" className="mb-6">
+        <BackButton to={basePath} className="mb-6">
           Retour aux connecteurs
         </BackButton>
 

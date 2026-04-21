@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 
-export type EdifactMessageType = 'ORDERS' | 'INVOIC' | 'DESADV' | 'ORDRSP' | string;
+export type EdifactMessageType = 'ORDERS' | 'HANMOV' | 'INVOIC' | 'PRICAT' | 'DESADV' | 'ORDRSP' | string;
 export type EdifactDirection = 'INBOUND' | 'OUTBOUND';
 
 export interface EdifactMessage {

@@ -14,6 +14,7 @@ import {
   FlowResponseDto,
   FlowVersionResponseDto,
 } from './dto';
+import { FlowRouterSyncPayload, FlowRouterSyncService } from './flow-router-sync.service';
 
 /**
  * Service CRUD des flux d'intégration.
@@ -25,6 +26,7 @@ export class FlowsService {
   constructor(
     private readonly tenantDbService: TenantDatabaseService,
     private readonly tenantsService: TenantsService,
+    private readonly flowRouterSyncService: FlowRouterSyncService,
   ) {}
 
   private async getTenantClient(tenantId: string): Promise<PrismaClient> {
@@ -37,6 +39,7 @@ export class FlowsService {
    */
   async create(tenantId: string, dto: CreateFlowDto): Promise<FlowResponseDto> {
     const prisma = await this.getTenantClient(tenantId);
+    this.validateTriggerConfig(dto.triggerType, dto.triggerConfig);
 
     const sourceConnector = await prisma.connector.findUnique({
       where: { id: dto.sourceConnectorId },
@@ -72,6 +75,7 @@ export class FlowsService {
     });
 
     this.logger.log(`Flux créé: ${flow.id} (${flow.name})`);
+    await this.syncRouterState(this.toRouterPayload(tenantId, flow));
 
     return this.mapToResponse(flow);
   }
@@ -132,6 +136,9 @@ export class FlowsService {
     }
 
     const updateData: Record<string, unknown> = {};
+    const nextTriggerType = dto.triggerType ?? (existing.triggerType as unknown as string);
+    const nextTriggerConfig = dto.triggerConfig ?? (existing.triggerConfig as Record<string, unknown>);
+    this.validateTriggerConfig(nextTriggerType, nextTriggerConfig);
     if (dto.name !== undefined) updateData.name = dto.name;
     if (dto.description !== undefined) updateData.description = dto.description;
     if (dto.triggerType !== undefined) updateData.triggerType = dto.triggerType;
@@ -162,6 +169,7 @@ export class FlowsService {
     });
 
     this.logger.log(`Flux mis à jour: ${flowId} (v${flow.version})`);
+    await this.syncRouterState(this.toRouterPayload(tenantId, flow));
 
     return this.mapToResponse(flow);
   }
@@ -176,6 +184,12 @@ export class FlowsService {
     if (!existing) {
       throw new NotFoundException(`Flux non trouvé: ${flowId}`);
     }
+    await this.removeRouterState({
+      flowId: existing.id,
+      tenantId,
+      isActive: existing.isActive,
+      triggerConfig: (existing.triggerConfig ?? {}) as Record<string, unknown>,
+    });
 
     await prisma.flowDestination.deleteMany({ where: { flowId } });
     await prisma.flowVersion.deleteMany({ where: { flowId } });
@@ -205,9 +219,9 @@ export class FlowsService {
       throw new BadRequestException(`Connecteur destination non trouvé: ${dto.connectorId}`);
     }
 
-    let mappingId: string | undefined;
+    let mappingId: string | undefined = dto.mappingId;
 
-    if (dto.mappingRules || dto.mappingConfig) {
+    if (!mappingId && (dto.mappingRules || dto.mappingConfig)) {
       const mapping = await prisma.mapping.create({
         data: {
           name: `Mapping ${flow.name} → ${connector.name}`,
@@ -235,7 +249,14 @@ export class FlowsService {
       },
     });
 
-    return this.findOne(tenantId, flowId);
+    const updatedFlow = await this.findOne(tenantId, flowId);
+    await this.syncRouterState({
+      flowId: updatedFlow.id,
+      tenantId,
+      isActive: updatedFlow.isActive,
+      triggerConfig: updatedFlow.triggerConfig ?? {},
+    });
+    return updatedFlow;
   }
 
   /**
@@ -258,7 +279,14 @@ export class FlowsService {
 
     await prisma.flowDestination.delete({ where: { id: destinationId } });
 
-    return this.findOne(tenantId, flowId);
+    const updatedFlow = await this.findOne(tenantId, flowId);
+    await this.syncRouterState({
+      flowId: updatedFlow.id,
+      tenantId,
+      isActive: updatedFlow.isActive,
+      triggerConfig: updatedFlow.triggerConfig ?? {},
+    });
+    return updatedFlow;
   }
 
   /**
@@ -286,6 +314,28 @@ export class FlowsService {
    */
   async setActive(tenantId: string, flowId: string, isActive: boolean): Promise<FlowResponseDto> {
     return this.update(tenantId, flowId, { isActive });
+  }
+
+  async syncRouterForFlow(tenantId: string, flowId: string): Promise<void> {
+    const flow = await this.findOne(tenantId, flowId);
+    await this.syncRouterState({
+      flowId: flow.id,
+      tenantId,
+      isActive: flow.isActive,
+      triggerConfig: flow.triggerConfig ?? {},
+    });
+  }
+
+  async syncRouterForAllFlows(tenantId: string): Promise<number> {
+    const flows = await this.findAll(tenantId);
+    const payloads: FlowRouterSyncPayload[] = flows.map((flow) => ({
+      flowId: flow.id,
+      tenantId,
+      isActive: flow.isActive,
+      triggerConfig: flow.triggerConfig ?? {},
+    }));
+    await this.flowRouterSyncService.syncAll(payloads);
+    return payloads.length;
   }
 
   /**
@@ -319,6 +369,39 @@ export class FlowsService {
         searchFields: d.searchFields,
       })),
     };
+  }
+
+  private validateTriggerConfig(triggerType: string, triggerConfig: Record<string, unknown>): void {
+    if (triggerType === 'FILE_WATCH') {
+      const inputPath = typeof triggerConfig?.inputPath === 'string' ? triggerConfig.inputPath.trim() : '';
+      if (!inputPath) {
+        throw new BadRequestException(
+          'Le déclencheur FILE_WATCH exige triggerConfig.inputPath (fichier lu par le moteur). triggerConfig.outputPath est optionnel (sortie locale Benthos) ; sans sortie locale, les destinations (ex. FTP) reçoivent les enregistrements transformés.',
+        );
+      }
+      this.validateBenthosIngressStream(triggerConfig);
+      return;
+    }
+    if (triggerType === 'WEBHOOK') {
+      this.validateBenthosIngressStream(triggerConfig);
+    }
+  }
+
+  /** Si ingressViaBenthos est activé, le stream Redis (file Benthos) est obligatoire. */
+  private validateBenthosIngressStream(triggerConfig: Record<string, unknown>): void {
+    if (triggerConfig.ingressViaBenthos !== true) {
+      return;
+    }
+    const stream =
+      (typeof triggerConfig.stream === 'string' && triggerConfig.stream.trim()) ||
+      (typeof triggerConfig.benthosStream === 'string' && triggerConfig.benthosStream.trim()) ||
+      (typeof triggerConfig.redisStream === 'string' && triggerConfig.redisStream.trim()) ||
+      '';
+    if (!stream) {
+      throw new BadRequestException(
+        'Avec ingressViaBenthos, renseignez triggerConfig.stream (ou benthosStream / redisStream) : nom du Redis Stream consommé par Benthos.',
+      );
+    }
   }
 
   /**
@@ -374,5 +457,37 @@ export class FlowsService {
         searchFields: Array.isArray(d.searchFields) ? (d.searchFields as string[]) : null,
       })),
     };
+  }
+
+  private toRouterPayload(
+    tenantId: string,
+    flow: {
+      id: string;
+      isActive: boolean;
+      triggerConfig: unknown;
+    },
+  ): FlowRouterSyncPayload {
+    return {
+      flowId: flow.id,
+      tenantId,
+      isActive: flow.isActive,
+      triggerConfig: (flow.triggerConfig ?? {}) as Record<string, unknown>,
+    };
+  }
+
+  private async syncRouterState(payload: FlowRouterSyncPayload): Promise<void> {
+    try {
+      await this.flowRouterSyncService.syncFlow(payload);
+    } catch (error) {
+      this.logger.error(`Sync router Redis échouée pour flow ${payload.flowId}: ${String(error)}`);
+    }
+  }
+
+  private async removeRouterState(payload: FlowRouterSyncPayload): Promise<void> {
+    try {
+      await this.flowRouterSyncService.removeFlow(payload);
+    } catch (error) {
+      this.logger.error(`Suppression router Redis échouée pour flow ${payload.flowId}: ${String(error)}`);
+    }
   }
 }

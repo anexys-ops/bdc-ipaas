@@ -11,6 +11,8 @@ export interface FlowExecutionJobData {
   executionId: string;
   flowId: string;
   isDryRun: boolean;
+  ingestionToken?: string;
+  clientName?: string;
 }
 
 @Injectable()
@@ -75,14 +77,21 @@ export class FlowProcessor implements OnModuleInit, OnModuleDestroy {
   }
 
   private async processJob(job: Job<FlowExecutionJobData>): Promise<void> {
-    const { tenantId, executionId, flowId, isDryRun = false } = job.data;
+    const { tenantId, executionId, flowId, isDryRun = false, ingestionToken, clientName } = job.data;
 
     this.logger.log(
       `Début traitement job ${job.id} (executionId=${executionId}, flowId=${flowId}, tentative ${job.attemptsMade + 1}/${job.opts.attempts ?? 3})`,
       'FlowProcessor',
     );
 
-    await this.engineService.processExecution(tenantId, executionId, flowId, isDryRun);
+    await this.engineService.processExecution(
+      tenantId,
+      executionId,
+      flowId,
+      isDryRun,
+      ingestionToken,
+      clientName,
+    );
 
     this.logger.log(`Fin traitement job ${job.id} (executionId=${executionId})`, 'FlowProcessor');
   }

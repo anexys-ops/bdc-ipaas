@@ -14,5 +14,217 @@
     }
   },
   "auth_config": {},
-  "operations": []
+  "config_fields": [
+    {
+      "key": "agent_id",
+      "label": "ID de l'agent",
+      "type": "text",
+      "required": false,
+      "placeholder": "ID fourni par l'agent après installation",
+      "description": "Identifiant de l'agent installé sur votre poste (optionnel)."
+    },
+    {
+      "key": "api_key",
+      "label": "Clé API",
+      "type": "password",
+      "required": false,
+      "placeholder": "Clé d'association plateforme / agent",
+      "description": "Clé API ou token pour associer l'agent à votre compte (optionnel)."
+    }
+  ],
+  "operations": [
+    {
+      "id": "list_clients",
+      "label": "Clients (tiers)",
+      "type": "source",
+      "method": "GET",
+      "description": "Liste des clients récupérés depuis la base Sage (F_COMPTET / tiers).",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "description": "Code tiers" },
+          "nom": { "type": "string", "description": "Raison sociale" },
+          "adresse": { "type": "string" },
+          "code_postal": { "type": "string" },
+          "ville": { "type": "string" },
+          "pays": { "type": "string" },
+          "email": { "type": "string" },
+          "telephone": { "type": "string" },
+          "siret": { "type": "string" },
+          "tva_intra": { "type": "string" },
+          "compte_comptable": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_commandes",
+      "label": "Commandes",
+      "type": "source",
+      "method": "GET",
+      "description": "Liste des commandes (documents de vente) depuis la base Sage.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "numero": { "type": "string", "description": "Numéro de commande" },
+          "code_tiers": { "type": "string" },
+          "date": { "type": "string", "description": "Date au format ISO" },
+          "montant_ht": { "type": "number" },
+          "montant_ttc": { "type": "number" },
+          "statut": { "type": "string" },
+          "lignes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reference": { "type": "string" },
+                "quantite": { "type": "number" },
+                "prix_unitaire": { "type": "number" },
+                "montant_ligne": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "list_devis",
+      "label": "Devis",
+      "type": "source",
+      "method": "GET",
+      "description": "Liste des devis depuis la base Sage.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "numero": { "type": "string" },
+          "code_tiers": { "type": "string" },
+          "date": { "type": "string" },
+          "montant_ht": { "type": "number" },
+          "montant_ttc": { "type": "number" },
+          "statut": { "type": "string" },
+          "date_validite": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "list_factures",
+      "label": "Factures",
+      "type": "source",
+      "method": "GET",
+      "description": "Liste des factures depuis la base Sage.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "numero": { "type": "string" },
+          "code_tiers": { "type": "string" },
+          "date": { "type": "string" },
+          "montant_ht": { "type": "number" },
+          "montant_ttc": { "type": "number" },
+          "tva": { "type": "number" },
+          "statut": { "type": "string" },
+          "date_echeance": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_client",
+      "label": "Créer un client",
+      "type": "destination",
+      "method": "POST",
+      "description": "Import d'un client (objet métier) vers Sage.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string" },
+          "nom": { "type": "string" },
+          "adresse": { "type": "string" },
+          "code_postal": { "type": "string" },
+          "ville": { "type": "string" },
+          "pays": { "type": "string" },
+          "email": { "type": "string" },
+          "telephone": { "type": "string" },
+          "siret": { "type": "string" },
+          "tva_intra": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_commande",
+      "label": "Créer une commande",
+      "type": "destination",
+      "method": "POST",
+      "description": "Import d'une commande vers Sage.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "code_tiers": { "type": "string" },
+          "date": { "type": "string" },
+          "lignes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reference": { "type": "string" },
+                "quantite": { "type": "number" },
+                "prix_unitaire": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_devis",
+      "label": "Créer un devis",
+      "type": "destination",
+      "method": "POST",
+      "description": "Import d'un devis vers Sage.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "code_tiers": { "type": "string" },
+          "date": { "type": "string" },
+          "date_validite": { "type": "string" },
+          "lignes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reference": { "type": "string" },
+                "quantite": { "type": "number" },
+                "prix_unitaire": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create_facture",
+      "label": "Créer une facture",
+      "type": "destination",
+      "method": "POST",
+      "description": "Import d'une facture vers Sage.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "code_tiers": { "type": "string" },
+          "date": { "type": "string" },
+          "date_echeance": { "type": "string" },
+          "montant_ht": { "type": "number" },
+          "tva": { "type": "number" },
+          "lignes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reference": { "type": "string" },
+                "quantite": { "type": "number" },
+                "prix_unitaire": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

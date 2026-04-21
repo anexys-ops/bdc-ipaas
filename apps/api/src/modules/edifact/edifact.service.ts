@@ -6,15 +6,6 @@ import {
 } from '@nestjs/common';
 import { PrismaClient, Prisma } from '../../generated/tenant';
 import { readFile } from 'fs/promises';
-import {
-  parseEdifact,
-  createEdifactGenerator,
-  validateEdifact,
-  type EdifactInterchange,
-  type ParsedOrder,
-  type ParsedInvoice,
-  type ValidationResult,
-} from '@anexys/edifact';
 import { TenantDatabaseService } from '../tenants/tenant-database.service';
 import { TenantsService } from '../tenants/tenants.service';
 import type { GenerateEdifactDto, EdifactMessageTypeDto } from './dto';
@@ -22,6 +13,140 @@ import type { GenerateEdifactDto, EdifactMessageTypeDto } from './dto';
 const DIRECTION_INBOUND = 'INBOUND';
 const STATUS_RECEIVED = 'RECEIVED';
 const STATUS_ERROR = 'ERROR';
+
+type EdifactMessageType = 'ORDERS' | 'INVOIC' | 'DESADV' | 'PRICAT' | 'RECADV' | 'UNKNOWN';
+
+interface EdifactParsedMessage {
+  type: EdifactMessageType;
+  reference: string;
+  data?: Record<string, unknown>;
+}
+
+interface EdifactInterchange {
+  sender: string;
+  receiver: string;
+  messages: EdifactParsedMessage[];
+}
+
+interface ParsedOrder {
+  orderNumber: string;
+  orderDate: string;
+  buyerCode: string;
+  sellerCode: string;
+  lines: Array<{ productCode: string; quantity: number; unitPrice?: number }>;
+}
+
+interface ParsedInvoice {
+  invoiceNumber: string;
+  invoiceDate: string;
+  buyerCode: string;
+  sellerCode: string;
+  lines: Array<{ productCode: string; quantity: number; unitPrice: number }>;
+  subtotal: number;
+  vatAmount: number;
+  totalAmount: number;
+}
+
+interface ValidationResult {
+  valid: boolean;
+  errors: Array<{ segment: string; position: number; message: string; severity: string }>;
+  warnings: Array<{ segment: string; position: number; message: string; severity: string }>;
+}
+
+function parseEdifact(content: string): EdifactInterchange {
+  if (!content.includes('UNH+')) {
+    throw new Error('Message EDIFACT invalide: segment UNH manquant');
+  }
+  const senderMatch = content.match(/UNB\+[^+]*\+([^+']+)/);
+  const receiverMatch = content.match(/UNB\+[^+]*\+[^+']+\+([^+']+)/);
+  const messageTypeMatch = content.match(/UNH\+[^+]*\+([A-Z0-9]+)/);
+  const referenceMatch = content.match(/BGM\+[^+]*\+([^+']+)/);
+  const type = (messageTypeMatch?.[1] ?? 'UNKNOWN') as EdifactMessageType;
+  return {
+    sender: senderMatch?.[1] ?? '',
+    receiver: receiverMatch?.[1] ?? '',
+    messages: [
+      {
+        type,
+        reference: referenceMatch?.[1] ?? '',
+        data: {},
+      },
+    ],
+  };
+}
+
+function validateEdifact(content: string): ValidationResult {
+  const errors: Array<{ segment: string; position: number; message: string; severity: string }> = [];
+  if (!content.includes('UNB+')) {
+    errors.push({ segment: 'UNB', position: 0, message: 'Segment UNB manquant', severity: 'error' });
+  }
+  if (!content.includes('UNH+')) {
+    errors.push({ segment: 'UNH', position: 0, message: 'Segment UNH manquant', severity: 'error' });
+  }
+  if (!content.includes('UNT+')) {
+    errors.push({ segment: 'UNT', position: 0, message: 'Segment UNT manquant', severity: 'error' });
+  }
+  if (!content.includes('UNZ+')) {
+    errors.push({ segment: 'UNZ', position: 0, message: 'Segment UNZ manquant', severity: 'error' });
+  }
+  return { valid: errors.length === 0, errors, warnings: [] };
+}
+
+function createEdifactGenerator(sender: string, receiver: string): {
+  generateOrder: (order: ParsedOrder) => string;
+  generateInvoice: (invoice: ParsedInvoice) => string;
+  generateDesadv: (desadv: {
+    despatchNumber: string;
+    orderNumber: string;
+    shipDate: string;
+    items: Array<{ productCode: string; quantity: number; sscc?: string }>;
+  }) => string;
+} {
+  const now = new Date();
+  const y = now.getUTCFullYear();
+  const m = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(now.getUTCDate()).padStart(2, '0');
+  const hh = String(now.getUTCHours()).padStart(2, '0');
+  const mm = String(now.getUTCMinutes()).padStart(2, '0');
+  const interchangeRef = `${y}${m}${d}${hh}${mm}`;
+  const header = `UNB+UNOC:3+${sender}+${receiver}+${y}${m}${d}:${hh}${mm}+${interchangeRef}'`;
+  const trailer = `UNZ+1+${interchangeRef}'`;
+  return {
+    generateOrder: (order) =>
+      [
+        header,
+        `UNH+1+ORDERS:D:96A:UN'`,
+        `BGM+220+${order.orderNumber}+9'`,
+        `DTM+137:${order.orderDate}:102'`,
+        `NAD+BY+${order.buyerCode}::9'`,
+        `NAD+SU+${order.sellerCode}::9'`,
+        `UNT+6+1'`,
+        trailer,
+      ].join('\n'),
+    generateInvoice: (invoice) =>
+      [
+        header,
+        `UNH+1+INVOIC:D:96A:UN'`,
+        `BGM+380+${invoice.invoiceNumber}+9'`,
+        `DTM+137:${invoice.invoiceDate}:102'`,
+        `NAD+BY+${invoice.buyerCode}::9'`,
+        `NAD+SU+${invoice.sellerCode}::9'`,
+        `MOA+77:${invoice.totalAmount}'`,
+        `UNT+7+1'`,
+        trailer,
+      ].join('\n'),
+    generateDesadv: (desadv) =>
+      [
+        header,
+        `UNH+1+DESADV:D:96A:UN'`,
+        `BGM+351+${desadv.despatchNumber}+9'`,
+        `RFF+ON:${desadv.orderNumber}'`,
+        `DTM+137:${desadv.shipDate}:102'`,
+        `UNT+5+1'`,
+        trailer,
+      ].join('\n'),
+  };
+}
 
 @Injectable()
 export class EdifactService {

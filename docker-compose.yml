@@ -1,0 +1,4 @@
+# Point d'entrée à la racine du dépôt. Avec "docker compose up" depuis ici, le .env à la racine est chargé.
+# Usage : cd /opt/bdc-ipaas && docker compose up -d
+include:
+  - path: docker/docker-compose.yml

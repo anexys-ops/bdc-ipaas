@@ -39,10 +39,14 @@ export class EngineController {
     @CurrentTenant() tenant: { id: string },
     @Param('flowId', ParseUUIDPipe) flowId: string,
     @Query('dryRun') dryRun?: string,
+    @Query('token') token?: string,
+    @Query('clientName') clientName?: string,
   ): Promise<ExecutionResult> {
     return this.engineService.executeFlow(tenant.id, flowId, {
       isDryRun: dryRun === 'true',
       triggerSource: 'MANUAL',
+      ingestionToken: token,
+      clientName,
     });
   }
 
@@ -80,7 +84,7 @@ export class EngineController {
   async getExecutionLogs(
     @CurrentTenant() tenant: { id: string },
     @Param('executionId', ParseUUIDPipe) executionId: string,
-  ): Promise<Array<{ level: string; message: string; createdAt: Date }>> {
+  ): Promise<Array<{ level: string; message: string; createdAt: Date; data?: Record<string, unknown> }>> {
     return this.engineService.getExecutionLogs(tenant.id, executionId);
   }
 
@@ -104,6 +108,8 @@ export class EngineController {
     @Param('tenantSlug') tenantSlug: string,
     @Param('flowId', ParseUUIDPipe) flowId: string,
     @Body() payload: Record<string, unknown>,
+    @Query('token') token?: string,
+    @Query('clientName') clientName?: string,
   ): Promise<{ executionId: string; status: string }> {
     const tenant = await this.prisma.tenant.findUnique({
       where: { slug: tenantSlug },
@@ -117,6 +123,8 @@ export class EngineController {
       const result = await this.engineService.executeFlow(tenant.id, flowId, {
         isDryRun: false,
         triggerSource: `WEBHOOK:${JSON.stringify(payload).substring(0, 100)}`,
+        ingestionToken: token,
+        clientName,
       });
 
       return {

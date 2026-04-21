@@ -37,6 +37,11 @@ export class AddDestinationDto {
   @IsUUID()
   connectorId!: string;
 
+  @ApiPropertyOptional({ description: 'ID du mapping existant à utiliser (ex. pour une planification)' })
+  @IsOptional()
+  @IsUUID()
+  mappingId?: string;
+
   @ApiProperty({ description: 'Ordre dans le flux (0 = premier)', required: false })
   @IsOptional()
   @IsNumber()

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { MarketplaceService } from './marketplace.service';
 import { ConnectorRegistryService } from '../connectors/connector-registry.service';
+import { MarketplaceItemService } from './marketplace-item.service';
 
 describe('MarketplaceService', () => {
   let service: MarketplaceService;
@@ -32,11 +33,16 @@ describe('MarketplaceService', () => {
     getById: jest.fn((id: string) => (id === 'test-connector' ? mockConnector : undefined)),
   };
 
+  const mockMarketplaceItemService = {
+    getOverlayMap: jest.fn().mockResolvedValue(new Map()),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MarketplaceService,
         { provide: ConnectorRegistryService, useValue: mockRegistryService },
+        { provide: MarketplaceItemService, useValue: mockMarketplaceItemService },
       ],
     }).compile();
 
@@ -49,8 +55,8 @@ describe('MarketplaceService', () => {
   });
 
   describe('getAll', () => {
-    it('devrait retourner tous les connecteurs du registre', () => {
-      const result = service.getAll();
+    it('devrait retourner tous les connecteurs du registre', async () => {
+      const result = await service.getAll();
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('test-connector');
@@ -61,8 +67,8 @@ describe('MarketplaceService', () => {
   });
 
   describe('getByCategories', () => {
-    it('devrait grouper les connecteurs par catégorie', () => {
-      const result = service.getByCategories();
+    it('devrait grouper les connecteurs par catégorie', async () => {
+      const result = await service.getByCategories();
 
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Test Category');
@@ -72,8 +78,8 @@ describe('MarketplaceService', () => {
   });
 
   describe('getDetail', () => {
-    it('devrait retourner le détail d\'un connecteur', () => {
-      const result = service.getDetail('test-connector');
+    it('devrait retourner le détail d\'un connecteur', async () => {
+      const result = await service.getDetail('test-connector');
 
       expect(result.id).toBe('test-connector');
       expect(result.sourceOperations).toHaveLength(1);
@@ -81,8 +87,8 @@ describe('MarketplaceService', () => {
       expect(result.authConfig).toBeDefined();
     });
 
-    it('devrait lever NotFoundException pour un connecteur inconnu', () => {
-      expect(() => service.getDetail('unknown')).toThrow(NotFoundException);
+    it('devrait lever NotFoundException pour un connecteur inconnu', async () => {
+      await expect(service.getDetail('unknown')).rejects.toThrow(NotFoundException);
     });
   });
 

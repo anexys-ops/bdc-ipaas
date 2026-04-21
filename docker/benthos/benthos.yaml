@@ -1,0 +1,33 @@
+# Benthos — supervision (heartbeat → Redis) + ingress HTTP CSV (simule une entrée type webhook / passerelle).
+# Le corps POST brut est écrit dans /pipeline/inbound/ingress.csv (volume partagé avec l’API et le worker).
+# Tester : curl -sS -X POST http://localhost:4195/ingest/csv -H 'Content-Type: text/csv' --data-binary $'a,b\n1,2\n'
+
+http:
+  enabled: true
+  address: 0.0.0.0:4195
+
+input:
+  broker:
+    inputs:
+      - generate:
+          interval: "@every 60s"
+          mapping: 'root = {"ts":timestamp_unix(),"source":"benthos","kind":"heartbeat"}'
+      - http_server:
+          path: /ingest/csv
+          allowed_verbs: [POST]
+
+pipeline:
+  processors: []
+
+output:
+  switch:
+    cases:
+      - check: meta("http_server_request_path") == "/ingest/csv"
+        output:
+          file:
+            path: /pipeline/inbound/ingress.csv
+            codec: all-bytes
+      - output:
+          redis_list:
+            url: redis://redis:6379
+            key: benthos_heartbeat

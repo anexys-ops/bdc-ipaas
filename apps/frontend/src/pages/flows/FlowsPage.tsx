@@ -1,217 +1,405 @@
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
-import { flowsApi } from '../../api/flows';
-import { engineApi } from '../../api/engine';
+import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '../../components/ui';
 import {
-  GitBranch,
-  Loader2,
-  ArrowRight,
+  Zap,
+  Search,
+  ChevronLeft,
+  ChevronRight,
   Database,
-  Upload,
+  Workflow,
+  Activity,
+  Loader2,
+  ListOrdered,
+  ArrowRight,
+  GitBranch,
   CheckCircle2,
   XCircle,
   Clock,
-  Zap,
+  Ban,
 } from 'lucide-react';
-import type { Flow, FlowExecution } from '../../types';
+import { useAuthStore } from '../../stores/auth.store';
+import { engineApi } from '../../api/engine';
 
-function formatDate(s: string | undefined): string {
-  if (!s) return '—';
-  const d = new Date(s);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffH = Math.floor(diffMin / 60);
-  const diffD = Math.floor(diffH / 24);
-  if (diffMin < 1) return 'À l\'instant';
-  if (diffMin < 60) return `Il y a ${diffMin} min`;
-  if (diffH < 24) return `Il y a ${diffH} h`;
-  if (diffD < 7) return `Il y a ${diffD} j`;
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+const EVENTS_PAGE_SIZE = 12;
+
+function formatHeartbeatTime(payload: Record<string, unknown> | null): string {
+  if (!payload) return '—';
+  const ts = payload.ts;
+  if (typeof ts !== 'number') return '—';
+  const ms = ts < 1e12 ? ts * 1000 : ts;
+  try {
+    return new Date(ms).toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  } catch {
+    return '—';
+  }
 }
 
-function StatusBadge({ status }: { status: FlowExecution['status'] }) {
-  const map: Record<string, { label: string; className: string }> = {
-    PENDING: { label: 'En attente', className: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
-    RUNNING: { label: 'En cours', className: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
-    SUCCESS: { label: 'Succès', className: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-    PARTIAL: { label: 'Partiel', className: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
-    FAILED: { label: 'Échec', className: 'bg-red-500/20 text-red-400 border-red-500/30' },
-    DRY_RUN_OK: { label: 'Test OK', className: 'bg-violet-500/20 text-violet-400 border-violet-500/30' },
-  };
-  const { label, className } = map[status] ?? { label: status, className: 'bg-slate-500/20 text-slate-400' };
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium border ${className}`}>
-      {status === 'SUCCESS' && <CheckCircle2 className="w-3 h-3" />}
-      {status === 'FAILED' && <XCircle className="w-3 h-3" />}
-      {status === 'RUNNING' && <Clock className="w-3 h-3 animate-pulse" />}
-      {label}
-    </span>
-  );
-}
-
-function FlowCard({ flow }: { flow: Flow }) {
-  const { data: executions, isLoading: loadingExecutions } = useQuery({
-    queryKey: ['flow-executions', flow.id],
-    queryFn: () => engineApi.getFlowExecutions(flow.id, 5),
-    enabled: !!flow.id,
-  });
-
-  return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-4">
-          <CardTitle className="text-slate-800 flex items-center gap-2">
-            <GitBranch className="w-5 h-5 text-primary-500" />
-            {flow.name}
-          </CardTitle>
-          <span
-            className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-              flow.isActive ? 'bg-emerald-500/20 text-emerald-600' : 'bg-slate-200 text-slate-500'
-            }`}
-          >
-            {flow.isActive ? 'Actif' : 'Inactif'}
-          </span>
-        </div>
-        {flow.description && (
-          <p className="text-sm text-slate-500 mt-1">{flow.description}</p>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Échanges aller : Source → Destinations */}
-        <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            Échanges aller (source → destinations)
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 text-sm font-medium">
-              <Database className="w-4 h-4" />
-              {flow.sourceConnectorName}
-            </span>
-            {flow.destinations.length === 0 ? (
-              <span className="text-slate-400 text-sm">Aucune destination</span>
-            ) : (
-              <>
-                <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
-                {flow.destinations.map((dest) => (
-                  <span
-                    key={dest.id}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary-500/15 text-primary-700 border border-primary-500/30 text-sm font-medium"
-                  >
-                    <Upload className="w-4 h-4" />
-                    {dest.connectorName}
-                  </span>
-                ))}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Échanges retour : dernières exécutions */}
-        <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            Dernières exécutions (retour)
-          </p>
-          {loadingExecutions ? (
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Chargement…
-            </div>
-          ) : !executions?.length ? (
-            <p className="text-sm text-slate-500">Aucune exécution pour l’instant.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {executions.map((ex) => (
-                <li
-                  key={ex.executionId}
-                  className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg bg-slate-50 border border-slate-100 text-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={ex.status} />
-                    <span className="text-slate-500">{formatDate(ex.startedAt)}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-slate-600 tabular-nums">
-                    <span title="Entrées">{ex.recordsIn ?? 0} in</span>
-                    <span title="Sorties">{ex.recordsOut ?? 0} out</span>
-                    {ex.recordsFailed != null && ex.recordsFailed > 0 && (
-                      <span className="text-red-600">{ex.recordsFailed} err.</span>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
+function payloadField(payload: Record<string, unknown> | null, key: string): string {
+  if (!payload) return '—';
+  const v = payload[key];
+  if (v === undefined || v === null) return '—';
+  return String(v);
 }
 
 export function FlowsPage() {
-  const { data: flows, isLoading, error } = useQuery({
-    queryKey: ['flows'],
-    queryFn: () => flowsApi.getAll(),
+  const user = useAuthStore((s) => s.user);
+  const canView = user?.role === 'ADMIN' || user?.role === 'OPERATOR' || user?.role === 'SUPER_ADMIN';
+
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
+    queryKey: ['engine', 'flows-runtime'],
+    queryFn: () => engineApi.getFlowsRuntime(),
+    enabled: canView,
+    refetchInterval: 30_000,
   });
 
-  const count = flows?.length ?? 0;
+  const filteredEvents = useMemo(() => {
+    if (!data?.benthosEvents?.length) return [];
+    const q = search.trim().toLowerCase();
+    if (!q) return data.benthosEvents;
+    return data.benthosEvents.filter((row) => {
+      if (row.raw.toLowerCase().includes(q)) return true;
+      if (!row.payload) return false;
+      return Object.values(row.payload).some((v) => String(v).toLowerCase().includes(q));
+    });
+  }, [data?.benthosEvents, search]);
 
-  if (isLoading) {
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / EVENTS_PAGE_SIZE));
+  const pageEvents = useMemo(
+    () => filteredEvents.slice(page * EVENTS_PAGE_SIZE, page * EVENTS_PAGE_SIZE + EVENTS_PAGE_SIZE),
+    [filteredEvents, page],
+  );
+
+  const q = data?.queues?.flowExecutions;
+
+  if (!canView) {
     return (
-      <div className="min-h-screen page-bg-mesh flex items-center justify-center">
-        <div className="glass-card p-10 flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-          <p className="text-sm text-slate-400">Chargement des flux...</p>
+      <div className="min-h-screen page-bg-mesh">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <Card className="border border-slate-200/80 bg-white/95">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-slate-800">
+                <Zap className="w-6 h-6 text-primary-500" />
+                Flux
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-slate-600">
+              <p>Cette vue (supervision Redis, Benthos et files d&apos;exécution) est réservée aux rôles opérateur ou administrateur.</p>
+              <Link to="/planifier" className="inline-flex items-center gap-2 text-primary-600 font-medium hover:text-primary-700">
+                <GitBranch className="w-4 h-4" />
+                Ouvrir la planification des flux
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen page-bg-mesh flex items-center justify-center p-4">
-        <Card className="max-w-md text-center py-10">
-          <p className="text-sm text-red-500">Erreur lors du chargement des flux.</p>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-slate-700 flex items-center gap-2">
-          <Zap className="w-6 h-6 text-primary-400" />
-          Flux
-        </h1>
-        <p className="text-sm text-slate-600 mt-0.5">
-          <span className="font-semibold text-slate-300">{count}</span> flux
-          {count !== 1 ? 's' : ''} — échanges aller (source → destinations) et retour (exécutions).
-        </p>
-      </div>
-        {count === 0 ? (
-          <Card className="text-center py-12">
-            <GitBranch className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <CardTitle className="text-slate-800">Aucun flux</CardTitle>
-            <CardContent className="mt-2">
-              <p className="text-sm text-slate-500 mb-6">
-                Créez un flux pour définir une source et des destinations, puis lancez les
-                exécutions pour voir les échanges aller et retour.
+    <div className="min-h-screen page-bg-mesh relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+              <Zap className="w-7 h-7 text-primary-500" />
+              Flux
+            </h1>
+            <p className="text-slate-600 mt-1 max-w-2xl">
+              Données réelles : Redis (files BullMQ, heartbeats Benthos) et disponibilité du pipeline Benthos. Pour configurer
+              vos intégrations, utilisez la planification.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Button type="button" variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+              {isFetching ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              Actualiser
+            </Button>
+            <Link to="/planifier">
+              <Button type="button" variant="secondary" size="sm" className="gap-1.5">
+                <GitBranch className="w-4 h-4" />
+                Planifier
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-600">
+            <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
+            <p className="text-sm font-medium">Chargement des données runtime…</p>
+          </div>
+        )}
+
+        {isError && !isLoading && (
+          <Card className="border border-amber-200 bg-amber-50/80 mb-8">
+            <CardContent className="pt-6">
+              <p className="text-amber-900 text-sm">
+                Impossible de charger la supervision (API ou droits). Vérifiez votre session ou réessayez plus tard.
               </p>
-              <Link to="/dashboard">
-                <Button>Retour au tableau de bord</Button>
-              </Link>
             </CardContent>
           </Card>
-        ) : (
-          <ul className="space-y-6">
-            {flows?.map((flow) => (
-              <li key={flow.id}>
-                <FlowCard flow={flow} />
-              </li>
-            ))}
-          </ul>
         )}
+
+        {data && !isLoading && (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <Card className="border border-slate-200/80 bg-white/95">
+                <CardContent className="pt-5 pb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-sky-100 border border-sky-200">
+                      <Database className="w-5 h-5 text-sky-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Redis</p>
+                      <p className="text-lg font-bold text-slate-800">
+                        {data.redis.ok ? 'Joignable' : 'Indisponible'}
+                      </p>
+                      {data.redis.ok && data.redis.latencyMs != null && (
+                        <p className="text-xs text-slate-500 tabular-nums">PING ~ {data.redis.latencyMs} ms</p>
+                      )}
+                      {!data.redis.ok && data.redis.error && (
+                        <p className="text-xs text-red-600 break-words">{data.redis.error}</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-slate-200/80 bg-white/95">
+                <CardContent className="pt-5 pb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-indigo-100 border border-indigo-200">
+                      <Workflow className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Benthos</p>
+                      <p className="text-lg font-bold text-slate-800">{data.benthos.ok ? 'En ligne' : 'Hors ligne'}</p>
+                      <p className="text-xs text-slate-500 truncate" title={data.benthos.httpUrl}>
+                        {data.benthos.httpUrl}
+                      </p>
+                      {!data.benthos.ok && data.benthos.error && (
+                        <p className="text-xs text-red-600">{data.benthos.error}</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-slate-200/80 bg-white/95">
+                <CardContent className="pt-5 pb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-100 border border-emerald-200">
+                      <Activity className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Heartbeats Redis</p>
+                      <p className="text-2xl font-bold text-slate-800 tabular-nums">
+                        {data.benthosHeartbeat.listLength != null ? data.benthosHeartbeat.listLength : '—'}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Clé <code className="text-slate-700">{data.benthosHeartbeat.redisKey}</code>
+                      </p>
+                      {data.benthosHeartbeat.error && (
+                        <p className="text-xs text-red-600">{data.benthosHeartbeat.error}</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-slate-200/80 bg-white/95">
+                <CardContent className="pt-5 pb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-violet-100 border border-violet-200">
+                      <ListOrdered className="w-5 h-5 text-violet-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">File BullMQ</p>
+                      {q ? (
+                        <p className="text-sm font-semibold text-slate-800 tabular-nums">
+                          actives {q.active} · attente {q.waiting}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-slate-500">Queue non disponible</p>
+                      )}
+                      {q && (
+                        <p className="text-xs text-slate-500 tabular-nums">
+                          échouées {q.failed} · terminées {q.completed}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+              <Card className="border border-slate-200/80 bg-white/95">
+                <CardContent className="pt-4 pb-4 flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase">Actives</p>
+                    <p className="text-xl font-bold tabular-nums">{q?.active ?? '—'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border border-slate-200/80 bg-white/95">
+                <CardContent className="pt-4 pb-4 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase">En attente</p>
+                    <p className="text-xl font-bold tabular-nums">{q?.waiting ?? '—'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border border-slate-200/80 bg-white/95">
+                <CardContent className="pt-4 pb-4 flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-red-600 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase">Échouées</p>
+                    <p className="text-xl font-bold tabular-nums">{q?.failed ?? '—'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border border-slate-200/80 bg-white/95">
+                <CardContent className="pt-4 pb-4 flex items-center gap-2">
+                  <Ban className="w-5 h-5 text-slate-500 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase">Terminées</p>
+                    <p className="text-xl font-bold tabular-nums">{q?.completed ?? '—'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="border border-slate-200/80 bg-white/95 overflow-hidden">
+              <CardHeader className="border-b border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-slate-800 flex items-center gap-2">
+                      <Workflow className="w-5 h-5 text-indigo-500" />
+                      Événements Benthos (Redis)
+                    </CardTitle>
+                    <p className="text-sm text-slate-500 mt-1 font-normal">
+                      Messages poussés par le pipeline dans la liste Redis (les plus récents en premier).
+                    </p>
+                  </div>
+                  <div className="relative w-full sm:w-80">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      type="search"
+                      placeholder="Filtrer (JSON, source, type…)"
+                      value={search}
+                      onChange={(e) => {
+                        setSearch(e.target.value);
+                        setPage(0);
+                      }}
+                      className="pl-9"
+                      aria-label="Filtrer les événements"
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-slate-50/80 border-b border-slate-200">
+                        <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">
+                          Horodatage
+                        </th>
+                        <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">
+                          Source
+                        </th>
+                        <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">
+                          Type
+                        </th>
+                        <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3 min-w-[200px]">
+                          Aperçu JSON
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pageEvents.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-14 text-center text-slate-500 text-sm">
+                            {data.benthosEvents.length === 0
+                              ? 'Aucun heartbeat en liste pour l’instant (attendez ~1 min après le démarrage de Benthos).'
+                              : 'Aucun résultat pour ce filtre.'}
+                          </td>
+                        </tr>
+                      ) : (
+                        pageEvents.map((row) => (
+                          <tr key={`${row.index}-${row.raw.slice(0, 24)}`} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
+                            <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                              {formatHeartbeatTime(row.payload)}
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-slate-800">
+                              {payloadField(row.payload, 'source')}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-600">{payloadField(row.payload, 'kind')}</td>
+                            <td className="px-4 py-3 text-xs text-slate-500 font-mono break-all max-w-xl">
+                              {row.raw.length > 180 ? `${row.raw.slice(0, 180)}…` : row.raw}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {filteredEvents.length > EVENTS_PAGE_SIZE && (
+                  <div className="flex items-center justify-between gap-4 px-4 py-4 border-t border-slate-100 bg-slate-50/50">
+                    <p className="text-sm text-slate-600">
+                      {page * EVENTS_PAGE_SIZE + 1}–{Math.min((page + 1) * EVENTS_PAGE_SIZE, filteredEvents.length)} sur{' '}
+                      {filteredEvents.length}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={() => setPage((p) => Math.max(0, p - 1))}
+                        disabled={page === 0}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        Précédent
+                      </Button>
+                      <span className="text-sm text-slate-600 px-2">
+                        Page {page + 1} / {totalPages}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                        disabled={page >= totalPages - 1}
+                      >
+                        Suivant
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
     </div>
   );
 }

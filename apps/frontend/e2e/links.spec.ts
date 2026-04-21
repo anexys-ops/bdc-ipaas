@@ -12,13 +12,13 @@ test.describe('Vérification des liens (pages publiques)', () => {
     await expect(page.locator('body')).not.toContainText(/404|not found|page introuvable/i);
 
     await page.goto('/');
-    await page.getByRole('link', { name: /se connecter/i }).first().click();
+    await page.getByRole('link', { name: /connexion/i }).first().click();
     await expect(page).toHaveURL(/\/login/);
   });
 
   test('page login : lien "Explorer le Marketplace" mène à /marketplace', async ({ page }) => {
     await page.goto('/login');
-    await page.getByRole('link', { name: /marketplace/i }).click();
+    await page.getByRole('link', { name: /marketplace/i }).first().click();
     await expect(page).toHaveURL(/\/marketplace/);
   });
 

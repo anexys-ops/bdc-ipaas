@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button, Card, CardContent, CardTitle } from '../../components/ui';
 import { connectorsApi } from '../../api/connectors';
 import { getConnectorLogoUrl } from '../../lib/connector-logos';
@@ -8,6 +8,9 @@ import { Plus, Package, Loader2, ArrowRight, RefreshCw, Trash2 } from 'lucide-re
 import { toast } from 'sonner';
 
 export function ConnectorsListPage() {
+  const location = useLocation();
+  const isBackoffice = location.pathname.startsWith('/backoffice/');
+  const basePath = isBackoffice ? '/backoffice/connectors' : '/connectors';
   const queryClient = useQueryClient();
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -56,6 +59,9 @@ export function ConnectorsListPage() {
       <div className="min-h-screen page-bg-mesh flex items-center justify-center p-4">
         <Card className="max-w-md text-center py-10">
           <p className="text-sm text-red-500">Erreur lors du chargement des connecteurs.</p>
+          <p className="text-xs text-slate-500 mt-2 font-mono break-all">
+            {error instanceof Error ? error.message : String(error)}
+          </p>
         </Card>
       </div>
     );
@@ -65,7 +71,7 @@ export function ConnectorsListPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between gap-4 mb-6">
         <h1 className="text-xl font-bold text-slate-700">Connecteurs configurés</h1>
-        <Link to="/connectors/new">
+        <Link to={`${basePath}/new`}>
           <Button>
             <Plus className="w-4 h-4 mr-2" />
             Ajouter un connecteur
@@ -80,7 +86,7 @@ export function ConnectorsListPage() {
               <p className="text-sm text-slate-500 mb-6">
                 Configurez un connecteur (Sellsy, EBP, etc.) pour lancer des flux.
               </p>
-              <Link to="/connectors/new">
+              <Link to={`${basePath}/new`}>
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
                   Configurer un connecteur
@@ -95,7 +101,7 @@ export function ConnectorsListPage() {
                 <Card className="hover:border-primary-500/50 transition-colors">
                   <CardContent className="flex items-center justify-between gap-4 py-4">
                     <Link
-                      to={`/connectors/${c.id}`}
+                      to={`${basePath}/${c.id}`}
                       className="flex items-center gap-4 min-w-0 flex-1"
                     >
                       <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center shrink-0 overflow-hidden p-1">
@@ -152,7 +158,7 @@ export function ConnectorsListPage() {
                           <RefreshCw className="w-4 h-4" />
                         )}
                       </Button>
-                      <Link to={`/connectors/${c.id}`} onClick={(e) => e.stopPropagation()}>
+                      <Link to={`${basePath}/${c.id}`} onClick={(e) => e.stopPropagation()}>
                         <Button variant="outline" size="sm" title="Modifier">
                           Modifier
                         </Button>

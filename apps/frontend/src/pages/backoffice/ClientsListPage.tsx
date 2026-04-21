@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Button, Card, CardContent, CardTitle } from '../../components/ui';
+import { BackofficePageContainer, BackofficePageHeader } from '../../components/layout';
 import { tenantsApi } from '../../api/tenants';
-import { Plus, Building2, Loader2, Users, Package, ArrowRight } from 'lucide-react';
+import { Plus, Building2, Loader2, ArrowRight, Users, Package } from 'lucide-react';
 import { useAuthStore } from '../../stores/auth.store';
 
 function tenantCreatedAt(iso: string): string {
@@ -36,44 +37,41 @@ export function ClientsListPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-      </div>
+      <BackofficePageContainer>
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+        </div>
+      </BackofficePageContainer>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="max-w-md text-center py-10">
-          <p className="text-sm text-red-500">Erreur lors du chargement des clients.</p>
+      <BackofficePageContainer>
+        <Card className="border-2 border-red-200 text-center py-10">
+          <CardContent>
+            <p className="text-sm text-red-500">Erreur lors du chargement des clients.</p>
+          </CardContent>
         </Card>
-      </div>
+      </BackofficePageContainer>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">Back office</h1>
-              <p className="text-sm text-slate-500">Gestion des clients (tenants)</p>
-            </div>
-            <Link to="/backoffice/clients/new">
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Nouveau client
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <BackofficePageContainer>
+      <BackofficePageHeader
+        title="Clients"
+        description="Gestion des clients (tenants)."
+      >
+        <Link to="/backoffice/clients/new">
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouveau client
+          </Button>
+        </Link>
+      </BackofficePageHeader>
         {!tenants?.length ? (
-          <Card className="text-center py-12">
+          <Card className="border-2 border-slate-200 text-center py-12">
             <Building2 className="w-12 h-12 text-slate-400 mx-auto mb-4" />
             <CardTitle className="text-slate-800">Aucun client</CardTitle>
             <CardContent className="mt-2">
@@ -94,7 +92,7 @@ export function ClientsListPage() {
             {tenants.map((t) => (
               <li key={t.id}>
                 <Link to={`/backoffice/clients/${t.id}`}>
-                  <Card className="hover:border-primary-500/50 transition-colors cursor-pointer">
+                  <Card className="border-2 border-slate-200 hover:border-primary-500/50 transition-colors cursor-pointer">
                     <CardContent className="flex items-center justify-between py-4">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center">
@@ -143,7 +141,6 @@ export function ClientsListPage() {
             ))}
           </ul>
         )}
-      </main>
-    </div>
+    </BackofficePageContainer>
   );
 }

@@ -1,13 +1,13 @@
 {
   "connector_meta": {
     "id": "ftp-sftp",
-    "name": "FTP / SFTP / CSV",
-    "version": "1.0",
+    "name": "FTP / SFTP",
+    "version": "1.1",
     "icon": "https://logo.clearbit.com/box.com",
     "category": "Fichiers",
     "auth_type": "basic",
     "docs_url": "https://en.wikipedia.org/wiki/File_Transfer_Protocol",
-    "config_instructions": "FTP : indiquez l'URL du serveur (ex: ftp://ftp.example.com), l'identifiant et le mot de passe. SFTP : utilisez une URL de type sftp://host ou l'URL de base avec host et port (ex: sftp://serveur.example.com:22). Authentification par mot de passe : renseignez username et password. Authentification par clé privée : renseignez username et le chemin ou contenu de la clé privée (selon implémentation). Pour un chemin local (sans serveur), l'URL de base peut rester vide et seul le chemin du fichier dans l'opération est utilisé."
+    "config_instructions": "Transport uniquement (FTP ou SFTP). Le format des fichiers (CSV, JSON, TXT, EDI…) est géré par le connecteur « Fichiers plats » ou un autre connecteur métier. FTP : URL ftp://hôte. SFTP : sftp://hôte:22. Auth par mot de passe ou clé privée SFTP."
   },
   "auth_config": {
     "protocol_param": "protocol",
@@ -25,15 +25,15 @@
       "type": "text",
       "required": false,
       "placeholder": "ftp://ftp.example.com ou sftp://serveur.example.com:22",
-      "description": "URL du serveur FTP ou SFTP. Optionnel pour chemin local (agent desktop)."
+      "description": "URL du serveur. Laisser vide si le chemin est résolu uniquement par l’agent local."
     },
     {
       "key": "username",
       "label": "Identifiant",
       "type": "text",
       "required": true,
-      "placeholder": "Utilisateur FTP/SFTP",
-      "description": "Identifiant de connexion au serveur."
+      "placeholder": "Utilisateur",
+      "description": "Identifiant de connexion."
     },
     {
       "key": "password",
@@ -41,91 +41,68 @@
       "type": "password",
       "required": false,
       "placeholder": "Mot de passe (vide si clé privée)",
-      "description": "Mot de passe. Laisser vide si vous utilisez une clé privée SFTP."
+      "description": "Mot de passe ou vide pour authentification par clé SFTP."
     },
     {
       "key": "private_key",
       "label": "Clé privée (SFTP)",
       "type": "password",
       "required": false,
-      "placeholder": "Contenu de la clé privée ou chemin",
-      "description": "Optionnel. Pour SFTP en authentification par clé : contenu de la clé privée ou chemin vers le fichier."
+      "placeholder": "Contenu PEM ou chemin",
+      "description": "Clé privée pour SFTP par certificat."
     }
   ],
   "operations": [
     {
-      "id": "read_csv_file",
-      "label": "Lire un fichier CSV",
+      "id": "download_file",
+      "label": "Télécharger un fichier",
       "type": "source",
       "method": "FILE_READ",
-      "description": "Lit un fichier CSV depuis FTP/SFTP ou chemin local et retourne les lignes",
+      "description": "Récupère un fichier binaire ou texte depuis le serveur (tout format).",
       "config_schema": {
         "type": "object",
         "required": ["path"],
         "properties": {
-          "path": { "type": "string", "description": "Chemin du fichier ex: /exports/clients.csv" },
-          "separator": { "type": "string", "default": ";", "description": "Séparateur de colonnes" },
-          "encoding": { "type": "string", "default": "utf-8", "enum": ["utf-8", "windows-1252", "iso-8859-1"] },
-          "hasHeader": { "type": "boolean", "default": true },
-          "skipLines": { "type": "number", "default": 0 }
+          "path": { "type": "string", "description": "Chemin distant ex: /exports/data.bin" }
         }
       },
       "output_schema": {
         "type": "object",
-        "description": "Dynamique — colonnes déduites du header CSV"
+        "description": "Contenu brut ; parser avec le connecteur de format en aval"
       }
     },
     {
-      "id": "watch_directory",
-      "label": "Surveiller un dossier (file watch)",
-      "type": "trigger",
-      "method": "FILE_WATCH",
-      "description": "Déclenche un flux dès qu'un nouveau fichier apparaît dans le dossier",
-      "config_schema": {
-        "type": "object",
-        "required": ["path"],
-        "properties": {
-          "path": { "type": "string" },
-          "pattern": { "type": "string", "default": "*.csv", "description": "Glob pattern" },
-          "moveAfter": { "type": "boolean", "default": true, "description": "Déplacer le fichier dans processed/ après lecture" }
-        }
-      }
-    },
-    {
-      "id": "write_csv_file",
-      "label": "Écrire un fichier CSV",
+      "id": "upload_file",
+      "label": "Envoyer un fichier",
       "type": "destination",
       "method": "FILE_WRITE",
-      "description": "Génère et dépose un fichier CSV sur FTP/SFTP",
+      "description": "Dépose un fichier sur le serveur (tout format).",
       "config_schema": {
         "type": "object",
         "required": ["path"],
         "properties": {
-          "path": { "type": "string", "description": "Dossier de destination" },
-          "filename": { "type": "string", "description": "Nom du fichier. Supporte variables: {date}, {time}, {flowId}" },
-          "separator": { "type": "string", "default": ";" },
-          "encoding": { "type": "string", "default": "utf-8" },
-          "includeHeader": { "type": "boolean", "default": true }
+          "path": { "type": "string", "description": "Dossier distant" },
+          "filename": { "type": "string", "description": "Nom du fichier ({date}, {time}, {flowId})" }
         }
       },
       "input_schema": {
         "type": "object",
-        "description": "Dynamique — colonnes définies par le mapping"
+        "description": "Flux binaire ou texte produit en amont"
       }
     },
     {
-      "id": "agent_watch",
-      "label": "Surveiller un dossier local (via Agent Desktop)",
+      "id": "watch_directory",
+      "label": "Surveiller un dossier distant",
       "type": "trigger",
-      "method": "AGENT_WATCH",
-      "description": "Nécessite l'Agent Desktop installé sur le poste client",
+      "method": "FILE_WATCH",
+      "description": "Déclenche le flux lorsqu’un nouveau fichier apparaît (polling ou événement selon implémentation).",
       "config_schema": {
         "type": "object",
-        "required": ["agentId", "watchPath"],
+        "required": ["path"],
         "properties": {
-          "agentId": { "type": "string", "description": "ID de l'agent desktop enregistré" },
-          "watchPath": { "type": "string", "description": "Chemin local sur le poste client" },
-          "pattern": { "type": "string", "default": "*.csv" }
+          "path": { "type": "string", "description": "Répertoire distant à surveiller" },
+          "pattern": { "type": "string", "default": "*", "description": "Glob, ex: *.csv, *.{json,txt}" },
+          "moveAfter": { "type": "boolean", "default": true, "description": "Déplacer après lecture si supporté" }
         }
       }
     }

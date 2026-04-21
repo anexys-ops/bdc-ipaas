@@ -16,7 +16,7 @@ export interface ConnectorMeta {
   version: string;
   icon: string;
   category: string;
-  auth_type: 'oauth2' | 'api_key' | 'basic' | 'oauth1' | 'agent';
+  auth_type: 'oauth2' | 'api_key' | 'basic' | 'oauth1' | 'agent' | 'none' | 'certificate';
   modes?: string[];
   docs_url: string | null;
   /** Instructions pour configurer le connecteur (URL, clé API, etc.) par logiciel/module */

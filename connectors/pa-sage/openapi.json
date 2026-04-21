@@ -1,0 +1,27 @@
+{
+  "connector_meta": {
+    "id": "pa-sage",
+    "name": "Sage (PA)",
+    "version": "1.0",
+    "icon": "https://logo.clearbit.com/sage.com",
+    "category": "PA",
+    "auth_type": "api_key",
+    "docs_url": null,
+    "config_instructions": "Plateforme d'agrément Sage pour la facturation électronique. Configurez l'accès selon la documentation de votre solution Sage."
+  },
+  "auth_config": {},
+  "config_fields": [
+    { "key": "base_url", "label": "URL de la PA", "type": "text", "required": true, "placeholder": "https://..." },
+    { "key": "api_key", "label": "Clé API", "type": "password", "required": true }
+  ],
+  "operations": [
+    {
+      "id": "submit_invoice",
+      "label": "Déposer une facture",
+      "type": "destination",
+      "method": "POST",
+      "description": "Envoi d'une facture au format facturation électronique vers la PA Sage.",
+      "input_schema": { "type": "object", "properties": {} }
+    }
+  ]
+}

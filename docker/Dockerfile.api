@@ -1,6 +1,9 @@
 # Build API depuis la racine du monorepo (contexte = .)
 FROM node:20-alpine AS builder
 
+# OpenSSL 3 + compat : Prisma détecte correctement le moteur linux-musl-openssl-3.0.x (évite les warnings Alpine).
+RUN apk add --no-cache openssl libc6-compat
+
 WORKDIR /app
 
 # Racine monorepo
@@ -12,16 +15,20 @@ RUN npm install -g pnpm && pnpm install --frozen-lockfile
 COPY apps/api apps/api
 COPY connectors connectors
 
-# Build des packages workspace dont l'API dépend (ex. @anexys/edifact)
-RUN pnpm --filter @anexys/edifact build
-
 WORKDIR /app/apps/api
 RUN npx prisma generate --schema=./src/prisma/schema.prisma
 RUN npx prisma generate --schema=./src/prisma/tenant.prisma
 RUN pnpm build
 
+# Stage pour exécuter les migrations (même image que builder, autre commande)
+FROM builder AS migrator
+WORKDIR /app/apps/api
+ENTRYPOINT ["npx", "prisma", "migrate", "deploy", "--schema=./src/prisma/schema.prisma"]
+
 # Stage production (structure monorepo pour symlinks pnpm)
 FROM node:20-alpine AS production
+
+RUN apk add --no-cache curl openssl
 
 WORKDIR /app
 

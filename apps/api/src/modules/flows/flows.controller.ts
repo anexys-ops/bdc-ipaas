@@ -149,4 +149,29 @@ export class FlowsController {
   ): Promise<FlowResponseDto> {
     return this.flowsService.setActive(tenant.id, id, false);
   }
+
+  @Post(':id/sync-router')
+  @Roles('ADMIN', 'OPERATOR', 'SUPER_ADMIN')
+  @Audit('SYNC_ROUTER', 'flow')
+  @ApiOperation({ summary: 'Synchroniser un flux vers le router Redis' })
+  @ApiResponse({ status: 200, description: 'Flux synchronisé' })
+  async syncRouterFlow(
+    @CurrentTenant() tenant: { id: string },
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ ok: true; flowId: string }> {
+    await this.flowsService.syncRouterForFlow(tenant.id, id);
+    return { ok: true, flowId: id };
+  }
+
+  @Post('sync-router')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Audit('SYNC_ROUTER_ALL', 'flow')
+  @ApiOperation({ summary: 'Synchroniser tous les flux vers le router Redis' })
+  @ApiResponse({ status: 200, description: 'Flux synchronisés' })
+  async syncRouterAll(
+    @CurrentTenant() tenant: { id: string },
+  ): Promise<{ ok: true; synced: number }> {
+    const synced = await this.flowsService.syncRouterForAllFlows(tenant.id);
+    return { ok: true, synced };
+  }
 }

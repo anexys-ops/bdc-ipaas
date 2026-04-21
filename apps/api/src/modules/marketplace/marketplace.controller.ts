@@ -21,7 +21,7 @@ export class MarketplaceController {
     description: 'Liste des connecteurs',
     type: [MarketplaceConnectorDto],
   })
-  getAll(): MarketplaceConnectorDto[] {
+  async getAll(): Promise<MarketplaceConnectorDto[]> {
     return this.marketplaceService.getAll();
   }
 
@@ -33,7 +33,7 @@ export class MarketplaceController {
     description: 'Connecteurs groupés par catégorie',
     type: [MarketplaceCategoryDto],
   })
-  getByCategories(): MarketplaceCategoryDto[] {
+  async getByCategories(): Promise<MarketplaceCategoryDto[]> {
     return this.marketplaceService.getByCategories();
   }
 
@@ -46,7 +46,7 @@ export class MarketplaceController {
     type: MarketplaceConnectorDetailDto,
   })
   @ApiResponse({ status: 404, description: 'Connecteur non trouvé' })
-  getDetail(@Param('type') type: string): MarketplaceConnectorDetailDto {
+  async getDetail(@Param('type') type: string): Promise<MarketplaceConnectorDetailDto> {
     return this.marketplaceService.getDetail(type);
   }
 

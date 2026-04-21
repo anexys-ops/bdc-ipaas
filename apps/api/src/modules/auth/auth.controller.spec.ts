@@ -4,6 +4,7 @@ import { Response, Request } from 'express';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AuditService } from '../audit/audit.service';
+import { TenantsService } from '../tenants/tenants.service';
 import { LoginDto } from './dto';
 import type { AuthenticatedUser } from './interfaces';
 
@@ -39,6 +40,11 @@ describe('AuthController', () => {
     log: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockTenantsService = {
+    create: jest.fn(),
+    createUser: jest.fn(),
+  };
+
   const mockResponse = {
     cookie: jest.fn(),
     clearCookie: jest.fn(),
@@ -60,6 +66,7 @@ describe('AuthController', () => {
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: AuditService, useValue: mockAuditService },
+        { provide: TenantsService, useValue: mockTenantsService },
       ],
     }).compile();
 

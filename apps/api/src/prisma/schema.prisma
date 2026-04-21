@@ -1,7 +1,7 @@
 generator client {
   provider      = "prisma-client-js"
   output        = "../generated/master"
-  binaryTargets = ["linux-musl-openssl-3.0.x"]
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -170,4 +170,17 @@ model AuditLog {
   ipAddress  String?
   userAgent  String?
   createdAt  DateTime @default(now())
+}
+
+/// Métadonnées marketplace gérées depuis l'administration (étoiles, tarif, texte, fichier API, activation).
+model MarketplaceItem {
+  id           String   @id @default(uuid())
+  connectorId  String   @unique
+  stars        Int      @default(5)
+  priceLabel   String   @default("99€ HT")
+  description  String?
+  apiJsonPath  String?
+  enabled      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

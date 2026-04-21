@@ -34,9 +34,10 @@ export class AuthService {
    */
   async login(loginDto: LoginDto): Promise<{ response: AuthResponseDto; refreshToken: string }> {
     const { email, password } = loginDto;
+    const emailNormalized = email.trim().toLowerCase();
 
     const user = await this.prisma.user.findFirst({
-      where: { email: email.toLowerCase() },
+      where: { email: emailNormalized },
       include: { tenant: true },
     });
 

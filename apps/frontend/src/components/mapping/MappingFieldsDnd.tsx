@@ -51,9 +51,10 @@ interface DraggableFieldProps {
   id: string;
   label: string;
   isDragging?: boolean;
+  isMapped?: boolean;
 }
 
-function DraggableField({ id, label, isDragging }: DraggableFieldProps) {
+function DraggableField({ id, label, isDragging, isMapped }: DraggableFieldProps) {
   const { attributes, listeners, setNodeRef, isDragging: dndDragging } = useDraggable({ id });
   const dragging = isDragging ?? dndDragging;
 
@@ -64,13 +65,18 @@ function DraggableField({ id, label, isDragging }: DraggableFieldProps) {
       {...listeners}
       className={`
         flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium
-        bg-emerald-50 border-emerald-200/80 text-emerald-800
         cursor-grab active:cursor-grabbing
-        ${dragging ? 'opacity-50 shadow-lg' : 'hover:bg-emerald-100'}
+        ${isMapped
+          ? 'bg-amber-50 border-amber-200/80 text-amber-800 hover:bg-amber-100'
+          : 'bg-emerald-50 border-emerald-200/80 text-emerald-800 hover:bg-emerald-100'}
+        ${dragging ? 'opacity-50 shadow-lg' : ''}
       `}
     >
-      <GripVertical className="w-4 h-4 text-emerald-500 shrink-0" />
+      <GripVertical className={`w-4 h-4 shrink-0 ${isMapped ? 'text-amber-500' : 'text-emerald-500'}`} />
       {label}
+      {isMapped && (
+        <span className="ml-auto w-2 h-2 rounded-full bg-amber-500 shrink-0" title="Champ mappé" aria-hidden />
+      )}
     </div>
   );
 }
@@ -225,6 +231,9 @@ export function MappingFieldsDnd({
 
   const sortableIds = rules.map((r, i) => `rule-${r.destinationField}-${i}`);
   const ruleByDest = new Map(rules.map((r) => [r.destinationField, r.sourceField ?? null]));
+  const mappedSourceFields = new Set(rules.map((r) => r.sourceField).filter(Boolean) as string[]);
+  const mappedCount = mappedSourceFields.size;
+  const totalSource = sourceFields.length;
 
   return (
     <DndContext
@@ -241,11 +250,27 @@ export function MappingFieldsDnd({
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
-          <h4 className="text-sm font-semibold text-slate-700 mb-2">Champs source</h4>
+          <div className="flex items-center gap-2 mb-2">
+            <h4 className="text-sm font-semibold text-slate-700">Champs source</h4>
+            {totalSource > 0 && (
+              <span className="flex items-center gap-1.5 text-xs text-slate-500 font-normal">
+                <span className="tabular-nums">{mappedCount}/{totalSource} mappés</span>
+                {mappedCount > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" title={`${mappedCount} champ(s) mappé(s)`} aria-hidden />
+                )}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-slate-500 mb-3">Glissez un champ vers la destination</p>
           <div className="space-y-2">
             {sourceFields.map((field) => (
-              <DraggableField key={field} id={getSourceId(field)} label={field} isDragging={activeId === getSourceId(field)} />
+              <DraggableField
+                key={field}
+                id={getSourceId(field)}
+                label={field}
+                isDragging={activeId === getSourceId(field)}
+                isMapped={mappedSourceFields.has(field)}
+              />
             ))}
             {sourceFields.length === 0 && (
               <p className="text-sm text-slate-400 py-2">Aucun champ (définir le schéma source en JSON)</p>
@@ -292,7 +317,12 @@ export function MappingFieldsDnd({
 
       <DragOverlay>
         {activeId && sourceIdToField(activeId) ? (
-          <DraggableField id={activeId} label={sourceIdToField(activeId)!} isDragging />
+          <DraggableField
+            id={activeId}
+            label={sourceIdToField(activeId)!}
+            isDragging
+            isMapped={mappedSourceFields.has(sourceIdToField(activeId)!)}
+          />
         ) : null}
       </DragOverlay>
     </DndContext>

@@ -23,7 +23,7 @@ export function ConnectorDetailPage() {
       <div className="min-h-screen page-bg-mesh flex items-center justify-center">
         <div className="glass-card p-10 flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-          <p className="text-sm text-slate-400">Chargement du connecteur...</p>
+          <p className="text-sm text-slate-600">Chargement du connecteur…</p>
         </div>
       </div>
     );

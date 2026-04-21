@@ -1,0 +1,75 @@
+{
+  "connector_meta": {
+    "id": "isales",
+    "name": "iSales",
+    "version": "1.0",
+    "icon": "https://isalesapp.fr/favicon.ico",
+    "category": "CRM / Facturation",
+    "auth_type": "api_key",
+    "docs_url": "https://isalesapp.fr/",
+    "config_instructions": "iSales - Catalogue commercial synchronisé avec Dolibarr. Configurez l'URL de base et la clé API depuis l'application iSales (Android) ou le back-office Dolibarr."
+  },
+  "auth_config": {
+    "api_key_header": "X-API-Key",
+    "base_url_param": "base_url"
+  },
+  "config_fields": [
+    {
+      "key": "base_url",
+      "label": "URL de base",
+      "type": "text",
+      "required": true,
+      "placeholder": "https://votre-instance.dolibarr.fr/api",
+      "description": "URL de base de l'API (Dolibarr ou iSales)."
+    },
+    {
+      "key": "api_key",
+      "label": "Clé API",
+      "type": "password",
+      "required": true,
+      "placeholder": "Votre clé API",
+      "description": "Clé API Dolibarr (DOLAPIKEY) ou clé iSales."
+    }
+  ],
+  "operations": [
+    {
+      "id": "list_products",
+      "label": "Récupérer le catalogue produits",
+      "type": "source",
+      "method": "GET",
+      "path": "/products",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ref": { "type": "string" },
+          "label": { "type": "string" },
+          "price": { "type": "number" }
+        }
+      }
+    },
+    {
+      "id": "sync_catalog",
+      "label": "Synchroniser le catalogue",
+      "type": "destination",
+      "method": "POST",
+      "path": "/catalog/sync",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ref": { "type": "string" },
+                "label": { "type": "string" },
+                "price": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

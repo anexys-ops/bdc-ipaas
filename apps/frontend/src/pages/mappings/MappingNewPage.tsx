@@ -8,7 +8,8 @@ import { connectorsApi } from '../../api/connectors';
 import { marketplaceApi } from '../../api/marketplace';
 import { mappingsApi } from '../../api/mappings';
 import { parseSchemaFields } from '../../utils/schemaFields';
-import { Loader2, ChevronRight, Copy, Save } from 'lucide-react';
+import { filterConfiguredConnectors, isFileOperation } from '../../lib/file-only-mode';
+import { Loader2, ChevronRight, Copy, Save, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import type { MappingRule, ConfiguredConnector } from '../../types';
 
@@ -69,11 +70,11 @@ export function MappingNewPage() {
   const destinationSchema = destFieldsData.schemaForMapping as Record<string, unknown>;
 
   const connectorsWithSource = useMemo(() => {
-    return configuredConnectors.filter((c) => c.type);
+    return filterConfiguredConnectors(configuredConnectors).filter((c) => c.type);
   }, [configuredConnectors]);
 
-  const sourceOps = sourceDetail?.sourceOperations ?? [];
-  const destOps = destDetail?.destinationOperations ?? [];
+  const sourceOps = (sourceDetail?.sourceOperations ?? []).filter(isFileOperation);
+  const destOps = (destDetail?.destinationOperations ?? []).filter(isFileOperation);
 
   const createMutation = useMutation({
     mutationFn: () => {
@@ -140,6 +141,19 @@ export function MappingNewPage() {
           {/* Step 0: Connecteur source */}
           {step === 0 && (
             <>
+              {connectorsWithSource.length === 0 && !loadingConnectors && (
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <p className="text-sm text-amber-800 flex-1">
+                    Aucun connecteur configuré. Ajoutez d’abord un connecteur (Sage, Dolibarr, etc.) depuis la page Connecteurs pour pouvoir choisir une source et une destination de mapping.
+                  </p>
+                  <Link to="/connectors/new">
+                    <Button variant="outline" size="sm" className="shrink-0 border-amber-300 text-amber-800 hover:bg-amber-100">
+                      <PlusCircle className="w-4 h-4 mr-2" />
+                      Ajouter un connecteur
+                    </Button>
+                  </Link>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Connecteur source (logiciel connecté)
@@ -185,7 +199,7 @@ export function MappingNewPage() {
                   {sourceOperationId && (
                     <div className="pt-4 border-t border-slate-200">
                       <ConnectorSchemaFields
-                        title="Champs de l’API source"
+                        title="Champs du fichier source"
                         subtitle="Obligatoires en vert, facultatifs en jaune"
                         fields={sourceFieldsData.fields}
                       />
@@ -260,7 +274,7 @@ export function MappingNewPage() {
                   {destOperationId && (
                     <div className="pt-4 border-t border-slate-200">
                       <ConnectorSchemaFields
-                        title="Champs de l’API destination"
+                        title="Champs du fichier destination"
                         subtitle="Obligatoires en vert, facultatifs en jaune"
                         fields={destFieldsData.fields}
                       />

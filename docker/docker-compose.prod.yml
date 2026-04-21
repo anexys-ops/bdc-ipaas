@@ -29,6 +29,31 @@ services:
       retries: 5
     restart: unless-stopped
 
+  benthos:
+    image: jeffail/benthos:4.27.0
+    container_name: anexys-benthos
+    volumes:
+      - ./benthos/benthos.yaml:/benthos.yaml:ro
+      - pipeline_data:/pipeline
+    command: ["-c", "/benthos.yaml"]
+    depends_on:
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+      target: migrator
+    container_name: anexys-migrate
+    env_file: ../.env.production
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-anexys}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-anexys_master}
+    depends_on:
+      postgres: { condition: service_healthy }
+    profiles:
+      - tools
+
   api:
     build:
       context: ..
@@ -39,14 +64,46 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-anexys}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-anexys_master}
       REDIS_URL: redis://redis:6379
+      BENTHOS_HTTP_URL: ${BENTHOS_HTTP_URL:-http://benthos:4195}
+      BENTHOS_REDIS_HEARTBEAT_KEY: ${BENTHOS_REDIS_HEARTBEAT_KEY:-benthos_heartbeat}
       FRONTEND_URL: ${FRONTEND_URL:-https://ultimate.edicloud.app}
       CONNECTORS_PATH: /app/connectors
       # Forcer le moteur Prisma OpenSSL 3 sur Alpine (évite libssl.so.1.1)
       PRISMA_QUERY_ENGINE_LIBRARY: /app/apps/api/dist/generated/master/libquery_engine-linux-musl-openssl-3.0.x.so.node
       VAULT_KEY: ${VAULT_KEY}
+      # SMTP Gmail pour envoi des demandes de démo vers commercial@anexys.fr
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM:-Ultimate Edicloud <machine@anexys.fr>}
+      DEMO_MAIL_TO: ${DEMO_MAIL_TO:-commercial@anexys.fr}
+    volumes:
+      - ../connectors:/app/connectors:ro
+      - pipeline_data:/pipeline
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: anexys-worker
+    command: ["node", "dist/worker.js"]
+    env_file: ../.env.production
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-anexys}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-anexys_master}
+      REDIS_URL: redis://redis:6379
+      VAULT_KEY: ${VAULT_KEY}
+      PRISMA_QUERY_ENGINE_LIBRARY: /app/apps/api/dist/generated/master/libquery_engine-linux-musl-openssl-3.0.x.so.node
+    volumes:
+      - pipeline_data:/pipeline
+    depends_on:
+      redis: { condition: service_healthy }
+      api: { condition: service_started }
     restart: unless-stopped
 
   frontend:
@@ -73,3 +130,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  pipeline_data:

@@ -20,6 +20,7 @@ import { marketplaceApi } from '../../api/marketplace';
 import { mappingsApi } from '../../api/mappings';
 import type { PreviewResponse } from '../../api/mappings';
 import { getConnectorLogoUrl } from '../../lib/connector-logos';
+import { filterConfiguredConnectors, isFileOperation } from '../../lib/file-only-mode';
 import {
   Database, Upload, Loader2, ChevronDown, ChevronRight,
   GripVertical, ArrowRight, Play, CheckCircle, XCircle,
@@ -118,7 +119,7 @@ function DestNodeComponent({ data }: NodeProps<{ payload?: DropPayload }>) {
   const fields = data?.payload ? flattenSchema(data.payload.schema) : [];
   return (
     <div
-      className="w-[260px] rounded-2xl border-2 border-blue-500/50 bg-white shadow-lg"
+      className="w-[260px] rounded-2xl border-2 border-primary-500/50 bg-white shadow-lg"
       onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.outline = '3px solid #3b82f6'; }}
       onDragLeave={(e) => { e.currentTarget.style.outline = ''; }}
       onDrop={(e) => {
@@ -134,7 +135,7 @@ function DestNodeComponent({ data }: NodeProps<{ payload?: DropPayload }>) {
         } catch { /* ignore */ }
       }}
     >
-      <div className="bg-blue-500 text-white px-4 py-2.5 rounded-t-2xl flex items-center gap-2">
+      <div className="bg-primary-600 text-white px-4 py-2.5 rounded-t-2xl flex items-center gap-2">
         <Upload className="w-4 h-4 shrink-0" />
         <span className="font-semibold text-sm">Destination</span>
       </div>
@@ -145,8 +146,8 @@ function DestNodeComponent({ data }: NodeProps<{ payload?: DropPayload }>) {
             <p className="text-xs text-slate-500 mb-2 truncate">{data.payload.operationLabel}</p>
             <div className="space-y-0.5">
               {fields.map((f) => (
-                <div key={f} className="text-xs text-blue-800 flex items-center gap-1.5 bg-blue-50 rounded px-2 py-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                <div key={f} className="text-xs text-primary-800 flex items-center gap-1.5 bg-primary-50 rounded px-2 py-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary-400 shrink-0" />
                   <span className="truncate">{f}</span>
                 </div>
               ))}
@@ -155,11 +156,11 @@ function DestNodeComponent({ data }: NodeProps<{ payload?: DropPayload }>) {
           </>
         ) : (
           <p className="text-xs text-slate-400 text-center py-6">
-            Glissez une opération <span className="text-blue-600 font-semibold">destination</span> ici
+            Glissez une opération <span className="text-primary-600 font-semibold">destination</span> ici
           </p>
         )}
       </div>
-      <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-blue-500 !border-2 !border-white" />
+      <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-primary-600 !border-2 !border-white" />
     </div>
   );
 }
@@ -175,8 +176,8 @@ function ConnectorPaletteItem({ connector }: { connector: ConfiguredConnector })
     enabled: open,
   });
   const filter = (label: string) => !search || label.toLowerCase().includes(search.toLowerCase());
-  const sourceOps = detail?.sourceOperations?.filter((op) => filter(op.label)) ?? [];
-  const destOps = detail?.destinationOperations?.filter((op) => filter(op.label)) ?? [];
+  const sourceOps = detail?.sourceOperations?.filter((op) => isFileOperation(op) && filter(op.label)) ?? [];
+  const destOps = detail?.destinationOperations?.filter((op) => isFileOperation(op) && filter(op.label)) ?? [];
 
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
@@ -206,7 +207,7 @@ function ConnectorPaletteItem({ connector }: { connector: ConfiguredConnector })
               placeholder="Rechercher un endpoint..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-7 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:ring-1 focus:ring-blue-400 outline-none"
+              className="w-full pl-7 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:ring-1 focus:ring-primary-400 outline-none"
             />
           </div>
           {isLoading ? (
@@ -231,15 +232,15 @@ function ConnectorPaletteItem({ connector }: { connector: ConfiguredConnector })
               )}
               {destOps.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1 mt-2">↓ Sortie destination ({destOps.length})</p>
+                  <p className="text-xs font-semibold text-primary-700 uppercase tracking-wider mb-1 mt-2">↓ Sortie destination ({destOps.length})</p>
                   {destOps.map((op) => (
                     <div key={op.id} draggable
                       onDragStart={(e) => {
                         e.dataTransfer.setData('application/json', JSON.stringify({ connectorId: connector.id, connectorName: connector.name, connectorType: connector.type, operationId: op.id, operationLabel: op.label, schema: op.inputSchema ?? {}, isSource: false } as DropPayload));
                         e.dataTransfer.effectAllowed = 'copy';
                       }}
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-blue-50 border border-blue-200/80 cursor-grab text-sm text-blue-800 hover:bg-blue-100 mb-1 select-none">
-                      <GripVertical className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-primary-50 border border-primary-200/80 cursor-grab text-sm text-primary-800 hover:bg-primary-100 mb-1 select-none">
+                      <GripVertical className="w-3.5 h-3.5 text-primary-500 shrink-0" />
                       <span className="truncate text-xs">{op.label}</span>
                     </div>
                   ))}
@@ -294,7 +295,7 @@ function PreviewPanel({ rules, sourceSchema, onClose }: { rules: MappingRule[]; 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Données d'entrée (JSON)</label>
             <textarea value={sampleJson} onChange={(e) => setSampleJson(e.target.value)} rows={14}
-              className="w-full font-mono text-xs border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-400/50 outline-none resize-none" spellCheck={false} />
+              className="w-full font-mono text-xs border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-primary-400/50 outline-none resize-none" spellCheck={false} />
             {jsonError && <p className="text-xs text-red-500 mt-1">{jsonError}</p>}
           </div>
           <div>
@@ -356,6 +357,7 @@ export function MappingCanvasPage() {
   }, [canvasHeight]);
 
   const { data: connectors, isLoading: connectorsLoading } = useQuery({ queryKey: ['connectors'], queryFn: () => connectorsApi.getAll() });
+  const fileConnectors = filterConfiguredConnectors(connectors ?? []);
 
   const initialNodes: Node[] = [
     { id: SOURCE_NODE_ID, type: 'source', position: { x: 50, y: 40 }, data: { payload: null } },
@@ -447,9 +449,9 @@ export function MappingCanvasPage() {
             <div className="text-center py-8">
               <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
               <p className="text-sm text-slate-500">Aucun connecteur configuré.</p>
-              <a href="/connectors/new" className="text-xs text-blue-500 underline mt-1 block">Ajouter un connecteur</a>
+              <a href="/connectors/new" className="text-xs text-primary-600 underline mt-1 block">Ajouter un connecteur</a>
             </div>
-          ) : connectors.map((c) => <ConnectorPaletteItem key={c.id} connector={c} />)}
+          ) : fileConnectors.map((c) => <ConnectorPaletteItem key={c.id} connector={c} />)}
         </div>
       </aside>
 
@@ -465,9 +467,9 @@ export function MappingCanvasPage() {
           </ReactFlow>
         </div>
         {/* Poignée de redimensionnement */}
-        <div className="h-2.5 bg-slate-200 hover:bg-blue-300 cursor-row-resize flex items-center justify-center group transition-colors flex-shrink-0"
+        <div className="h-2.5 bg-slate-200 hover:bg-primary-200 cursor-row-resize flex items-center justify-center group transition-colors flex-shrink-0"
           onMouseDown={onDividerDown} title="Glisser pour redimensionner">
-          <div className="w-12 h-1 rounded-full bg-slate-400 group-hover:bg-blue-500 transition-colors" />
+          <div className="w-12 h-1 rounded-full bg-slate-400 group-hover:bg-primary-500 transition-colors" />
         </div>
 
         {/* Zone mapping */}
@@ -478,7 +480,7 @@ export function MappingCanvasPage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <input placeholder="Nom du mapping (ex: Sellsy → EBP Clients)" value={mappingName}
                   onChange={(e) => setMappingName(e.target.value)}
-                  className="flex-1 min-w-48 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-400/50 outline-none" />
+                  className="flex-1 min-w-48 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-primary-400/50 outline-none" />
                 <Button variant="outline" size="sm" onClick={() => {
                   const srcSet = new Set(sourceFields);
                   const newRules: MappingRule[] = destFields.filter((f) => srcSet.has(f)).map((f) => ({ destinationField: f, type: 'from' as const, sourceField: f }));
@@ -503,7 +505,7 @@ export function MappingCanvasPage() {
                       <div className="flex flex-wrap gap-1.5">
                         {WRITE_MODES.map((m) => (
                           <button key={m.value} type="button" onClick={() => setWriteMode(m.value)} title={m.desc}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${writeMode === m.value ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${writeMode === m.value ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
                             {m.label}
                           </button>
                         ))}
@@ -514,7 +516,7 @@ export function MappingCanvasPage() {
                       <div className="flex-1 min-w-40">
                         <p className="text-xs font-semibold text-slate-600 mb-2">Champ identifiant (matchField)</p>
                         <select value={matchField} onChange={(e) => setMatchField(e.target.value)}
-                          className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-1 focus:ring-blue-400 outline-none">
+                          className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary-400 outline-none">
                           <option value="">-- Sélectionner --</option>
                           {destFields.map((f) => <option key={f} value={f}>{f}</option>)}
                         </select>
@@ -533,7 +535,7 @@ export function MappingCanvasPage() {
                 </div>
               )}
 
-              <details className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-2 text-xs text-blue-700">
+              <details className="bg-primary-50 border border-primary-100 rounded-xl px-4 py-2 text-xs text-primary-700">
                 <summary className="cursor-pointer font-medium select-none">📋 Formules disponibles</summary>
                 <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
                   <span><code>UPPER(source.nom)</code> → majuscules</span>
@@ -568,7 +570,7 @@ export function MappingCanvasPage() {
               <p className="text-sm text-slate-500 max-w-sm">
                 Ouvrez un connecteur dans la palette de gauche, puis glissez une opération{' '}
                 <span className="text-emerald-600 font-medium">source</span> et une{' '}
-                <span className="text-blue-600 font-medium">destination</span> vers le canevas ci-dessus.
+                <span className="text-primary-600 font-medium">destination</span> vers le canevas ci-dessus.
               </p>
             </div>
           )}

@@ -25,9 +25,9 @@ describe('Mapping des routes', () => {
       expect(ALL_STATIC_PATHS).toContain(path);
     });
 
-    it('"/" affiche la page d\'accueil (lien ANEXYS ou hero)', () => {
+    it('"/" affiche la page d\'accueil (lien Ultimate Edicloud ou hero)', () => {
       renderApp('/');
-      expect(screen.getAllByText(/ANEXYS iPaaS/i)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/Ultimate Edicloud/i)[0]).toBeInTheDocument();
     });
 
     it('"/login" affiche le formulaire de connexion', () => {
@@ -66,7 +66,7 @@ describe('Mapping des routes', () => {
 
     it('route inconnue redirige vers "/"', () => {
       renderApp('/page-inexistante-404');
-      expect(screen.getAllByText(/ANEXYS iPaaS/i)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/Ultimate Edicloud/i)[0]).toBeInTheDocument();
     });
   });
 });

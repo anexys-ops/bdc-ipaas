@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
 import { flowsApi, type UpdateFlowDto, type TriggerType } from '../../api/flows';
 import { BackButton } from '../../components/layout/BackButton';
 import { CalendarClock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { IngressBenthosFields } from './IngressBenthosFields';
 
 const CRON_PRESETS: { value: string; label: string }[] = [
   { value: '*/5 * * * *', label: 'Toutes les 5 minutes' },
@@ -23,12 +24,20 @@ const CRON_PRESETS: { value: string; label: string }[] = [
 
 export function PlanifierEditPage() {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const isBackoffice = location.pathname.startsWith('/backoffice/');
+  const basePath = isBackoffice ? '/backoffice/planifier' : '/planifier';
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [triggerType, setTriggerType] = useState<TriggerType>('CRON');
   const [cronPreset, setCronPreset] = useState(CRON_PRESETS[0].value);
   const [cronCustom, setCronCustom] = useState('');
   const [webhookDelayMs, setWebhookDelayMs] = useState('');
+  const [inputPath, setInputPath] = useState('');
+  const [outputPath, setOutputPath] = useState('');
+  const [ingressViaBenthos, setIngressViaBenthos] = useState(false);
+  const [benthosStream, setBenthosStream] = useState('ingress:global');
+  const [ingestionToken, setIngestionToken] = useState('');
 
   const { data: flow, isLoading } = useQuery({
     queryKey: ['flow', id],
@@ -41,8 +50,26 @@ export function PlanifierEditPage() {
       setName(flow.name);
       setTriggerType((flow.triggerType as TriggerType) ?? 'CRON');
       const cfg = flow.triggerConfig ?? {};
+      const stream =
+        typeof cfg.stream === 'string'
+          ? cfg.stream
+          : typeof cfg.benthosStream === 'string'
+            ? cfg.benthosStream
+            : 'ingress:global';
+      setIngressViaBenthos(cfg.ingressViaBenthos === true);
+      setBenthosStream(stream);
+      const tok =
+        typeof cfg.ingestionToken === 'string'
+          ? cfg.ingestionToken
+          : typeof cfg.token === 'string'
+            ? cfg.token
+            : '';
+      setIngestionToken(tok);
       if (flow.triggerType === 'WEBHOOK') {
         setWebhookDelayMs(cfg.delayMs != null ? String(cfg.delayMs) : '');
+      } else if (flow.triggerType === 'FILE_WATCH') {
+        setInputPath(typeof cfg.inputPath === 'string' ? cfg.inputPath : '');
+        setOutputPath(typeof cfg.outputPath === 'string' ? cfg.outputPath : '');
       } else {
         const cron = (cfg.cron as string) ?? '';
         const preset = CRON_PRESETS.find((p) => p.value === cron);
@@ -67,10 +94,22 @@ export function PlanifierEditPage() {
   });
 
   const handleSubmit = () => {
+    const benthosExtra: Record<string, unknown> = ingressViaBenthos
+      ? {
+          ingressViaBenthos: true,
+          stream: benthosStream.trim(),
+          ...(ingestionToken.trim() ? { ingestionToken: ingestionToken.trim() } : {}),
+        }
+      : {};
     const triggerConfig: Record<string, unknown> =
       triggerType === 'CRON'
         ? { cron: cronPreset === 'CUSTOM' ? cronCustom.trim() : cronPreset }
-        : { delayMs: webhookDelayMs ? parseInt(webhookDelayMs, 10) : undefined };
+        : triggerType === 'WEBHOOK'
+          ? {
+              delayMs: webhookDelayMs ? parseInt(webhookDelayMs, 10) : undefined,
+              ...benthosExtra,
+            }
+          : { inputPath: inputPath.trim(), outputPath: outputPath.trim(), ...benthosExtra };
     updateMutation.mutate({
       name: name.trim(),
       triggerType,
@@ -82,7 +121,7 @@ export function PlanifierEditPage() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
         <p className="text-slate-500">ID manquant.</p>
-        <Link to="/planifier"><Button variant="outline" className="mt-4">Retour</Button></Link>
+        <Link to={basePath}><Button variant="outline" className="mt-4">Retour</Button></Link>
       </div>
     );
   }
@@ -98,7 +137,7 @@ export function PlanifierEditPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <BackButton to="/planifier" className="mb-6" />
+      <BackButton to={basePath} className="mb-6" />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -141,6 +180,16 @@ export function PlanifierEditPage() {
                   className="text-primary-600"
                 />
                 <span className="text-slate-700">Webhook</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="triggerType"
+                  checked={triggerType === 'FILE_WATCH'}
+                  onChange={() => setTriggerType('FILE_WATCH')}
+                  className="text-primary-600"
+                />
+                <span className="text-slate-700">Fichier</span>
               </label>
             </div>
 
@@ -185,6 +234,40 @@ export function PlanifierEditPage() {
                   min={0}
                   className="w-full max-w-xs px-4 py-2.5 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none"
                 />
+                <IngressBenthosFields
+                  ingressViaBenthos={ingressViaBenthos}
+                  onIngressViaBenthos={setIngressViaBenthos}
+                  benthosStream={benthosStream}
+                  onBenthosStream={setBenthosStream}
+                  ingestionToken={ingestionToken}
+                  onIngestionToken={setIngestionToken}
+                />
+              </div>
+            )}
+            {triggerType === 'FILE_WATCH' && (
+              <div className="pl-6 border-l-2 border-slate-200 space-y-2">
+                <label className="block text-sm text-slate-600 mb-1">Chemin d'entrée</label>
+                <input
+                  type="text"
+                  value={inputPath}
+                  onChange={(e) => setInputPath(e.target.value)}
+                  className="w-full max-w-lg px-4 py-2.5 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none"
+                />
+                <label className="block text-sm text-slate-600 mb-1">Chemin de sortie</label>
+                <input
+                  type="text"
+                  value={outputPath}
+                  onChange={(e) => setOutputPath(e.target.value)}
+                  className="w-full max-w-lg px-4 py-2.5 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none"
+                />
+                <IngressBenthosFields
+                  ingressViaBenthos={ingressViaBenthos}
+                  onIngressViaBenthos={setIngressViaBenthos}
+                  benthosStream={benthosStream}
+                  onBenthosStream={setBenthosStream}
+                  ingestionToken={ingestionToken}
+                  onIngestionToken={setIngestionToken}
+                />
               </div>
             )}
           </div>
@@ -192,7 +275,13 @@ export function PlanifierEditPage() {
           <div className="flex gap-3 pt-4">
             <Button
               onClick={handleSubmit}
-              disabled={name.trim().length < 3 || (triggerType === 'CRON' && cronPreset === 'CUSTOM' && !cronCustom.trim()) || updateMutation.isPending}
+              disabled={
+                name.trim().length < 3 ||
+                (triggerType === 'CRON' && cronPreset === 'CUSTOM' && !cronCustom.trim()) ||
+                (triggerType === 'FILE_WATCH' && (!inputPath.trim() || !outputPath.trim())) ||
+                (ingressViaBenthos && !benthosStream.trim()) ||
+                updateMutation.isPending
+              }
             >
               {updateMutation.isPending ? (
                 <>
@@ -203,7 +292,7 @@ export function PlanifierEditPage() {
                 'Enregistrer'
               )}
             </Button>
-            <Link to="/planifier">
+            <Link to={basePath}>
               <Button variant="outline">Annuler</Button>
             </Link>
           </div>

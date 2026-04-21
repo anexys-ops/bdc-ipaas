@@ -38,6 +38,10 @@ coverage/
 # Turbo
 .turbo/
 
+# Playwright (rapports locaux, ne pas versionner)
+apps/frontend/playwright-report/
+apps/frontend/test-results/
+
 # Temporary files
 tmp/
 temp/

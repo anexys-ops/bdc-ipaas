@@ -26,6 +26,20 @@ export class CreatePortalSessionDto {
   returnUrl!: string;
 }
 
+export class CreateCheckoutSessionDto {
+  @ApiProperty({ enum: BillingPlan, description: 'Plan payant (hors FREE)' })
+  @IsEnum(BillingPlan)
+  plan!: BillingPlan;
+
+  @ApiProperty({ description: 'URL après paiement réussi (peut contenir le littéral {CHECKOUT_SESSION_ID})' })
+  @IsUrl({ require_tld: false })
+  successUrl!: string;
+
+  @ApiProperty({ description: 'URL si paiement annulé' })
+  @IsUrl({ require_tld: false })
+  cancelUrl!: string;
+}
+
 export class UsageRecordDto {
   @ApiProperty() @IsString() metricType!: string;
   @ApiProperty() @IsNumber() @Min(0) quantity!: number;

@@ -3,14 +3,16 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '../../components/ui';
 import { edifactApi } from '../../api/edifact.api';
-import type { EdifactDirection, EdifactMessageType } from '../../api/edifact.api';
+import type { EdifactDirection, EdifactMessageType, EdifactMessage } from '../../api/edifact.api';
 import { FileText, Loader2, Plus, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 const PAGE_SIZE = 20;
 const MESSAGE_TYPES: { value: EdifactMessageType; label: string }[] = [
   { value: 'ORDERS', label: 'ORDERS' },
-  { value: 'INVOIC', label: 'INVOIC' },
+  { value: 'HANMOV', label: 'HANMOV' },
+  { value: 'INVOIC', label: 'INVOICE' },
+  { value: 'PRICAT', label: 'PRICAT' },
   { value: 'DESADV', label: 'DESADV' },
   { value: 'ORDRSP', label: 'ORDRSP' },
 ];
@@ -163,10 +165,10 @@ export function EdifactPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {messages.map((msg) => (
+                  {messages.map((msg: EdifactMessage) => (
                     <tr key={msg.id} className="border-b border-slate-100 hover:bg-slate-50/50">
                       <td className="p-3 text-slate-600 whitespace-nowrap">
-                        {formatDate(msg.createdAt)}
+                        {formatDate((msg as { receivedAt?: string; createdAt?: string }).receivedAt ?? (msg as { createdAt?: string }).createdAt ?? '')}
                       </td>
                       <td className="p-3 font-medium text-slate-800">{msg.type}</td>
                       <td className="p-3">

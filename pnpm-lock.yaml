@@ -51,9 +51,6 @@ importers:
 
   apps/api:
     dependencies:
-      '@anexys/edifact':
-        specifier: workspace:*
-        version: link:../../packages/edifact
       '@nestjs/common':
         specifier: ^10.3.0
         version: 10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -87,6 +84,9 @@ importers:
       '@prisma/client':
         specifier: ^5.10.0
         version: 5.22.0(prisma@5.22.0)
+      basic-ftp:
+        specifier: ^5.0.5
+        version: 5.2.0
       bcrypt:
         specifier: ^5.1.1
         version: 5.1.1
@@ -2159,6 +2159,10 @@ packages:
     resolution: {integrity: sha512-lIyg0szRfYbiy67j9KN8IyeD7q7hcmqnJ1ddWmNt19ItGpNN64mnllmxUNFIOdOm6by97jlL6wfpTTJrmnjWAA==}
     engines: {node: '>=6.0.0'}
     hasBin: true
+
+  basic-ftp@5.2.0:
+    resolution: {integrity: sha512-VoMINM2rqJwJgfdHq6RiUudKt2BV+FY5ZFezP/ypmwayk68+NzzAQy4XXLlqsGD4MCzq3DrmNFD/uUmBJuGoXw==}
+    engines: {node: '>=10.0.0'}
 
   bcrypt@5.1.1:
     resolution: {integrity: sha512-AGBHOG5hPYZ5Xl9KXzU5iKq9516yEmvCKDg3ecP5kX2aB6UqTeXZxk2ELnDgDm6BQSMlLt9rDB4LoSMx0rYwww==}
@@ -7872,6 +7876,8 @@ snapshots:
   base64id@2.0.0: {}
 
   baseline-browser-mapping@2.10.0: {}
+
+  basic-ftp@5.2.0: {}
 
   bcrypt@5.1.1:
     dependencies:

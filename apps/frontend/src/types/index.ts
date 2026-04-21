@@ -23,6 +23,14 @@ export interface MarketplaceConnector {
   docsUrl?: string | null;
   sourceOperationsCount: number;
   destinationOperationsCount: number;
+  /** Note en étoiles (1-5), gérée en admin */
+  stars?: number;
+  /** Tarif affiché (ex: 99€ HT), géré en admin */
+  priceLabel?: string;
+  /** Texte/description complémentaire, géré en admin */
+  description?: string | null;
+  /** Chemin du fichier API JSON */
+  apiJsonPath?: string | null;
 }
 
 export interface MarketplaceCategory {

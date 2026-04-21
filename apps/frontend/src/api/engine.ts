@@ -16,6 +16,81 @@ export interface ExecutionLogEntry {
   level: string;
   message: string;
   createdAt: string;
+  data?: Record<string, unknown>;
+}
+
+export interface PipelineInfraStatus {
+  redis: { ok: boolean; latencyMs?: number; error?: string };
+  benthos: { ok: boolean; httpUrl: string; error?: string };
+  benthosHeartbeat: { redisKey: string; listLength: number | null; error?: string };
+}
+
+export interface FlowsRuntimeStatus extends PipelineInfraStatus {
+  queues: {
+    flowExecutions: { active: number; waiting: number; failed: number; completed: number } | null;
+  };
+  benthosEvents: Array<{
+    index: number;
+    raw: string;
+    payload: Record<string, unknown> | null;
+  }>;
+}
+
+export interface PipelineHubSanitizedConfig {
+  nodeEnv: string;
+  uptimeSec: number;
+  benthosHttpUrl: string;
+  redisUrlMasked: string;
+  heartbeatKey: string;
+  processRole: 'api';
+  workerContainerHint: string;
+}
+
+export type RedisRouterOverview =
+  | {
+      entries: Array<{
+        token: string;
+        flowId: string | null;
+        enabled: boolean;
+        clientId: string | null;
+        stream: string | null;
+        authType: string | null;
+        authConfigured: boolean;
+        routeCount: number;
+        routes: Array<{ redisKey: string; destinationUrl: string | null }>;
+      }>;
+    }
+  | { error: string };
+
+export interface FlowQueueJobPreview {
+  id: string;
+  name: string;
+  state: string;
+  progress: number;
+  timestamp: number;
+  failedReason?: string;
+}
+
+export interface PipelineHubOverview {
+  runtime: FlowsRuntimeStatus;
+  config: PipelineHubSanitizedConfig;
+  redisRouter: RedisRouterOverview;
+  queueJobs: FlowQueueJobPreview[];
+}
+
+/** Réponse `GET /engine/platform-health` (SUPER_ADMIN uniquement). */
+export interface PlatformHealthResponse {
+  checkedAt: string;
+  api: { ok: true };
+  database: { ok: boolean; latencyMs?: number; error?: string };
+  redis: { ok: boolean; latencyMs?: number; error?: string };
+  benthos: { ok: boolean; error?: string };
+  benthosHeartbeat: { listLength: number | null; error?: string };
+  workerQueue: {
+    ok: boolean;
+    error?: string;
+    counts?: { active: number; waiting: number; failed: number; completed: number };
+  };
 }
 
 export const engineApi = {
@@ -34,4 +109,15 @@ export const engineApi = {
     const qs = dryRun ? '?dryRun=true' : '';
     return apiClient.post<ExecutionResult>(`/flows/${flowId}/execute${qs}`, undefined);
   },
+
+  getPipelineInfra: () => apiClient.get<PipelineInfraStatus>('/engine/pipeline-infra'),
+
+  getFlowsRuntime: () => apiClient.get<FlowsRuntimeStatus>('/engine/flows-runtime'),
+
+  getPipelineHub: () => apiClient.get<PipelineHubOverview>('/engine/pipeline-hub'),
+
+  postPipelineRestartHint: () =>
+    apiClient.post<{ ok: boolean; message: string }>('/engine/pipeline-hub/restart-hint', undefined),
+
+  getPlatformHealth: () => apiClient.get<PlatformHealthResponse>('/engine/platform-health'),
 };

@@ -4,7 +4,9 @@
 
 @layer base {
   body {
-    @apply text-slate-700 antialiased bg-slate-50/50;
+    @apply text-slate-700 antialiased;
+    background: linear-gradient(160deg, #f0f9ff 0%, #e0f2fe 20%, #f5f3ff 50%, #fefce8 80%, #f0fdf4 100%);
+    background-attachment: fixed;
   }
 }
 
@@ -33,13 +35,22 @@
   .input {
     @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300 transition-all;
   }
-  .page-bg {
-    min-height: 100vh;
-    background: linear-gradient(160deg, #f0f9ff 0%, #e0f2fe 25%, #fefce8 60%, #ede9fe 100%);
-  }
-  .page-bg-mesh {
+  /** Fond unique pour tout le site (cohérence visuelle) */
+  .app-shell {
     min-height: 100vh;
     background: linear-gradient(160deg, #f0f9ff 0%, #e0f2fe 20%, #f5f3ff 50%, #fefce8 80%, #f0fdf4 100%);
+    background-attachment: fixed;
+  }
+  .page-bg,
+  .page-bg-mesh,
+  .page-bg-marketplace,
+  .page-bg-dashboard {
+    min-height: 100vh;
+    background: linear-gradient(160deg, #f0f9ff 0%, #e0f2fe 20%, #f5f3ff 50%, #fefce8 80%, #f0fdf4 100%);
+    background-attachment: fixed;
+  }
+  .link-cta {
+    @apply text-primary-600 font-medium hover:text-primary-700 transition-colors;
   }
 }
 

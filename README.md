@@ -30,8 +30,9 @@ Plateforme iPaaS (Integration Platform as a Service) multi-tenant.
 # Installer les dépendances
 pnpm install
 
-# Démarrer les services Docker (PostgreSQL, Redis) — requis pour l'API
-docker compose -f docker/docker-compose.dev.yml up -d
+# Démarrer les services Docker (PostgreSQL, Redis, API, frontend, nginx)
+# Depuis la racine : le .env à la racine est chargé automatiquement
+docker compose up -d
 
 # Générer les clients Prisma et appliquer les migrations
 cd apps/api

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
 import { flowsApi } from '../../api/flows';
 import { CalendarClock, Plus, Loader2, ArrowRight, Database, Upload, Trash2, Play, Pause } from 'lucide-react';
@@ -8,6 +8,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 function formatTrigger(config: Record<string, unknown>, triggerType: string): string {
+  const benthosSuffix =
+    config?.ingressViaBenthos === true
+      ? ` · Benthos (${typeof config.stream === 'string' && config.stream ? config.stream : 'stream'})`
+      : '';
   if (triggerType === 'CRON' && typeof config?.cron === 'string') {
     const presets: Record<string, string> = {
       '*/5 * * * *': 'Toutes les 5 min',
@@ -21,12 +25,20 @@ function formatTrigger(config: Record<string, unknown>, triggerType: string): st
     };
     return presets[config.cron] ?? config.cron;
   }
-  if (triggerType === 'WEBHOOK') return 'Webhook';
+  if (triggerType === 'WEBHOOK') return `Webhook${benthosSuffix}`;
   if (triggerType === 'MANUAL') return 'Manuel';
+  if (triggerType === 'FILE_WATCH') {
+    const inPath = typeof config?.inputPath === 'string' ? config.inputPath : '';
+    const outPath = typeof config?.outputPath === 'string' ? config.outputPath : '';
+    if (inPath || outPath) {
+      return `Fichier (${inPath || '-'} -> ${outPath || '-'})${benthosSuffix}`;
+    }
+    return `Fichier${benthosSuffix}`;
+  }
   return triggerType;
 }
 
-function FlowPlanCard({ flow }: { flow: Flow }) {
+function FlowPlanCard({ flow, basePath }: { flow: Flow; basePath: string }) {
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
@@ -107,7 +119,7 @@ function FlowPlanCard({ flow }: { flow: Flow }) {
             {flow.isActive ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
             {flow.isActive ? 'Désactiver' : 'Activer'}
           </Button>
-          <Link to={`/planifier/${flow.id}/edit`}>
+          <Link to={`${basePath}/${flow.id}/edit`}>
             <Button size="sm" variant="outline">Modifier</Button>
           </Link>
           <Button
@@ -129,6 +141,9 @@ function FlowPlanCard({ flow }: { flow: Flow }) {
 }
 
 export function PlanifierPage() {
+  const location = useLocation();
+  const isBackoffice = location.pathname.startsWith('/backoffice/');
+  const basePath = isBackoffice ? '/backoffice/planifier' : '/planifier';
   const { data: flows, isLoading, error } = useQuery({
     queryKey: ['flows'],
     queryFn: () => flowsApi.getAll(),
@@ -166,10 +181,10 @@ export function PlanifierPage() {
             Planifier
           </h1>
           <p className="text-sm text-slate-600 mt-0.5">
-            Choisissez un mapping et planifiez son exécution par cron ou webhook.
+            Choisissez un mapping et planifiez son exécution par cron, webhook ou fichier.
           </p>
         </div>
-        <Link to="/planifier/new">
+        <Link to={`${basePath}/new`}>
           <Button size="lg">
             <Plus className="w-5 h-5 mr-2" />
             Nouvelle planification
@@ -183,9 +198,9 @@ export function PlanifierPage() {
           <CardTitle className="text-slate-800">Aucune planification</CardTitle>
           <CardContent className="mt-2">
             <p className="text-sm text-slate-500 mb-6">
-              Créez une planification pour exécuter un mapping automatiquement (cron) ou via webhook.
+              Créez une planification pour exécuter un mapping automatiquement (cron), via webhook ou en mode fichier.
             </p>
-            <Link to="/planifier/new">
+            <Link to={`${basePath}/new`}>
               <Button>Créer une planification</Button>
             </Link>
           </CardContent>
@@ -194,7 +209,7 @@ export function PlanifierPage() {
         <ul className="space-y-6">
           {flows?.map((flow) => (
             <li key={flow.id}>
-              <FlowPlanCard flow={flow} />
+              <FlowPlanCard flow={flow} basePath={basePath} />
             </li>
           ))}
         </ul>

@@ -1,0 +1,19 @@
+# Contexte des builds `docker/Dockerfile.api` et `docker/Dockerfile.frontend` (monorepo).
+.git
+.github
+.cursor
+**/node_modules
+**/.turbo
+**/dist
+**/build
+**/.next
+**/coverage
+**/*.md
+!README.md
+.env
+.env.*
+!.env.example
+docker/postgres_data
+**/.DS_Store
+apps/frontend/playwright-report
+apps/frontend/test-results

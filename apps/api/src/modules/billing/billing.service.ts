@@ -1,7 +1,14 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import { BillingPlan, PLAN_LIMITS, CreateSubscriptionDto, BillingResponseDto, InvoiceResponseDto } from './dto/billing.dto';
+import {
+  BillingPlan,
+  PLAN_LIMITS,
+  CreateSubscriptionDto,
+  CreateCheckoutSessionDto,
+  BillingResponseDto,
+  InvoiceResponseDto,
+} from './dto/billing.dto';
 import Stripe from 'stripe';
 
 function getStripePriceIds(configService: { get: (key: string) => string | undefined }): Record<BillingPlan, string> {
@@ -233,6 +240,9 @@ export class BillingService {
         case 'customer.subscription.deleted':
           await this.handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
           break;
+        case 'checkout.session.completed':
+          await this.handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+          break;
       }
     } catch (err) {
       this.logger.error(`Erreur webhook Stripe: ${(err as Error).message}`);
@@ -268,6 +278,34 @@ export class BillingService {
     if (!tenantId) return;
 
     this.logger.warn(`Paiement échoué pour tenant ${tenantId}`);
+  }
+
+  private async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<void> {
+    if (session.mode !== 'subscription') return;
+
+    const tenantId = session.metadata?.tenantId;
+    const planRaw = session.metadata?.plan;
+    if (!tenantId || !planRaw) {
+      this.logger.warn('checkout.session.completed sans tenantId ou plan dans les métadonnées');
+      return;
+    }
+
+    const plan = planRaw as BillingPlan;
+    if (!Object.values(BillingPlan).includes(plan) || plan === BillingPlan.FREE) return;
+
+    const subRef = session.subscription;
+    const subscriptionId = typeof subRef === 'string' ? subRef : subRef?.id;
+    if (!subscriptionId) return;
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        plan: this.mapBillingPlanToPrismaPlan(plan),
+        stripeSubscriptionId: subscriptionId,
+      },
+    });
+
+    this.logger.log(`Checkout complété pour tenant ${tenantId}, abonnement ${subscriptionId}, plan ${plan}`);
   }
 
   private async handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
@@ -316,6 +354,49 @@ export class BillingService {
     const session = await this.stripe.billingPortal.sessions.create({
       customer: tenant.stripeCustomerId,
       return_url: returnUrl,
+    });
+
+    return { url: session.url ?? '' };
+  }
+
+  async createCheckoutSession(tenantId: string, dto: CreateCheckoutSessionDto): Promise<{ url: string }> {
+    if (!this.stripe) throw new BadRequestException('Stripe non configuré');
+    if (dto.plan === BillingPlan.FREE) {
+      throw new BadRequestException('Le plan gratuit ne nécessite pas de paiement Stripe');
+    }
+
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) throw new NotFoundException(`Tenant non trouvé: ${tenantId}`);
+
+    const priceIds = getStripePriceIds(this.configService);
+    const priceId = priceIds[dto.plan];
+    if (!priceId) {
+      throw new BadRequestException(`Prix Stripe non configuré pour le plan ${dto.plan}`);
+    }
+
+    let customerId = tenant.stripeCustomerId;
+    if (!customerId) {
+      const customer = await this.stripe.customers.create({
+        name: tenant.name,
+        metadata: { tenantId },
+      });
+      customerId = customer.id;
+      await this.prisma.tenant.update({ where: { id: tenantId }, data: { stripeCustomerId: customerId } });
+    }
+
+    const successUrl = dto.successUrl.includes('{CHECKOUT_SESSION_ID}')
+      ? dto.successUrl
+      : `${dto.successUrl}${dto.successUrl.includes('?') ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}`;
+
+    const session = await this.stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: successUrl,
+      cancel_url: dto.cancelUrl,
+      metadata: { tenantId, plan: dto.plan },
+      subscription_data: { metadata: { tenantId, plan: dto.plan } },
+      allow_promotion_codes: true,
     });
 
     return { url: session.url ?? '' };

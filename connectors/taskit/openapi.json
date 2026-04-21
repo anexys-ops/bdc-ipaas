@@ -1,0 +1,67 @@
+{
+  "connector_meta": {
+    "id": "taskit",
+    "name": "Taskit",
+    "version": "1.0",
+    "icon": "https://taskit.fr/favicon.ico",
+    "category": "Gestion de tâches / Projet",
+    "auth_type": "api_key",
+    "docs_url": "https://taskit.fr",
+    "config_instructions": "Configurez l'accès à votre instance Taskit (taskit.fr) : URL de base et clé API dans les paramètres du logiciel."
+  },
+  "auth_config": {
+    "api_key_header": "X-API-Key",
+    "base_url_param": "base_url"
+  },
+  "config_fields": [
+    {
+      "key": "base_url",
+      "label": "URL de base",
+      "type": "text",
+      "required": true,
+      "placeholder": "https://votre-instance.taskit.fr/api",
+      "description": "URL de base de l'API Taskit (sans slash final)."
+    },
+    {
+      "key": "api_key",
+      "label": "Clé API",
+      "type": "password",
+      "required": true,
+      "placeholder": "Votre clé API Taskit",
+      "description": "Clé API disponible dans les paramètres de votre compte Taskit."
+    }
+  ],
+  "operations": [
+    {
+      "id": "list_tasks",
+      "label": "Récupérer les tâches",
+      "type": "source",
+      "method": "GET",
+      "path": "/tasks",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "status": { "type": "string" },
+          "dueDate": { "type": "string" }
+        }
+      }
+    },
+    {
+      "id": "create_task",
+      "label": "Créer une tâche",
+      "type": "destination",
+      "method": "POST",
+      "path": "/tasks",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

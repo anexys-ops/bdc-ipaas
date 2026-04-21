@@ -50,7 +50,12 @@ export class TenantDatabaseService implements OnModuleDestroy {
       return existing.client;
     }
 
-    const connectionString = this.vaultService.decrypt(dbConnectionHash);
+    let connectionString = this.vaultService.decrypt(dbConnectionHash);
+    // En Docker, l'URL tenant peut avoir été enregistrée avec localhost ; utiliser le même host que DATABASE_URL.
+    const mainUrl = process.env.DATABASE_URL;
+    if (mainUrl && mainUrl.includes('@postgres:')) {
+      connectionString = connectionString.replace(/@localhost:/g, '@postgres:');
+    }
 
     const client = new PrismaClient({
       datasources: {

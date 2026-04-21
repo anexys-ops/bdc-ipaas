@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class LoginDto {
@@ -6,6 +7,7 @@ export class LoginDto {
     description: 'Email de l\'utilisateur',
     example: 'admin@anexys.fr',
   })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
   @IsEmail({}, { message: 'Email invalide' })
   email!: string;
 

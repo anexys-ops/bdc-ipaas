@@ -44,11 +44,38 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        connectorPulse: {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(14, 165, 233, 0.35)' },
+          '50%': { boxShadow: '0 0 0 12px rgba(14, 165, 233, 0)' },
+        },
+        flowLine: {
+          '0%': { strokeDashoffset: '24', opacity: '0.6' },
+          '50%': { opacity: '1' },
+          '100%': { strokeDashoffset: '0', opacity: '0.6' },
+        },
+        staggerIn: {
+          '0%': { opacity: '0', transform: 'scale(0.92) translateY(8px)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        scrollLeft: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
       },
       animation: {
         'float': 'float 6s ease-in-out infinite',
         'glow': 'glow 2s ease-in-out infinite alternate',
         'fadeIn': 'fadeIn 0.5s ease-out',
+        'connector-pulse': 'connectorPulse 2s ease-in-out infinite',
+        'flow-line': 'flowLine 1.5s ease-in-out infinite',
+        'stagger-in': 'staggerIn 0.5s ease-out forwards',
+        'scroll-left': 'scrollLeft 25s linear infinite',
+      },
+      animationDelay: {
+        '100': '100ms',
+        '200': '200ms',
+        '300': '300ms',
+        '400': '400ms',
       },
       boxShadow: {
         'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',

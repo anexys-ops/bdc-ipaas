@@ -103,12 +103,12 @@ export function ClientNewPage() {
 
         {/* Stepper */}
         <div className="flex items-center gap-3 mb-8">
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${step >= 1 ? 'bg-blue-500 text-white' : 'bg-slate-200 text-slate-600'}`}>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${step >= 1 ? 'bg-primary-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
             <Building2 className="w-4 h-4" />
             1. Informations client
           </div>
           <div className="flex-1 h-px bg-slate-200" />
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${step >= 2 ? 'bg-blue-500 text-white' : 'bg-slate-200 text-slate-600'}`}>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${step >= 2 ? 'bg-primary-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
             <User className="w-4 h-4" />
             2. Compte administrateur
           </div>
@@ -120,7 +120,7 @@ export function ClientNewPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-blue-500" />
+                  <Building2 className="w-5 h-5 text-primary-600" />
                   Informations du client
                 </CardTitle>
                 <p className="text-sm text-slate-500 mt-1">
@@ -160,7 +160,7 @@ export function ClientNewPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-blue-500" />
+                  <CreditCard className="w-5 h-5 text-primary-600" />
                   Plan d'abonnement
                 </CardTitle>
               </CardHeader>
@@ -173,17 +173,17 @@ export function ClientNewPage() {
                       onClick={() => setPlan(p.value)}
                       className={`relative rounded-xl border-2 p-4 text-left transition-all ${
                         plan === p.value
-                          ? 'border-blue-500 bg-blue-50'
+                          ? 'border-primary-500 bg-primary-50'
                           : 'border-slate-200 hover:border-slate-300 bg-white'
                       }`}
                     >
                       {plan === p.value && (
-                        <span className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span className="absolute top-2 right-2 w-5 h-5 bg-primary-600 rounded-full flex items-center justify-center">
                           <Check className="w-3 h-3 text-white" />
                         </span>
                       )}
                       <p className="font-semibold text-slate-900 text-sm">{p.label}</p>
-                      <p className="text-xs font-medium text-blue-600 mb-2">{p.price}</p>
+                      <p className="text-xs font-medium text-primary-600 mb-2">{p.price}</p>
                       <ul className="space-y-1">
                         {p.features.map((f) => (
                           <li key={f} className="text-xs text-slate-600 flex items-center gap-1">
@@ -223,7 +223,7 @@ export function ClientNewPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-blue-500" />
+                  <User className="w-5 h-5 text-primary-600" />
                   Compte administrateur
                 </CardTitle>
                 <p className="text-sm text-slate-500 mt-1">

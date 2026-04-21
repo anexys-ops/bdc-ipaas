@@ -13,6 +13,7 @@ import { AgentsModule } from './modules/agents/agents.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { DemoModule } from './modules/demo/demo.module';
 import { UsersModule } from './modules/users/users.module';
 import { GroupsModule } from './modules/groups/groups.module';
 import { EdifactModule } from './modules/edifact/edifact.module';
@@ -40,6 +41,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     BillingModule,
     AuditModule,
     NotificationsModule,
+    DemoModule,
     UsersModule,
     GroupsModule,
     EdifactModule,

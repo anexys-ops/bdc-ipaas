@@ -1,8 +1,9 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from './stores/auth.store';
-import { PrivateLayout } from './components/layout';
+import { PrivateLayout, PublicLayout, BackofficeLayout } from './components/layout';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupTrialPage } from './pages/auth/SignupTrialPage';
+import { ReserverDemoPage } from './pages/demo/ReserverDemoPage';
 import { HomePage } from './pages/home/HomePage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { AuditPage } from './pages/audit/AuditPage';
@@ -21,6 +22,8 @@ import { ClientDetailPage } from './pages/backoffice/ClientDetailPage';
 import { ClientNewPage } from './pages/backoffice/ClientNewPage';
 import { BackofficeDashboardPage } from './pages/backoffice/BackofficeDashboardPage';
 import { BackofficeInvoicesPage } from './pages/backoffice/BackofficeInvoicesPage';
+import { MarketplaceManagementPage } from './pages/backoffice/MarketplaceManagementPage';
+import { BackofficeFileFlowsPage } from './pages/backoffice/BackofficeFileFlowsPage';
 import { MappingsPage } from './pages/mappings/MappingsPage';
 import { MappingDetailPage } from './pages/mappings/MappingDetailPage';
 import { MappingNewPage } from './pages/mappings/MappingNewPage';
@@ -33,6 +36,9 @@ import { EdifactPage } from './pages/edifact/EdifactPage';
 import { EdifactSendPage } from './pages/edifact/EdifactSendPage';
 import { UsersPage } from './pages/users/UsersPage';
 import { GroupsPage } from './pages/groups/GroupsPage';
+import { MonitoringPage } from './pages/monitoring/MonitoringPage';
+import { PipelineHubPage } from './pages/hub/PipelineHubPage';
+import { TarifsPage } from './pages/tarifs/TarifsPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -54,6 +60,20 @@ function BackOfficeRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/** Marketplace : si authentifié → PrivateLayout (rester connecté), sinon → PublicLayout */
+function MarketplaceLayout() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  return isAuthenticated ? (
+    <PrivateLayout>
+      <Outlet />
+    </PrivateLayout>
+  ) : (
+    <PublicLayout>
+      <Outlet />
+    </PublicLayout>
+  );
+}
+
 function App() {
   return (
     <Routes>
@@ -61,8 +81,20 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup-trial" element={<SignupTrialPage />} />
+      <Route path="/reserver-demo" element={<ReserverDemoPage />} />
 
-      {/* Routes privées avec menu commun (Marketplace inclus pour garder le menu) */}
+      {/* Marketplace : si authentifié → PrivateLayout (rester connecté), sinon → PublicLayout */}
+      <Route path="/marketplace" element={<MarketplaceLayout />}>
+        <Route index element={<MarketplacePage />} />
+        <Route path=":type" element={<ConnectorDetailPage />} />
+      </Route>
+
+      {/* Pages accessibles sans connexion (header commun) */}
+      <Route element={<PublicLayout />}>
+        <Route path="/tarifs" element={<TarifsPage />} />
+      </Route>
+
+      {/* Routes privées avec menu commun */}
       <Route
         element={
           <PrivateRoute>
@@ -71,8 +103,6 @@ function App() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/marketplace" element={<MarketplacePage />} />
-        <Route path="/marketplace/:type" element={<ConnectorDetailPage />} />
         <Route path="/audit" element={<AuditPage />} />
         <Route path="/flows" element={<FlowsPage />} />
         <Route path="/planifier" element={<PlanifierPage />} />
@@ -94,46 +124,36 @@ function App() {
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/billing/invoices" element={<InvoicesPage />} />
         <Route path="/billing/quota" element={<QuotaPage />} />
+        <Route path="/monitoring" element={<MonitoringPage />} />
+        <Route path="/hub/pipeline" element={<PipelineHubPage />} />
         <Route
           path="/backoffice"
           element={
             <BackOfficeRoute>
-              <BackofficeDashboardPage />
+              <BackofficeLayout />
             </BackOfficeRoute>
           }
-        />
-        <Route
-          path="/backoffice/invoices"
-          element={
-            <BackOfficeRoute>
-              <BackofficeInvoicesPage />
-            </BackOfficeRoute>
-          }
-        />
-        <Route
-          path="/backoffice/clients"
-          element={
-            <BackOfficeRoute>
-              <ClientsListPage />
-            </BackOfficeRoute>
-          }
-        />
-        <Route
-          path="/backoffice/clients/new"
-          element={
-            <BackOfficeRoute>
-              <ClientNewPage />
-            </BackOfficeRoute>
-          }
-        />
-        <Route
-          path="/backoffice/clients/:id"
-          element={
-            <BackOfficeRoute>
-              <ClientDetailPage />
-            </BackOfficeRoute>
-          }
-        />
+        >
+          <Route index element={<BackofficeDashboardPage />} />
+          <Route path="invoices" element={<BackofficeInvoicesPage />} />
+          <Route path="marketplace" element={<MarketplaceManagementPage />} />
+          <Route path="file-flows" element={<BackofficeFileFlowsPage />} />
+          <Route path="clients" element={<ClientsListPage />} />
+          <Route path="clients/new" element={<ClientNewPage />} />
+          <Route path="clients/:id" element={<ClientDetailPage />} />
+          <Route path="connectors" element={<ConnectorsListPage />} />
+          <Route path="connectors/new" element={<ConnectorNewPage />} />
+          <Route path="connectors/:id" element={<ConfiguredConnectorDetailPage />} />
+          <Route path="mappings" element={<MappingsPage />} />
+          <Route path="mappings/canvas" element={<MappingCanvasPage />} />
+          <Route path="mappings/new" element={<MappingNewPage />} />
+          <Route path="mappings/:id" element={<MappingDetailPage />} />
+          <Route path="planifier" element={<PlanifierPage />} />
+          <Route path="planifier/new" element={<PlanifierNewPage />} />
+          <Route path="planifier/:id/edit" element={<PlanifierEditPage />} />
+          <Route path="edifact" element={<EdifactPage />} />
+          <Route path="edifact/send" element={<EdifactSendPage />} />
+        </Route>
       </Route>
 
       {/* Redirects */}
