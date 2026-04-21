@@ -80,7 +80,7 @@ services:
       - CONNECTORS_PATH=/app/connectors
       - DATABASE_URL=postgresql://anexys:${DB_PASSWORD}@postgres:5432/anexys_master
       - REDIS_URL=redis://redis:6379
-      - BENTHOS_HTTP_URL=${BENTHOS_HTTP_URL:-http://benthos:4195}
+      - BENTHOS_HTTP_URL=${BENTHOS_HTTP_URL:-https://gate.edicloud.app}
       - BENTHOS_REDIS_HEARTBEAT_KEY=${BENTHOS_REDIS_HEARTBEAT_KEY:-benthos_heartbeat}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}

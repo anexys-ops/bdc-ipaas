@@ -50,7 +50,10 @@ export class PipelineHubService {
     const configBlock: PipelineHubSanitizedConfig = {
       nodeEnv: this.config.get<string>('NODE_ENV') ?? 'development',
       uptimeSec: Math.round(process.uptime()),
-      benthosHttpUrl: (this.config.get<string>('BENTHOS_HTTP_URL') ?? 'http://benthos:4195').replace(/\/$/, ''),
+      benthosHttpUrl: (this.config.get<string>('BENTHOS_HTTP_URL') ?? 'https://gate.edicloud.app').replace(
+        /\/$/,
+        '',
+      ),
       redisUrlMasked: PipelineHubService.maskRedisUrl(redisUrl),
       heartbeatKey: this.config.get<string>('BENTHOS_REDIS_HEARTBEAT_KEY') ?? 'benthos_heartbeat',
       processRole: 'api',

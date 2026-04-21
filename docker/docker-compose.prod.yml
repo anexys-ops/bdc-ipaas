@@ -90,7 +90,7 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-anexys}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-anexys_master}
       REDIS_URL: redis://redis:6379
-      BENTHOS_HTTP_URL: ${BENTHOS_HTTP_URL:-http://benthos:4195}
+      BENTHOS_HTTP_URL: ${BENTHOS_HTTP_URL:-https://gate.edicloud.app}
       BENTHOS_REDIS_HEARTBEAT_KEY: ${BENTHOS_REDIS_HEARTBEAT_KEY:-benthos_heartbeat}
       FRONTEND_URL: ${FRONTEND_URL:-https://ultimate.edicloud.app}
       CONNECTORS_PATH: /app/connectors
