@@ -21,8 +21,6 @@ import {
   FileText,
   Package,
   Box,
-  Cpu,
-  Orbit,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { QuoteEstimatorSection } from '../../components/tarifs/QuoteEstimatorSection';
@@ -56,52 +54,30 @@ const ETL_STEPS = [
 
 const TRUST_BADGES = ['100 % configurable', 'Hébergement sécurisé', 'Sans stockage de vos données'] as const;
 
-/** Illustration hero : réseau / hub futuriste (SVG), sans photo stock. */
+/** Illustration hero servie en `/hero-integration.png` (même URL en prod : cache-busting via déploiement). */
 function HeroVisual() {
   return (
-    <div className="relative w-full max-w-lg mx-auto aspect-[4/3] rounded-3xl border border-slate-200/60 bg-slate-950/95 shadow-2xl shadow-sky-500/10 overflow-hidden">
+    <div className="relative w-full max-w-xl mx-auto">
       <div
-        className="absolute inset-0 opacity-40"
+        className="relative rounded-3xl overflow-hidden bg-slate-900/5 border border-slate-200/70 shadow-[0_24px_60px_-12px_rgba(14,165,233,0.18),0_12px_24px_-8px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/40"
         style={{
           background:
-            'radial-gradient(circle at 30% 20%, rgba(56, 189, 248, 0.35), transparent 45%), radial-gradient(circle at 80% 60%, rgba(167, 139, 250, 0.35), transparent 40%)',
+            'linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(248,250,252,0.6) 40%, rgba(224,242,254,0.35) 100%)',
         }}
-      />
-      <svg viewBox="0 0 400 300" className="relative w-full h-full text-sky-400/90" aria-hidden>
-        <defs>
-          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#38bdf8" />
-            <stop offset="100%" stopColor="#a78bfa" />
-          </linearGradient>
-        </defs>
-        <circle cx="200" cy="150" r="8" fill="url(#g1)" className="animate-pulse" />
-        {[
-          [80, 80],
-          [320, 90],
-          [100, 220],
-          [300, 210],
-          [200, 40],
-        ].map(([x, y], i) => (
-          <g key={i}>
-            <line x1="200" y1="150" x2={x} y2={y} stroke="currentColor" strokeWidth="0.5" opacity="0.35" />
-            <circle cx={x} cy={y} r="5" fill="currentColor" opacity="0.6" />
-          </g>
-        ))}
-        <rect x="120" y="110" width="160" height="80" rx="12" fill="none" stroke="url(#g1)" strokeWidth="1" opacity="0.8" />
-        <text x="200" y="152" textAnchor="middle" fill="#e2e8f0" fontSize="11" fontFamily="system-ui">
-          Edicloud Hub
-        </text>
-        <text x="200" y="172" textAnchor="middle" fill="#94a3b8" fontSize="9" fontFamily="system-ui">
-          Ultimate · connecteur
-        </text>
-      </svg>
-      <div className="absolute bottom-3 left-3 right-3 flex justify-between text-[10px] uppercase tracking-widest text-slate-500 font-medium">
-        <span className="flex items-center gap-1">
-          <Cpu className="w-3 h-3 text-sky-400" /> iPaaS
-        </span>
-        <span className="flex items-center gap-1">
-          <Orbit className="w-3 h-3 text-violet-400" /> Sync
-        </span>
+      >
+        <img
+          src="/hero-integration.png"
+          alt="Schéma illustratif : hub cloud Ultimate reliant ERP, e-commerce, CRM et flux de données."
+          width={1200}
+          height={675}
+          decoding="async"
+          fetchPriority="high"
+          className="w-full h-auto block object-cover select-none"
+        />
+        <div
+          className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/25 mix-blend-overlay opacity-50"
+          aria-hidden
+        />
       </div>
     </div>
   );
@@ -187,7 +163,7 @@ export function HomePage() {
               </h1>
               <p className="mt-5 text-lg text-slate-600 max-w-xl leading-relaxed">
                 Plateforme iPaaS pour ERP, e‑commerce, CRM et flux EDI. Automatisez vos échanges de données avec le
-                marketplace Ultimate Edicloud — sans image décorative superflue, avec une architecture pensée pour la
+                marketplace Ultimate Edicloud — interface claire, supervision des flux et une architecture pensée pour la
                 production.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
