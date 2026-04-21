@@ -35,7 +35,7 @@ export function LoginPage() {
         return;
       }
       setAuth(response.user, response.accessToken);
-      toast.success('Connexion Keycloak réussie');
+      toast.success('Connexion SSO réussie');
       navigate('/dashboard');
     },
     [navigate, setAuth],
@@ -60,7 +60,7 @@ export function LoginPage() {
           exchangedRef.current = false;
           const message =
             error instanceof Error ? error.message : String((error as { message?: unknown })?.message ?? error);
-          toast.error(message || 'Échec de la liaison Keycloak avec l’API');
+          toast.error(message || 'Échec de la liaison SSO avec l\'API');
         } finally {
           setKcBusy(false);
         }
@@ -103,7 +103,7 @@ export function LoginPage() {
         );
       } else if (message.includes('mot de passe incorrect') || message.includes('Email ou mot de passe')) {
         toast.error(
-          'Email ou mot de passe incorrect. Vérifiez vos identifiants ou créez un compte d\'essai. Après installation, exécutez le seed API (voir ACCES.md) pour un compte de démo.',
+          'Email ou mot de passe incorrect. Vérifiez vos identifiants ou créez un compte d\'essai.',
         );
       } else {
         toast.error(message);
@@ -125,7 +125,7 @@ export function LoginPage() {
       }
       await kc.login({ redirectUri: `${window.location.origin}/login` });
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Impossible d’ouvrir Keycloak';
+      const message = e instanceof Error ? e.message : 'Impossible d\'ouvrir la page SSO';
       toast.error(message);
       setKcBusy(false);
     }
@@ -145,30 +145,7 @@ export function LoginPage() {
         </CardHeader>
 
         <CardContent>
-          {keycloakEnabled ? (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                disabled={!kcReady || kcBusy}
-                loading={kcBusy}
-                onClick={() => void handleKeycloakClick()}
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Se connecter en SSO
-              </Button>
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center" aria-hidden>
-                  <span className="w-full border-t border-slate-200" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase tracking-wide">
-                  <span className="bg-white/95 px-2 text-slate-400">ou par email</span>
-                </div>
-              </div>
-            </>
-          ) : null}
-
+          {/* ── Formulaire email / mot de passe (toujours visible) ── */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input
               label="Email"
@@ -191,6 +168,32 @@ export function LoginPage() {
               Se connecter
             </Button>
           </form>
+
+          {/* ── Bouton SSO Keycloak (en dessous, si configuré) ─────── */}
+          {keycloakEnabled && (
+            <>
+              <div className="relative my-5">
+                <div className="absolute inset-0 flex items-center" aria-hidden>
+                  <span className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase tracking-wide">
+                  <span className="bg-white/95 px-2 text-slate-400">ou connexion SSO</span>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={!kcReady || kcBusy}
+                loading={kcBusy}
+                onClick={() => void handleKeycloakClick()}
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Se connecter avec BigDataConsulting SSO
+              </Button>
+            </>
+          )}
 
           <div className="mt-6 text-center space-y-2">
             <Link
