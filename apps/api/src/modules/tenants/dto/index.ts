@@ -1,6 +1,7 @@
 export * from './create-tenant.dto';
 export * from './update-tenant.dto';
 export * from './tenant-response.dto';
+export * from './tenant-me-gateway.dto';
 export * from './tenant-stats.dto';
 export * from './tenant-connector.dto';
 export * from './tenant-user.dto';

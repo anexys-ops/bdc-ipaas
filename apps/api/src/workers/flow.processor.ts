@@ -13,6 +13,7 @@ export interface FlowExecutionJobData {
   isDryRun: boolean;
   ingestionToken?: string;
   clientName?: string;
+  webhookPayload?: Record<string, unknown> | unknown[];
 }
 
 @Injectable()
@@ -77,7 +78,15 @@ export class FlowProcessor implements OnModuleInit, OnModuleDestroy {
   }
 
   private async processJob(job: Job<FlowExecutionJobData>): Promise<void> {
-    const { tenantId, executionId, flowId, isDryRun = false, ingestionToken, clientName } = job.data;
+    const {
+      tenantId,
+      executionId,
+      flowId,
+      isDryRun = false,
+      ingestionToken,
+      clientName,
+      webhookPayload,
+    } = job.data;
 
     this.logger.log(
       `Début traitement job ${job.id} (executionId=${executionId}, flowId=${flowId}, tentative ${job.attemptsMade + 1}/${job.opts.attempts ?? 3})`,
@@ -91,6 +100,7 @@ export class FlowProcessor implements OnModuleInit, OnModuleDestroy {
       isDryRun,
       ingestionToken,
       clientName,
+      webhookPayload,
     );
 
     this.logger.log(`Fin traitement job ${job.id} (executionId=${executionId})`, 'FlowProcessor');

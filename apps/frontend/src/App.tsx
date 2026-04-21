@@ -38,6 +38,7 @@ import { UsersPage } from './pages/users/UsersPage';
 import { GroupsPage } from './pages/groups/GroupsPage';
 import { MonitoringPage } from './pages/monitoring/MonitoringPage';
 import { PipelineHubPage } from './pages/hub/PipelineHubPage';
+import { GatewayPage } from './pages/gateway/GatewayPage';
 import { TarifsPage } from './pages/tarifs/TarifsPage';
 import { AvisPage } from './pages/avis/AvisPage';
 import { SubscribePage } from './pages/billing/SubscribePage';
@@ -128,6 +129,7 @@ function App() {
         <Route path="/billing/quota" element={<QuotaPage />} />
         <Route path="/monitoring" element={<MonitoringPage />} />
         <Route path="/hub/pipeline" element={<PipelineHubPage />} />
+        <Route path="/gateway" element={<GatewayPage />} />
         <Route
           path="/backoffice"
           element={

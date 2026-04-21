@@ -20,8 +20,11 @@ import {
   CreateTenantUserDto,
   UpdateTenantUserDto,
   Plan,
+  TenantMeGatewayDto,
 } from './dto';
+import { GateRedisService } from '../gateway/gate-redis.service';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import { Role } from '../../generated/master';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -56,6 +59,7 @@ export class TenantsService {
     private readonly vaultService: VaultService,
     private readonly configService: ConfigService,
     private readonly tenantDbService: TenantDatabaseService,
+    private readonly gateRedisService: GateRedisService,
   ) {}
 
   /**
@@ -108,6 +112,7 @@ export class TenantsService {
       data: {
         slug,
         name,
+        gateToken: await this.allocateUniqueGateToken(slug),
         dbName,
         dbConnectionHash,
         plan,
@@ -588,6 +593,82 @@ export class TenantsService {
     if (stdout) {
       this.logger.debug(`Prisma db push stdout: ${stdout}`);
     }
+  }
+
+  /**
+   * Jeton gate pour synchronisation Redis (flux WEBHOOK).
+   */
+  async getMasterTenantGateToken(tenantId: string): Promise<string | null> {
+    const row = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { gateToken: true },
+    });
+    return row?.gateToken ?? null;
+  }
+
+  async getMyGatewayProfile(tenantId: string): Promise<TenantMeGatewayDto> {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant non trouvé: ${tenantId}`);
+    }
+    const base = this.mapToResponse(tenant);
+    return {
+      ...base,
+      gateToken: tenant.gateToken,
+      webhookUrl: this.gateRedisService.webhookPublicBaseUrl(),
+      ingestPublicUrl: this.gateRedisService.ingestPublicUrl(),
+    };
+  }
+
+  async getGatewayRedisSyncStatus(tenantId: string): Promise<{
+    gateRedisReachable: boolean;
+    routeEnabled: boolean | null;
+  }> {
+    const token = await this.getMasterTenantGateToken(tenantId);
+    if (!token) {
+      return { gateRedisReachable: false, routeEnabled: null };
+    }
+    const flag = await this.gateRedisService.readEnabledFlag(token);
+    return {
+      gateRedisReachable: flag !== null,
+      routeEnabled: flag,
+    };
+  }
+
+  async regenerateGateToken(tenantId: string): Promise<TenantMeGatewayDto> {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant non trouvé: ${tenantId}`);
+    }
+    const previous = tenant.gateToken;
+    await this.gateRedisService.deleteTokenKeys(previous);
+    const next = await this.allocateUniqueGateToken(tenant.slug);
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { gateToken: next },
+    });
+    await this.gateRedisService.syncTenantPresence(tenantId);
+    return this.getMyGatewayProfile(tenantId);
+  }
+
+  private newGateTokenSegment(slug: string): string {
+    const safe = slug.toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(0, 32) || 'tenant';
+    const suffix = randomBytes(4).toString('hex');
+    return `${safe}_${suffix}`;
+  }
+
+  private async allocateUniqueGateToken(slug: string): Promise<string> {
+    for (let i = 0; i < 8; i += 1) {
+      const candidate = this.newGateTokenSegment(slug);
+      const exists = await this.prisma.tenant.findUnique({
+        where: { gateToken: candidate },
+        select: { id: true },
+      });
+      if (!exists) {
+        return candidate;
+      }
+    }
+    return `${this.newGateTokenSegment(slug)}_${randomBytes(2).toString('hex')}`;
   }
 
   /**

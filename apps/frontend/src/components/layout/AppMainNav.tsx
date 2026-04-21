@@ -21,6 +21,7 @@ import {
   Home,
   Euro,
   MessageCircle,
+  Cable,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -213,8 +214,14 @@ export function NavMenuGroup({
 const integrationGroup: NavGroup = {
   id: 'integration',
   label: 'Intégration',
-  activePrefix: ['/connectors', '/mappings', '/planifier'],
+  activePrefix: ['/connectors', '/mappings', '/planifier', '/gateway'],
   items: [
+    {
+      to: '/gateway',
+      label: 'Porte d’entrée',
+      description: 'Webhook gateway et jeton gate',
+      icon: Cable,
+    },
     {
       to: '/connectors',
       label: 'Connecteurs',

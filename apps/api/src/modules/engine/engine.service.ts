@@ -87,6 +87,8 @@ export class EngineService {
       triggerSource?: string;
       ingestionToken?: string;
       clientName?: string;
+      /** Payload brut du webhook (BDC-94) — injecté dans triggerConfig.webhookPayload. */
+      payload?: Record<string, unknown> | unknown[];
     } = {},
   ): Promise<ExecutionResult> {
     const prisma = await this.getTenantClient(tenantId);
@@ -131,6 +133,7 @@ export class EngineService {
           isDryRun: options.isDryRun,
           ingestionToken: options.ingestionToken,
           clientName: options.clientName,
+          webhookPayload: options.payload,
         },
         {
           attempts: 3,
@@ -142,13 +145,14 @@ export class EngineService {
       );
       this.logger.log(`Job ajouté à la queue: ${execution.id}`);
     } else {
-      this.processExecution(
+      void this.processExecution(
         tenantId,
         execution.id,
         flowId,
         options.isDryRun || false,
         options.ingestionToken,
         options.clientName,
+        options.payload,
       );
     }
 
@@ -171,6 +175,7 @@ export class EngineService {
     isDryRun: boolean,
     ingestionToken?: string,
     clientName?: string,
+    webhookPayload?: Record<string, unknown> | unknown[],
   ): Promise<void> {
     const prisma = await this.getTenantClient(tenantId);
 
@@ -195,11 +200,16 @@ export class EngineService {
       if (!flow) {
         throw new Error('Flux non trouvé');
       }
-      this.validateIngestionContext(flow.triggerConfig, ingestionToken, clientName);
+      const baseTriggerConfig = flow.triggerConfig as Record<string, unknown>;
+      const triggerConfig: Record<string, unknown> =
+        webhookPayload !== undefined
+          ? { ...baseTriggerConfig, webhookPayload }
+          : baseTriggerConfig;
+
+      this.validateIngestionContext(triggerConfig, ingestionToken, clientName);
 
       await this.logExecution(prisma, executionId, 'INFO', 'Démarrage de l\'exécution');
 
-      const triggerConfig = flow.triggerConfig as Record<string, unknown>;
       const records = await this.extractSourceRecords(flow.triggerType, triggerConfig, executionId, prisma);
       const recordsIn = records.length;
       let recordsOut = 0;
@@ -322,6 +332,26 @@ export class EngineService {
     executionId: string,
     prisma: PrismaClient,
   ): Promise<Array<Record<string, unknown>>> {
+    if (triggerType === 'WEBHOOK') {
+      const payload = triggerConfig.webhookPayload as unknown;
+      if (payload == null) {
+        return [];
+      }
+      if (Array.isArray(payload)) {
+        const rows = payload.filter(
+          (x): x is Record<string, unknown> => x !== null && typeof x === 'object' && !Array.isArray(x),
+        );
+        await this.logExecution(prisma, executionId, 'INFO', `Webhook: ${rows.length} record(s) tableau`);
+        return rows;
+      }
+      if (typeof payload === 'object') {
+        await this.logExecution(prisma, executionId, 'INFO', 'Webhook: 1 record objet');
+        return [payload as Record<string, unknown>];
+      }
+      await this.logExecution(prisma, executionId, 'INFO', 'Webhook: valeur scalaire enveloppée');
+      return [{ value: payload } as Record<string, unknown>];
+    }
+
     if (triggerType !== 'FILE_WATCH' && triggerType !== 'AGENT_WATCH' && triggerType !== 'FILE_ONLY') {
       return [];
     }
@@ -724,6 +754,49 @@ export class EngineService {
   /**
    * Récupère l'historique des exécutions d'un flux.
    */
+  /**
+   * Dernières exécutions dont la source est un webhook (tous flux confondus).
+   */
+  async getRecentWebhookExecutions(tenantId: string, limit: number = 20): Promise<
+    Array<{
+      executionId: string;
+      flowId: string;
+      status: ExecutionResult['status'];
+      triggerSource: string;
+      recordsIn: number;
+      recordsOut: number;
+      startedAt: Date;
+      finishedAt: Date | null;
+    }>
+  > {
+    const prisma = await this.getTenantClient(tenantId);
+    const rows = await prisma.flowExecution.findMany({
+      where: { triggerSource: { startsWith: 'WEBHOOK' } },
+      orderBy: { startedAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        flowId: true,
+        status: true,
+        triggerSource: true,
+        recordsIn: true,
+        recordsOut: true,
+        startedAt: true,
+        finishedAt: true,
+      },
+    });
+    return rows.map((e) => ({
+      executionId: e.id,
+      flowId: e.flowId,
+      status: e.status as ExecutionResult['status'],
+      triggerSource: e.triggerSource,
+      recordsIn: e.recordsIn,
+      recordsOut: e.recordsOut,
+      startedAt: e.startedAt,
+      finishedAt: e.finishedAt,
+    }));
+  }
+
   async getFlowExecutions(
     tenantId: string,
     flowId: string,

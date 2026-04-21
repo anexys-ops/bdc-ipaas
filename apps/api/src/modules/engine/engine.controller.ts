@@ -138,9 +138,10 @@ export class EngineController {
     try {
       const result = await this.engineService.executeFlow(tenant.id, flowId, {
         isDryRun: false,
-        triggerSource: `WEBHOOK:${JSON.stringify(payload).substring(0, 100)}`,
+        triggerSource: 'WEBHOOK:legacy-path',
         ingestionToken: token,
         clientName,
+        payload,
       });
 
       return {

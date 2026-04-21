@@ -4,10 +4,13 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { TenantsService } from './tenants.service';
+import { FlowsService } from '../flows/flows.service';
+import { EngineService } from '../engine/engine.service';
 import {
   CreateTenantDto, UpdateTenantDto, TenantResponseDto,
   TenantStatsDto, TenantConnectorDto, TenantUserDto,
   CreateTenantUserDto, UpdateTenantUserDto,
+  TenantMeGatewayDto,
 } from './dto';
 import { JwtAuthGuard, RolesGuard } from '../../common/guards';
 import { CurrentTenant, CurrentUser, Roles } from '../../common/decorators';
@@ -17,7 +20,11 @@ import { CurrentTenant, CurrentUser, Roles } from '../../common/decorators';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class TenantsController {
-  constructor(private readonly tenantsService: TenantsService) {}
+  constructor(
+    private readonly tenantsService: TenantsService,
+    private readonly flowsService: FlowsService,
+    private readonly engineService: EngineService,
+  ) {}
 
   // ─── GESTION DES TENANTS (SUPER_ADMIN) ───────────────────────────────────
 
@@ -36,6 +43,60 @@ export class TenantsController {
   @ApiResponse({ status: 200, type: [TenantResponseDto] })
   async findAll(@Query('withStats') withStats?: string) {
     return this.tenantsService.findAll({ withStats: withStats === 'true' });
+  }
+
+  // ─── COMPTE COURANT (tenant connecté) — routes « me » avant :id (UUID) ───
+
+  @Get('me')
+  @Roles('ADMIN', 'OPERATOR', 'VIEWER', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Profil tenant + porte d’entrée gateway (gateToken, URLs)' })
+  @ApiResponse({ status: 200, type: TenantMeGatewayDto })
+  async getMe(@CurrentTenant() tenant: { id: string }): Promise<TenantMeGatewayDto> {
+    return this.tenantsService.getMyGatewayProfile(tenant.id);
+  }
+
+  @Get('me/gateway-redis-status')
+  @Roles('ADMIN', 'OPERATOR', 'VIEWER', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Statut de synchronisation des clés Redis gate pour ce tenant' })
+  async getMeGatewayRedis(@CurrentTenant() tenant: { id: string }) {
+    return this.tenantsService.getGatewayRedisSyncStatus(tenant.id);
+  }
+
+  @Get('me/webhook-executions')
+  @Roles('ADMIN', 'OPERATOR', 'VIEWER', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Dernières exécutions déclenchées par webhook' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async getMeWebhookExecutions(
+    @CurrentTenant() tenant: { id: string },
+    @Query('limit') limit?: string,
+  ) {
+    const n = limit ? Math.min(100, Math.max(1, parseInt(limit, 10) || 20)) : 20;
+    return this.engineService.getRecentWebhookExecutions(tenant.id, n);
+  }
+
+  @Post('me/regenerate-gate-token')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Régénérer le gateToken et re-synchroniser Redis + routes flux' })
+  @ApiResponse({ status: 200, type: TenantMeGatewayDto })
+  async regenerateGateToken(@CurrentTenant() tenant: { id: string }): Promise<TenantMeGatewayDto> {
+    const profile = await this.tenantsService.regenerateGateToken(tenant.id);
+    await this.flowsService.syncRouterForAllFlows(tenant.id);
+    return profile;
+  }
+
+  @Get('me/info')
+  @Roles('ADMIN', 'OPERATOR', 'VIEWER', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Informations du tenant courant (pour l\'interface client)' })
+  async getMyInfo(@CurrentTenant() tenant: { id: string }): Promise<TenantResponseDto> {
+    return this.tenantsService.findOne(tenant.id);
+  }
+
+  @Get('me/usage')
+  @Roles('ADMIN', 'OPERATOR', 'VIEWER', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Consommation actuelle du tenant courant' })
+  async getMyUsage(@CurrentTenant() tenant: { id: string }) {
+    return this.tenantsService.getBillingInfo(tenant.id);
   }
 
   @Get(':id')
@@ -173,21 +234,5 @@ export class TenantsController {
     @Param('userId', ParseUUIDPipe) userId: string,
   ): Promise<void> {
     await this.tenantsService.updateUser(id, userId, { isActive: false });
-  }
-
-  // ─── COMPTE COURANT (tenant connecté) ────────────────────────────────────
-
-  @Get('me/info')
-  @Roles('ADMIN', 'OPERATOR', 'VIEWER', 'SUPER_ADMIN')
-  @ApiOperation({ summary: 'Informations du tenant courant (pour l\'interface client)' })
-  async getMyInfo(@CurrentTenant() tenant: { id: string }): Promise<TenantResponseDto> {
-    return this.tenantsService.findOne(tenant.id);
-  }
-
-  @Get('me/usage')
-  @Roles('ADMIN', 'OPERATOR', 'VIEWER', 'SUPER_ADMIN')
-  @ApiOperation({ summary: 'Consommation actuelle du tenant courant' })
-  async getMyUsage(@CurrentTenant() tenant: { id: string }) {
-    return this.tenantsService.getBillingInfo(tenant.id);
   }
 }

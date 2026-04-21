@@ -97,6 +97,29 @@ export interface UpdateTenantUserDto {
   isActive?: boolean;
 }
 
+/** `GET /tenants/me` — porte d’entrée gateway (BDC-95 / BDC-96). */
+export interface TenantMeGateway extends Tenant {
+  gateToken: string;
+  webhookUrl: string;
+  ingestPublicUrl: string;
+}
+
+export interface GatewayRedisStatus {
+  gateRedisReachable: boolean;
+  routeEnabled: boolean | null;
+}
+
+export interface WebhookExecutionRow {
+  executionId: string;
+  flowId: string;
+  status: string;
+  triggerSource: string;
+  recordsIn: number;
+  recordsOut: number;
+  startedAt: string;
+  finishedAt: string | null;
+}
+
 export const tenantsApi = {
   // Listing & détail
   getAll: (withStats?: boolean) =>
@@ -136,4 +159,11 @@ export const tenantsApi = {
   // Compte courant
   getMyInfo: () => apiClient.get<Tenant>('/tenants/me/info'),
   getMyUsage: () => apiClient.get<TenantBillingInfo>('/tenants/me/usage'),
+
+  // Gateway webhook (BDC-95 / BDC-96)
+  getMeGateway: () => apiClient.get<TenantMeGateway>('/tenants/me'),
+  getGatewayRedisStatus: () => apiClient.get<GatewayRedisStatus>('/tenants/me/gateway-redis-status'),
+  listWebhookExecutions: (limit = 20) =>
+    apiClient.get<WebhookExecutionRow[]>(`/tenants/me/webhook-executions?limit=${limit}`),
+  regenerateGateToken: () => apiClient.post<TenantMeGateway>('/tenants/me/regenerate-gate-token', undefined),
 };

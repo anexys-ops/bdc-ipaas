@@ -15,6 +15,7 @@ import {
   FlowVersionResponseDto,
 } from './dto';
 import { FlowRouterSyncPayload, FlowRouterSyncService } from './flow-router-sync.service';
+import { GateRedisService } from '../gateway/gate-redis.service';
 
 /**
  * Service CRUD des flux d'intégration.
@@ -27,6 +28,7 @@ export class FlowsService {
     private readonly tenantDbService: TenantDatabaseService,
     private readonly tenantsService: TenantsService,
     private readonly flowRouterSyncService: FlowRouterSyncService,
+    private readonly gateRedisService: GateRedisService,
   ) {}
 
   private async getTenantClient(tenantId: string): Promise<PrismaClient> {
@@ -39,7 +41,11 @@ export class FlowsService {
    */
   async create(tenantId: string, dto: CreateFlowDto): Promise<FlowResponseDto> {
     const prisma = await this.getTenantClient(tenantId);
-    this.validateTriggerConfig(dto.triggerType, dto.triggerConfig);
+    const mergedTriggerConfig: Record<string, unknown> =
+      dto.triggerType === 'WEBHOOK'
+        ? { webhookRoute: 'default', ...(dto.triggerConfig as Record<string, unknown>) }
+        : (dto.triggerConfig as Record<string, unknown>);
+    this.validateTriggerConfig(dto.triggerType, mergedTriggerConfig);
 
     const sourceConnector = await prisma.connector.findUnique({
       where: { id: dto.sourceConnectorId },
@@ -55,7 +61,7 @@ export class FlowsService {
         description: dto.description,
         sourceConnectorId: dto.sourceConnectorId,
         triggerType: dto.triggerType,
-        triggerConfig: dto.triggerConfig as object,
+        triggerConfig: mergedTriggerConfig as object,
       },
       include: {
         sourceConnector: true,
@@ -75,7 +81,8 @@ export class FlowsService {
     });
 
     this.logger.log(`Flux créé: ${flow.id} (${flow.name})`);
-    await this.syncRouterState(this.toRouterPayload(tenantId, flow));
+    await this.syncRouterState(await this.buildRouterPayload(tenantId, flow));
+    await this.afterWebhookFlowChange(tenantId, flow.triggerType as string);
 
     return this.mapToResponse(flow);
   }
@@ -137,12 +144,20 @@ export class FlowsService {
 
     const updateData: Record<string, unknown> = {};
     const nextTriggerType = dto.triggerType ?? (existing.triggerType as unknown as string);
-    const nextTriggerConfig = dto.triggerConfig ?? (existing.triggerConfig as Record<string, unknown>);
+    let nextTriggerConfig = (dto.triggerConfig ?? existing.triggerConfig) as Record<string, unknown>;
+    if (nextTriggerType === 'WEBHOOK') {
+      const wr = nextTriggerConfig.webhookRoute;
+      if (wr === undefined || wr === '' || (typeof wr === 'string' && !String(wr).trim())) {
+        nextTriggerConfig = { webhookRoute: 'default', ...nextTriggerConfig };
+      }
+    }
     this.validateTriggerConfig(nextTriggerType, nextTriggerConfig);
     if (dto.name !== undefined) updateData.name = dto.name;
     if (dto.description !== undefined) updateData.description = dto.description;
     if (dto.triggerType !== undefined) updateData.triggerType = dto.triggerType;
-    if (dto.triggerConfig !== undefined) updateData.triggerConfig = dto.triggerConfig;
+    if (dto.triggerConfig !== undefined || nextTriggerType === 'WEBHOOK') {
+      updateData.triggerConfig = nextTriggerConfig;
+    }
     if (dto.environment !== undefined) updateData.environment = dto.environment;
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
 
@@ -169,7 +184,8 @@ export class FlowsService {
     });
 
     this.logger.log(`Flux mis à jour: ${flowId} (v${flow.version})`);
-    await this.syncRouterState(this.toRouterPayload(tenantId, flow));
+    await this.syncRouterState(await this.buildRouterPayload(tenantId, flow));
+    await this.afterWebhookFlowChange(tenantId, flow.triggerType as string);
 
     return this.mapToResponse(flow);
   }
@@ -184,12 +200,14 @@ export class FlowsService {
     if (!existing) {
       throw new NotFoundException(`Flux non trouvé: ${flowId}`);
     }
-    await this.removeRouterState({
-      flowId: existing.id,
-      tenantId,
-      isActive: existing.isActive,
-      triggerConfig: (existing.triggerConfig ?? {}) as Record<string, unknown>,
-    });
+    await this.removeRouterState(
+      await this.buildRouterPayload(tenantId, {
+        id: existing.id,
+        isActive: existing.isActive,
+        triggerType: existing.triggerType as string,
+        triggerConfig: existing.triggerConfig,
+      }),
+    );
 
     await prisma.flowDestination.deleteMany({ where: { flowId } });
     await prisma.flowVersion.deleteMany({ where: { flowId } });
@@ -197,6 +215,7 @@ export class FlowsService {
     await prisma.flow.delete({ where: { id: flowId } });
 
     this.logger.log(`Flux supprimé: ${flowId}`);
+    await this.afterWebhookFlowChange(tenantId, existing.triggerType as string);
   }
 
   /**
@@ -250,12 +269,8 @@ export class FlowsService {
     });
 
     const updatedFlow = await this.findOne(tenantId, flowId);
-    await this.syncRouterState({
-      flowId: updatedFlow.id,
-      tenantId,
-      isActive: updatedFlow.isActive,
-      triggerConfig: updatedFlow.triggerConfig ?? {},
-    });
+    await this.syncRouterState(await this.buildRouterPayload(tenantId, updatedFlow));
+    await this.afterWebhookFlowChange(tenantId, updatedFlow.triggerType);
     return updatedFlow;
   }
 
@@ -280,12 +295,8 @@ export class FlowsService {
     await prisma.flowDestination.delete({ where: { id: destinationId } });
 
     const updatedFlow = await this.findOne(tenantId, flowId);
-    await this.syncRouterState({
-      flowId: updatedFlow.id,
-      tenantId,
-      isActive: updatedFlow.isActive,
-      triggerConfig: updatedFlow.triggerConfig ?? {},
-    });
+    await this.syncRouterState(await this.buildRouterPayload(tenantId, updatedFlow));
+    await this.afterWebhookFlowChange(tenantId, updatedFlow.triggerType);
     return updatedFlow;
   }
 
@@ -318,24 +329,17 @@ export class FlowsService {
 
   async syncRouterForFlow(tenantId: string, flowId: string): Promise<void> {
     const flow = await this.findOne(tenantId, flowId);
-    await this.syncRouterState({
-      flowId: flow.id,
-      tenantId,
-      isActive: flow.isActive,
-      triggerConfig: flow.triggerConfig ?? {},
-    });
+    await this.syncRouterState(await this.buildRouterPayload(tenantId, flow));
+    await this.afterWebhookFlowChange(tenantId, flow.triggerType);
   }
 
   async syncRouterForAllFlows(tenantId: string): Promise<number> {
     const flows = await this.findAll(tenantId);
-    const payloads: FlowRouterSyncPayload[] = flows.map((flow) => ({
-      flowId: flow.id,
-      tenantId,
-      isActive: flow.isActive,
-      triggerConfig: flow.triggerConfig ?? {},
-    }));
-    await this.flowRouterSyncService.syncAll(payloads);
-    return payloads.length;
+    for (const flow of flows) {
+      await this.syncRouterState(await this.buildRouterPayload(tenantId, flow));
+    }
+    await this.gateRedisService.syncTenantPresence(tenantId);
+    return flows.length;
   }
 
   /**
@@ -459,20 +463,43 @@ export class FlowsService {
     };
   }
 
-  private toRouterPayload(
+  private async buildRouterPayload(
     tenantId: string,
     flow: {
       id: string;
       isActive: boolean;
+      triggerType: string;
       triggerConfig: unknown;
     },
-  ): FlowRouterSyncPayload {
+  ): Promise<FlowRouterSyncPayload> {
+    const base = (flow.triggerConfig ?? {}) as Record<string, unknown>;
+    let triggerConfig: Record<string, unknown> = { ...base };
+    if (flow.triggerType === 'WEBHOOK') {
+      const gateToken = await this.tenantsService.getMasterTenantGateToken(tenantId);
+      if (gateToken) {
+        triggerConfig = { ...triggerConfig, ingestionToken: gateToken };
+      }
+      if (triggerConfig.webhookRoute === undefined || triggerConfig.webhookRoute === '') {
+        triggerConfig = { ...triggerConfig, webhookRoute: 'default' };
+      }
+    }
     return {
       flowId: flow.id,
       tenantId,
       isActive: flow.isActive,
-      triggerConfig: (flow.triggerConfig ?? {}) as Record<string, unknown>,
+      triggerConfig,
     };
+  }
+
+  private async afterWebhookFlowChange(tenantId: string, triggerType: string): Promise<void> {
+    if (triggerType !== 'WEBHOOK') {
+      return;
+    }
+    try {
+      await this.gateRedisService.syncTenantPresence(tenantId);
+    } catch (e) {
+      this.logger.warn(`sync gate Redis tenant ${tenantId}: ${String(e)}`);
+    }
   }
 
   private async syncRouterState(payload: FlowRouterSyncPayload): Promise<void> {

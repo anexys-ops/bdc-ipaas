@@ -65,10 +65,12 @@ async function main(): Promise<void> {
   }
 
   const dbConnectionHash = encryptVault(tenantDbUrl, vaultKey);
+  const gateToken = `${DEMO_SLUG.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}_${crypto.randomBytes(4).toString('hex')}`;
   const tenant = await prisma.tenant.create({
     data: {
       slug: DEMO_SLUG,
       name: 'Demo',
+      gateToken,
       dbName: DEMO_DB_NAME,
       dbConnectionHash,
       plan: Plan.FREE,

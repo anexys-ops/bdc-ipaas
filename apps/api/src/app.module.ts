@@ -17,6 +17,8 @@ import { DemoModule } from './modules/demo/demo.module';
 import { UsersModule } from './modules/users/users.module';
 import { GroupsModule } from './modules/groups/groups.module';
 import { EdifactModule } from './modules/edifact/edifact.module';
+import { GateRedisModule } from './modules/gateway/gate-redis.module';
+import { GatewayModule } from './modules/gateway/gateway.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { LoggerModule } from './common/logger';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
@@ -30,6 +32,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     }),
     PrismaModule,
     VaultModule,
+    GateRedisModule,
     AuthModule,
     TenantsModule,
     ConnectorsModule,
@@ -45,6 +48,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     UsersModule,
     GroupsModule,
     EdifactModule,
+    GatewayModule,
   ],
   providers: [
     {

@@ -5,6 +5,7 @@ import { TenantsService } from './tenants.service';
 import { TenantDatabaseService } from './tenant-database.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { VaultService } from '../vault/vault.service';
+import { GateRedisService } from '../gateway/gate-redis.service';
 import { Plan } from './dto';
 
 describe('TenantsService', () => {
@@ -14,6 +15,7 @@ describe('TenantsService', () => {
   const mockTenant = {
     id: 'tenant-123',
     slug: 'test-company',
+    gateToken: 'test-company_a1b2c3d4',
     name: 'Test Company',
     dbName: 'db_test_company',
     dbConnectionHash: 'encrypted-connection-string',
@@ -60,6 +62,14 @@ describe('TenantsService', () => {
     }),
   };
 
+  const mockGateRedisService = {
+    webhookPublicBaseUrl: jest.fn().mockReturnValue('https://gate.edicloud.app/webhook'),
+    ingestPublicUrl: jest.fn().mockReturnValue('https://ultimate.edicloud.app/api/v1/gateway/ingest'),
+    deleteTokenKeys: jest.fn().mockResolvedValue(undefined),
+    syncTenantPresence: jest.fn().mockResolvedValue(undefined),
+    readEnabledFlag: jest.fn().mockResolvedValue(null),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -68,6 +78,7 @@ describe('TenantsService', () => {
         { provide: VaultService, useValue: mockVaultService },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: TenantDatabaseService, useValue: mockTenantDatabaseService },
+        { provide: GateRedisService, useValue: mockGateRedisService },
       ],
     }).compile();
 
