@@ -1,10 +1,10 @@
 import { useRef, useEffect, useState } from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/auth.store';
 import { LogOut, Settings, User, Key, CreditCard, ShieldCheck, UserCog, Users, PieChart } from 'lucide-react';
 import { authApi } from '../../api/auth';
 import { toast } from 'sonner';
-import { AppMainNav } from './AppMainNav';
+import { AppMainNav, NavMenuGroup, publicSiteNavGroup } from './AppMainNav';
 import { AppFooter } from './AppFooter';
 import { AppHeaderBrand } from './AppHeaderBrand';
 import { AppPageBackground } from './AppPageBackground';
@@ -16,6 +16,7 @@ interface PrivateLayoutProps {
 export function PrivateLayout({ children }: PrivateLayoutProps) {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const pathname = useLocation().pathname;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
@@ -50,26 +51,9 @@ export function PrivateLayout({ children }: PrivateLayoutProps) {
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 min-h-[3.5rem] py-2 overflow-visible">
             <AppHeaderBrand homeTo="/dashboard" />
 
-            <nav
-              className="hidden xl:flex items-center gap-2 shrink-0 text-[11px] font-medium text-slate-500 border-l border-slate-200/90 pl-3 ml-1"
-              aria-label="Liens site public"
-            >
-              <Link to="/" className="hover:text-sky-600 transition-colors">
-                Site
-              </Link>
-              <span className="text-slate-300" aria-hidden>
-                ·
-              </span>
-              <Link to="/tarifs" className="hover:text-sky-600 transition-colors">
-                Tarifs
-              </Link>
-              <span className="text-slate-300" aria-hidden>
-                ·
-              </span>
-              <Link to="/avis" className="hover:text-sky-600 transition-colors">
-                Avis
-              </Link>
-            </nav>
+            <div className="flex shrink-0 border-l border-slate-200/90 pl-2 ml-1 items-center">
+              <NavMenuGroup group={publicSiteNavGroup} pathname={pathname} />
+            </div>
 
             {/* Pas d'overflow ici : overflow-x-auto masque les sous-menus (position absolute sous le header). */}
             <div className="flex-1 min-w-0 overflow-visible min-h-0">

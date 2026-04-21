@@ -1,8 +1,9 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { AppFooter } from './AppFooter';
 import { AppHeaderBrand } from './AppHeaderBrand';
 import { AppPageBackground } from './AppPageBackground';
+import { NavMenuGroup, publicSiteNavGroup } from './AppMainNav';
 
 interface PublicLayoutProps {
   children?: React.ReactNode;
@@ -13,6 +14,8 @@ interface PublicLayoutProps {
  * hauteur, largeur max, logo et typo identiques.
  */
 export function PublicLayout({ children }: PublicLayoutProps) {
+  const pathname = useLocation().pathname;
+
   return (
     <div className="min-h-screen app-shell flex flex-col">
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm overflow-visible">
@@ -20,40 +23,17 @@ export function PublicLayout({ children }: PublicLayoutProps) {
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 min-h-[3.5rem] py-2 overflow-visible">
             <AppHeaderBrand homeTo="/" />
 
-            <nav
-              className="hidden xl:flex items-center gap-2 shrink-0 text-[11px] font-medium text-slate-500 border-l border-slate-200/90 pl-3 ml-1"
-              aria-label="Raccourcis"
-            >
-              <Link to="/" className="hover:text-sky-600 transition-colors">
-                Site
-              </Link>
-              <span className="text-slate-300" aria-hidden>
-                ·
-              </span>
-              <Link to="/tarifs" className="hover:text-sky-600 transition-colors">
-                Tarifs
-              </Link>
-              <span className="text-slate-300" aria-hidden>
-                ·
-              </span>
-              <Link to="/avis" className="hover:text-sky-600 transition-colors">
-                Avis
-              </Link>
-            </nav>
+            <div className="flex shrink-0 border-l border-slate-200/90 pl-2 ml-1 items-center">
+              <NavMenuGroup group={publicSiteNavGroup} pathname={pathname} />
+            </div>
 
             <div className="flex-1 min-w-0 flex flex-wrap items-center justify-end gap-x-2 sm:gap-x-3 gap-y-2 sm:pl-2">
-              <nav className="flex flex-wrap items-center justify-end gap-x-2 sm:gap-x-3 text-sm font-medium" aria-label="Navigation marketing">
-                <Link to="/" className="text-slate-600 hover:text-primary-600 transition-colors px-1">
-                  Accueil
-                </Link>
+              <nav
+                className="flex flex-wrap items-center justify-end gap-x-2 sm:gap-x-3 text-sm font-medium"
+                aria-label="Navigation marketing"
+              >
                 <Link to="/marketplace" className="text-slate-600 hover:text-primary-600 transition-colors px-1">
                   Marketplace
-                </Link>
-                <Link to="/tarifs" className="text-slate-600 hover:text-primary-600 transition-colors px-1 xl:hidden">
-                  Tarifs
-                </Link>
-                <Link to="/avis" className="text-slate-600 hover:text-primary-600 transition-colors px-1 xl:hidden">
-                  Avis
                 </Link>
                 <Link to="/login" className="text-slate-600 hover:text-primary-600 transition-colors px-1">
                   Connexion

@@ -18,19 +18,22 @@ import {
   Building2,
   ChevronDown,
   Workflow,
+  Home,
+  Euro,
+  MessageCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type NavRole = 'SUPER_ADMIN' | 'ADMIN' | string | undefined;
 
-type NavItem = {
+export type NavItem = {
   to: string;
   label: string;
   description: string;
   icon?: LucideIcon;
 };
 
-type NavGroup = {
+export type NavGroup = {
   id: string;
   label: string;
   items: NavItem[];
@@ -40,6 +43,7 @@ type NavGroup = {
 function pathMatches(pathname: string, to: string): boolean {
   if (to === '/dashboard') return pathname === '/dashboard';
   if (to === '/marketplace') return pathname.startsWith('/marketplace');
+  if (to === '/') return pathname === '/';
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
@@ -48,7 +52,34 @@ function groupIsActive(pathname: string, group: NavGroup): boolean {
   return prefixes.some((p) => pathMatches(pathname, p));
 }
 
-function NavMenuGroup({
+/** Liens marketing regroupés (header app connectée) */
+export const publicSiteNavGroup: NavGroup = {
+  id: 'public-site',
+  label: 'Découvrir',
+  activePrefix: ['/', '/tarifs', '/avis'],
+  items: [
+    {
+      to: '/',
+      label: 'Accueil',
+      description: 'Présentation Ultimate Edicloud',
+      icon: Home,
+    },
+    {
+      to: '/tarifs',
+      label: 'Tarifs',
+      description: 'Offres et simulateur',
+      icon: Euro,
+    },
+    {
+      to: '/avis',
+      label: 'Avis',
+      description: 'Retours clients',
+      icon: MessageCircle,
+    },
+  ],
+};
+
+export function NavMenuGroup({
   group,
   pathname,
 }: {
@@ -179,14 +210,26 @@ function NavMenuGroup({
   );
 }
 
-const planifierGroup: NavGroup = {
-  id: 'planifier',
-  label: 'Planifier',
-  activePrefix: ['/planifier'],
+const integrationGroup: NavGroup = {
+  id: 'integration',
+  label: 'Intégration',
+  activePrefix: ['/connectors', '/mappings', '/planifier'],
   items: [
     {
+      to: '/connectors',
+      label: 'Connecteurs',
+      description: 'Instances et catalogue',
+      icon: Package,
+    },
+    {
+      to: '/mappings',
+      label: 'Mappings',
+      description: 'Transformations de données',
+      icon: FileStack,
+    },
+    {
       to: '/planifier',
-      label: 'Liste des planifications',
+      label: 'Planifications',
       description: 'Voir et modifier vos flux planifiés',
       icon: CalendarClock,
     },
@@ -201,7 +244,7 @@ const planifierGroup: NavGroup = {
 
 const edifactGroup: NavGroup = {
   id: 'edifact',
-  label: 'EDIFACT',
+  label: 'EDI',
   activePrefix: ['/edifact'],
   items: [
     {
@@ -221,19 +264,19 @@ const edifactGroup: NavGroup = {
 
 const monitoringGroup: NavGroup = {
   id: 'monitoring',
-  label: 'Monitoring',
+  label: 'Supervision',
   activePrefix: ['/monitoring', '/hub/pipeline'],
   items: [
     {
       to: '/monitoring',
       label: 'Alertes & notifications',
-      description: 'Emails, types d’erreur et alertes',
+      description: 'Emails et types d’erreur',
       icon: Activity,
     },
     {
       to: '/hub/pipeline',
       label: 'Hub pipeline',
-      description: 'Benthos, Redis, files, jetons et workers',
+      description: 'Benthos, Redis, files et workers',
       icon: Workflow,
     },
   ],
@@ -287,31 +330,19 @@ export function AppMainNav({ role }: { role: NavRole }) {
   };
 
   return (
-    <nav
-      className="flex flex-wrap items-center gap-x-0.5 gap-y-1 pr-1"
-      aria-label="Navigation principale"
-    >
+    <nav className="flex flex-wrap items-center gap-x-0.5 gap-y-1 pr-1" aria-label="Navigation principale">
       <Link to="/dashboard" className={navLinkClass(pathname, '/dashboard')}>
         <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
         Tableau de bord
       </Link>
+
+      <NavMenuGroup group={integrationGroup} pathname={pathname} />
 
       <Link to="/flows" className={navLinkClass(pathname, '/flows')}>
         <GitBranch className="w-3.5 h-3.5 shrink-0" />
         Flux
       </Link>
 
-      <Link to="/connectors" className={navLinkClass(pathname, '/connectors')}>
-        <Package className="w-3.5 h-3.5 shrink-0" />
-        Connecteurs
-      </Link>
-
-      <Link to="/mappings" className={navLinkClass(pathname, '/mappings')}>
-        <FileStack className="w-3.5 h-3.5 shrink-0" />
-        Mappings
-      </Link>
-
-      <NavMenuGroup group={planifierGroup} pathname={pathname} />
       <NavMenuGroup group={edifactGroup} pathname={pathname} />
 
       <Link to="/marketplace" className={navLinkClass(pathname, '/marketplace')}>
@@ -331,9 +362,10 @@ export function AppMainNav({ role }: { role: NavRole }) {
               ? 'text-primary-900 bg-primary-100 border-primary-200'
               : 'text-primary-800 hover:bg-primary-50 border-transparent'
           }`}
+          title="Espace opérateur plateforme"
         >
           <Building2 className="w-3.5 h-3.5 shrink-0" />
-          Admin ANEXYS
+          Plateforme
         </Link>
       )}
     </nav>
