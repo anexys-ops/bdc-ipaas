@@ -52,8 +52,8 @@ const CONNECTOR_BRICKS = [
 
 const ETL_STEPS = [
   { step: 1, title: 'Extraction', description: 'Récupérez les données depuis vos sources : API REST, fichiers plats (CSV, XML, EDIFACT), bases de données.', icon: Database },
-  { step: 2, title: 'Transformation', description: 'Nettoyez, mappez et normalisez vos données vers le format cible (JSON, XML, IDOC, ORDERS…).', icon: RefreshCw },
-  { step: 3, title: 'Chargement', description: 'Poussez les données transformées vers l'application cible avec gestion des erreurs et relance automatique.', icon: Upload },
+  { step: 2, title: 'Transformation', description: 'Nettoyez, mappez et normalisez vos données vers le format cible (JSON, XML, IDOC, ORDERS...).', icon: RefreshCw },
+  { step: 3, title: 'Chargement', description: 'Poussez les données transformées vers l\u2019application cible avec gestion des erreurs et relance automatique.', icon: Upload },
 ] as const;
 
 const TRUST_BADGES = [
@@ -205,7 +205,7 @@ function HomeMarketplaceLogos() {
           marketplace Ultimate Edicloud.
         </p>
         {isLoading ? (
-          <p className="mt-8 text-center text-sm text-slate-500">Chargement des connecteurs…</p>
+          <p className="mt-8 text-center text-sm text-slate-500">Chargement des connecteurs...</p>
         ) : (
           <div className="mt-10 flex flex-wrap justify-center gap-3 sm:gap-4">
             {sorted.map((c) => {
