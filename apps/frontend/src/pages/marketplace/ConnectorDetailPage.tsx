@@ -1,16 +1,15 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Loader2, Package, Check, FileText } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
 import { SchemaFieldsList } from '../../components/connector/SchemaFieldsList';
 import { marketplaceApi } from '../../api/marketplace';
-import { getConnectorLogoUrl } from '../../lib/connector-logos';
+import { resolveMarketplaceLogoUrl } from '../../lib/connector-logos';
+import { SoftwareLogoImg } from '../../components/marketplace/SoftwareLogoImg';
 import { AgentDownloadCard, isAgentConnector } from '../../components/connector/AgentDownloadCard';
 
 export function ConnectorDetailPage() {
   const { type } = useParams<{ type: string }>();
-  const [logoError, setLogoError] = useState(false);
 
   const { data: connector, isLoading, error } = useQuery({
     queryKey: ['marketplace', type],
@@ -47,7 +46,7 @@ export function ConnectorDetailPage() {
     );
   }
 
-  const logoUrl = getConnectorLogoUrl(connector.id, connector.icon);
+  const logoUrl = resolveMarketplaceLogoUrl(connector.id, connector.icon, connector.libraryLogoId);
 
   return (
     <div className="page-bg-mesh">
@@ -63,18 +62,13 @@ export function ConnectorDetailPage() {
           </nav>
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
             <div className="flex gap-4">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-primary-50 flex items-center justify-center border border-primary-200/60 shrink-0 overflow-hidden p-1">
-                {logoUrl && !logoError ? (
-                  <img
-                    src={logoUrl}
-                    alt=""
-                    className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
-                    onError={() => setLogoError(true)}
-                  />
-                ) : (
-                  <span className="text-4xl" aria-hidden>🔌</span>
-                )}
-              </div>
+              <SoftwareLogoImg
+                src={logoUrl}
+                alt=""
+                size="xl"
+                rounded="2xl"
+                className="border-primary-200/60 bg-primary-50/30"
+              />
               <div className="min-w-0">
                 <h1 className="text-2xl sm:text-3xl font-bold text-slate-700 tracking-tight">
                   {connector.name}

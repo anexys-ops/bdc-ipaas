@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button, Card, CardContent, CardTitle } from '../../components/ui';
 import { connectorsApi } from '../../api/connectors';
 import { getConnectorLogoUrl } from '../../lib/connector-logos';
+import { SoftwareLogoImg } from '../../components/marketplace/SoftwareLogoImg';
 import { Plus, Package, Loader2, ArrowRight, RefreshCw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -104,25 +105,12 @@ export function ConnectorsListPage() {
                       to={`${basePath}/${c.id}`}
                       className="flex items-center gap-4 min-w-0 flex-1"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center shrink-0 overflow-hidden p-1">
-                        {getConnectorLogoUrl(c.type, c.connectorInfo?.icon) ? (
-                          <>
-                            <img
-                              src={getConnectorLogoUrl(c.type, c.connectorInfo?.icon)}
-                              alt=""
-                              className="w-8 h-8 object-contain"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                const fallback = e.currentTarget.nextElementSibling;
-                                if (fallback) (fallback as HTMLElement).classList.remove('hidden');
-                              }}
-                            />
-                            <span className="text-xl hidden" aria-hidden>🔌</span>
-                          </>
-                        ) : (
-                          <span className="text-xl" aria-hidden>🔌</span>
-                        )}
-                      </div>
+                      <SoftwareLogoImg
+                        src={getConnectorLogoUrl(c.type, c.connectorInfo?.icon)}
+                        alt=""
+                        size="md"
+                        className="bg-primary-50/50 border-primary-200/50"
+                      />
                       <div className="min-w-0">
                         <p className="font-medium text-slate-800">{c.name}</p>
                         <p className="text-sm text-slate-500">

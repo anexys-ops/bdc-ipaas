@@ -1,4 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { marketplaceApi } from '../../api/marketplace';
+import { resolveMarketplaceLogoUrl } from '../../lib/connector-logos';
+import { SoftwareLogoImg } from '../../components/marketplace/SoftwareLogoImg';
 import {
   Zap,
   ArrowRight,
@@ -98,6 +102,57 @@ function HeroVisual() {
   );
 }
 
+function HomeMarketplaceLogos() {
+  const { data: connectors, isLoading } = useQuery({
+    queryKey: ['marketplace', 'home-showcase'],
+    queryFn: () => marketplaceApi.getAll(),
+    staleTime: 60_000,
+  });
+
+  const sorted = connectors ? [...connectors].sort((a, b) => a.name.localeCompare(b.name, 'fr')) : [];
+
+  return (
+    <section className="py-12 sm:py-16 border-t border-slate-200/60 bg-slate-50/80">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p className="text-sky-600 text-sm font-semibold uppercase tracking-wider text-center">Écosystème</p>
+        <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 text-center">
+          Logiciels et connecteurs du marketplace
+        </h2>
+        <p className="mt-3 text-slate-600 text-center max-w-2xl mx-auto text-sm sm:text-base">
+          Les mêmes logos harmonisés que sur le catalogue public — identité visuelle unifiée sur tout le site.
+        </p>
+        {isLoading ? (
+          <p className="mt-8 text-center text-sm text-slate-500">Chargement des connecteurs…</p>
+        ) : (
+          <div className="mt-10 flex flex-wrap justify-center gap-3 sm:gap-4">
+            {sorted.map((c) => {
+              const src = resolveMarketplaceLogoUrl(c.id, c.icon, c.libraryLogoId);
+              return (
+                <Link
+                  key={c.id}
+                  to={`/marketplace/${c.id}`}
+                  className="group flex flex-col items-center gap-2 w-[4.5rem] sm:w-[5.25rem]"
+                  title={c.name}
+                >
+                  <SoftwareLogoImg src={src} alt="" size="lg" rounded="xl" className="group-hover:border-sky-300" />
+                  <span className="text-[10px] sm:text-xs text-center text-slate-500 line-clamp-2 leading-tight group-hover:text-sky-700 transition-colors">
+                    {c.name}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+        <p className="mt-8 text-center">
+          <Link to="/marketplace" className="text-sm font-semibold text-sky-700 hover:underline">
+            Voir tout le catalogue →
+          </Link>
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export function HomePage() {
   return (
     <div className="relative overflow-hidden">
@@ -161,6 +216,8 @@ export function HomePage() {
           </div>
         </div>
       </section>
+
+      <HomeMarketplaceLogos />
 
       <section className="py-16 sm:py-20 border-t border-slate-200/60 bg-white/40 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

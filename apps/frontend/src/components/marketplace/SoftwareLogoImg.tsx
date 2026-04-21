@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Zap } from 'lucide-react';
 import { clsx } from 'clsx';
 
-type LogoSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type LogoSize = '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 const sizeClass: Record<LogoSize, string> = {
+  '2xs': 'w-5 h-5 min-w-[1.25rem] min-h-[1.25rem]',
   xs: 'w-6 h-6 min-w-[1.5rem] min-h-[1.5rem]',
   sm: 'w-8 h-8 min-w-[2rem] min-h-[2rem]',
   md: 'w-10 h-10 min-w-[2.5rem] min-h-[2.5rem]',

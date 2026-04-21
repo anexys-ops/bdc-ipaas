@@ -20,6 +20,7 @@ import { marketplaceApi } from '../../api/marketplace';
 import { mappingsApi } from '../../api/mappings';
 import type { PreviewResponse } from '../../api/mappings';
 import { getConnectorLogoUrl } from '../../lib/connector-logos';
+import { SoftwareLogoImg } from '../../components/marketplace/SoftwareLogoImg';
 import { filterConfiguredConnectors, isFileOperation } from '../../lib/file-only-mode';
 import {
   Database, Upload, Loader2, ChevronDown, ChevronRight,
@@ -187,14 +188,13 @@ function ConnectorPaletteItem({ connector }: { connector: ConfiguredConnector })
         className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-slate-50"
       >
         {open ? <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />}
-        {getConnectorLogoUrl(connector.type, connector.connectorInfo?.icon) && (
-          <img
-            src={getConnectorLogoUrl(connector.type, connector.connectorInfo?.icon)}
-            alt=""
-            className="w-5 h-5 rounded object-contain shrink-0"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-        )}
+        <SoftwareLogoImg
+          src={getConnectorLogoUrl(connector.type, connector.connectorInfo?.icon)}
+          alt=""
+          size="2xs"
+          rounded="lg"
+          className="p-0.5"
+        />
         <span className="font-medium text-slate-800 truncate text-sm flex-1">{connector.name}</span>
         <span className="text-xs text-slate-400 shrink-0">{connector.connectorInfo?.name ?? connector.type}</span>
       </button>

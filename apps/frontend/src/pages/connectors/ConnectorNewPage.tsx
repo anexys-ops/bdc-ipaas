@@ -5,14 +5,15 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '../../c
 import { BackButton } from '../../components/layout';
 import { connectorsApi } from '../../api/connectors';
 import { marketplaceApi } from '../../api/marketplace';
-import { getConnectorLogoUrl } from '../../lib/connector-logos';
+import { resolveMarketplaceLogoUrl } from '../../lib/connector-logos';
+import { SoftwareLogoImg } from '../../components/marketplace/SoftwareLogoImg';
 import { FILE_ONLY_MODE, filterMarketplaceConnectors } from '../../lib/file-only-mode';
 import {
   ALL_TAB_PALETTE,
   formatMarketplaceCategoryLabel,
   getMarketplaceCategoryPalette,
 } from '../../lib/marketplace-category-palette';
-import { Loader2, Info, CheckCircle2, XCircle, ArrowRight, Download, Search, LayoutGrid, Zap, Key, Layers } from 'lucide-react';
+import { Loader2, Info, CheckCircle2, XCircle, ArrowRight, Download, Search, LayoutGrid, Key, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ConfigField, MarketplaceConnector } from '../../types';
 
@@ -30,25 +31,9 @@ function ConnectorChoiceIcon({
   connector: MarketplaceConnector;
   size?: 'sm' | 'md' | 'lg';
 }) {
-  const [imgError, setImgError] = useState(false);
-  const logoUrl = getConnectorLogoUrl(connector.id, connector.icon);
-  const imgClass = size === 'sm' ? 'w-8 h-8' : size === 'lg' ? 'w-12 h-12' : 'w-10 h-10';
-
-  if (!logoUrl || imgError) {
-    return (
-      <div className={`${imgClass} rounded-xl bg-primary-100 flex items-center justify-center`}>
-        <Zap className="w-1/2 h-1/2 text-primary-600" />
-      </div>
-    );
-  }
-  return (
-    <img
-      src={logoUrl}
-      alt=""
-      className={`${imgClass} object-contain rounded-xl bg-white border border-slate-100`}
-      onError={() => setImgError(true)}
-    />
-  );
+  const logoUrl = resolveMarketplaceLogoUrl(connector.id, connector.icon, connector.libraryLogoId);
+  const sizeMap = { sm: 'sm' as const, md: 'md' as const, lg: 'lg' as const };
+  return <SoftwareLogoImg src={logoUrl} alt="" size={sizeMap[size]} rounded="xl" />;
 }
 
 function ConnectorChoiceCard({
@@ -71,9 +56,7 @@ function ConnectorChoiceCard({
     >
       <div className="p-5 h-full flex flex-col">
         <div className="flex items-start justify-between gap-3">
-          <div
-            className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 border ${p.iconWrap}`}
-          >
+          <div className={`shrink-0 rounded-xl border ${p.iconWrap} p-0.5`}>
             <ConnectorChoiceIcon connector={connector} size="lg" />
           </div>
           <span

@@ -7,7 +7,6 @@ import {
   Package,
   Loader2,
   LayoutGrid,
-  Zap,
   Layers,
   Key,
   Star,
@@ -25,7 +24,8 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui';
 import { marketplaceApi } from '../../api/marketplace';
-import { getConnectorLogoUrl } from '../../lib/connector-logos';
+import { resolveMarketplaceLogoUrl } from '../../lib/connector-logos';
+import { SoftwareLogoImg } from '../../components/marketplace/SoftwareLogoImg';
 import type { MarketplaceConnector } from '../../types';
 
 /** Slogans marketplace – visibles dans la hero */
@@ -111,25 +111,9 @@ function ConnectorIcon({
   connector: MarketplaceConnector;
   size?: 'sm' | 'md' | 'lg';
 }) {
-  const [imgError, setImgError] = useState(false);
-  const logoUrl = getConnectorLogoUrl(connector.id, connector.icon);
-  const imgClass = size === 'sm' ? 'w-8 h-8' : size === 'lg' ? 'w-12 h-12' : 'w-10 h-10';
-
-  if (!logoUrl || imgError) {
-    return (
-      <div className={`${imgClass} rounded-xl bg-slate-200 flex items-center justify-center`}>
-        <Zap className="w-1/2 h-1/2 text-primary-500" />
-      </div>
-    );
-  }
-  return (
-    <img
-      src={logoUrl}
-      alt=""
-      className={`${imgClass} object-contain rounded-xl bg-white border border-slate-200`}
-      onError={() => setImgError(true)}
-    />
-  );
+  const logoUrl = resolveMarketplaceLogoUrl(connector.id, connector.icon, connector.libraryLogoId);
+  const sizeMap = { sm: 'sm' as const, md: 'md' as const, lg: 'lg' as const };
+  return <SoftwareLogoImg src={logoUrl} alt="" size={sizeMap[size]} rounded="xl" />;
 }
 
 function ModuleCard({ connector }: { connector: MarketplaceConnector }) {
@@ -142,9 +126,7 @@ function ModuleCard({ connector }: { connector: MarketplaceConnector }) {
     >
       <div className="p-5 h-full flex flex-col">
         <div className="flex items-start justify-between gap-3">
-          <div className="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
-            <ConnectorIcon connector={connector} size="lg" />
-          </div>
+          <ConnectorIcon connector={connector} size="lg" />
           <span className="inline-flex items-center gap-1 text-xs font-medium text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             Voir
             <ArrowRight className="w-3.5 h-3.5" />

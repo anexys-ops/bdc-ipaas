@@ -29,6 +29,8 @@ import {
 import { useAuthStore } from '../../stores/auth.store';
 import { BackofficePageContainer, BackofficePageHeader } from '../../components/layout';
 import { toast } from 'sonner';
+import { getSoftwareLogoCatalog, resolveMarketplaceLogoUrl } from '../../lib/connector-logos';
+import { SoftwareLogoImg } from '../../components/marketplace/SoftwareLogoImg';
 
 function OpenApiModal({
   connectorId,
@@ -144,7 +146,10 @@ export function MarketplaceManagementPage() {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<UpdateMarketplaceItemDto & { connectorId?: string }>({});
+  const [form, setForm] = useState<UpdateMarketplaceItemDto & { connectorId?: string; libraryLogoId?: string | null }>(
+    {},
+  );
+  const logoCatalog = useMemo(() => getSoftwareLogoCatalog(), []);
   const [openApiConnector, setOpenApiConnector] = useState<{ id: string; name: string } | null>(null);
   const [search, setSearch] = useState('');
 
@@ -221,21 +226,31 @@ export function MarketplaceManagementPage() {
       priceLabel: item?.priceLabel ?? '99€ HT',
       description: item?.description ?? undefined,
       apiJsonPath: item?.apiJsonPath ?? undefined,
+      libraryLogoId: item?.libraryLogoId ?? '',
     });
   };
 
   const saveEdit = () => {
     if (!editingId) return;
     const item = itemsByConnector.get(editingId);
+    const libRaw = form.libraryLogoId;
+    const dto: UpdateMarketplaceItemDto = {
+      stars: form.stars,
+      priceLabel: form.priceLabel,
+      description: form.description,
+      apiJsonPath: form.apiJsonPath,
+      libraryLogoId: libRaw && String(libRaw).trim() ? String(libRaw).trim() : null,
+    };
     if (item) {
-      updateMutation.mutate({ id: editingId, dto: form });
+      updateMutation.mutate({ id: editingId, dto });
     } else {
       createMutation.mutate({
         connectorId: editingId,
-        stars: form.stars ?? 5,
-        priceLabel: form.priceLabel ?? '99€ HT',
-        description: form.description,
-        apiJsonPath: form.apiJsonPath,
+        stars: dto.stars ?? 5,
+        priceLabel: dto.priceLabel ?? '99€ HT',
+        description: dto.description,
+        apiJsonPath: dto.apiJsonPath,
+        libraryLogoId: dto.libraryLogoId,
         enabled: true,
       });
     }
@@ -263,6 +278,11 @@ export function MarketplaceManagementPage() {
     }
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [filteredConnectors]);
+
+  const editingConnector = useMemo(
+    () => connectors?.find((c) => c.id === editingId),
+    [connectors, editingId],
+  );
 
   type AdminTab = 'list' | 'categories';
   const [adminTab, setAdminTab] = useState<AdminTab>('list');
@@ -383,6 +403,44 @@ export function MarketplaceManagementPage() {
                                   onChange={(e) => setForm((f) => ({ ...f, apiJsonPath: e.target.value }))}
                                 />
                               </div>
+                              {editingConnector && (
+                                <div className="flex flex-wrap items-end gap-4">
+                                  <div className="flex-1 min-w-[220px] max-w-xl">
+                                    <label className="block text-sm text-slate-600 mb-1">
+                                      Logo — bibliothèque
+                                    </label>
+                                    <select
+                                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                      value={typeof form.libraryLogoId === 'string' ? form.libraryLogoId : ''}
+                                      onChange={(e) =>
+                                        setForm((f) => ({ ...f, libraryLogoId: e.target.value || '' }))
+                                      }
+                                    >
+                                      <option value="">Automatique (recommandé)</option>
+                                      {logoCatalog.map((entry) => (
+                                        <option key={entry.id} value={entry.id}>
+                                          {entry.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <p className="text-xs text-slate-500 mt-1">
+                                      Choisissez une entrée de la bibliothèque ou laissez « Automatique » pour la
+                                      résolution harmonisée (local → marque → OpenAPI).
+                                    </p>
+                                  </div>
+                                  <div className="shrink-0 pb-0.5">
+                                    <SoftwareLogoImg
+                                      src={resolveMarketplaceLogoUrl(
+                                        editingConnector.id,
+                                        editingConnector.icon,
+                                        form.libraryLogoId?.trim() ? form.libraryLogoId : null,
+                                      )}
+                                      alt=""
+                                      size="lg"
+                                    />
+                                  </div>
+                                </div>
+                              )}
                               <div className="flex gap-2">
                                 <Button onClick={saveEdit} disabled={updateMutation.isPending || createMutation.isPending}>
                                   {updateMutation.isPending || createMutation.isPending ? (
@@ -513,6 +571,42 @@ export function MarketplaceManagementPage() {
                             onChange={(e) => setForm((f) => ({ ...f, apiJsonPath: e.target.value }))}
                           />
                         </div>
+                        {editingConnector && (
+                          <div className="flex flex-wrap items-end gap-4">
+                            <div className="flex-1 min-w-[220px] max-w-xl">
+                              <label className="block text-sm text-slate-600 mb-1">Logo — bibliothèque</label>
+                              <select
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                value={typeof form.libraryLogoId === 'string' ? form.libraryLogoId : ''}
+                                onChange={(e) =>
+                                  setForm((f) => ({ ...f, libraryLogoId: e.target.value || '' }))
+                                }
+                              >
+                                <option value="">Automatique (recommandé)</option>
+                                {logoCatalog.map((entry) => (
+                                  <option key={entry.id} value={entry.id}>
+                                    {entry.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <p className="text-xs text-slate-500 mt-1">
+                                Choisissez une entrée de la bibliothèque ou laissez « Automatique » pour la résolution
+                                harmonisée (local → marque → OpenAPI).
+                              </p>
+                            </div>
+                            <div className="shrink-0 pb-0.5">
+                              <SoftwareLogoImg
+                                src={resolveMarketplaceLogoUrl(
+                                  editingConnector.id,
+                                  editingConnector.icon,
+                                  form.libraryLogoId?.trim() ? form.libraryLogoId : null,
+                                )}
+                                alt=""
+                                size="lg"
+                              />
+                            </div>
+                          </div>
+                        )}
                         <div className="flex gap-2">
                           <Button onClick={saveEdit} disabled={updateMutation.isPending || createMutation.isPending}>
                             {updateMutation.isPending || createMutation.isPending ? (
