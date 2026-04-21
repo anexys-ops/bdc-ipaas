@@ -41,15 +41,16 @@ export class EngineInfraController {
   })
   @ApiResponse({ status: 200, description: 'Données runtime pour la page Flux' })
   async getFlowsRuntime(): Promise<FlowsRuntimeStatus> {
-    const [infra, queues] = await Promise.all([
+    const [infra, queues, gateMessages] = await Promise.all([
       this.pipelineInfra.getStatus(),
       this.engineService.getQueueStats(),
+      this.pipelineInfra.getRecentGateMessages(50),
     ]);
-    const benthosEvents = await this.pipelineInfra.getRecentBenthosHeartbeats(100);
     return {
       ...infra,
       queues,
-      benthosEvents,
+      benthosEvents: [],
+      gateMessages,
     };
   }
 

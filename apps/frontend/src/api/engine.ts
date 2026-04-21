@@ -19,21 +19,46 @@ export interface ExecutionLogEntry {
   data?: Record<string, unknown>;
 }
 
+export interface GateStreamStats {
+  ingressGlobal: number;
+  ingressToyo: number;
+  dlqFlow: number;
+  dlqNoRoute: number;
+  error?: string;
+}
+
+export interface GateStreamMessage {
+  id: string;
+  messageId: string;
+  clientId: string;
+  token: string;
+  route: string;
+  receivedAt: string;
+  bodyPreview: string;
+  valid: string;
+  authType: string;
+  stream: string;
+}
+
 export interface PipelineInfraStatus {
   redis: { ok: boolean; latencyMs?: number; error?: string };
   benthos: { ok: boolean; httpUrl: string; error?: string };
+  /** @deprecated */
   benthosHeartbeat: { redisKey: string; listLength: number | null; error?: string };
+  gateStreams: GateStreamStats;
 }
 
 export interface FlowsRuntimeStatus extends PipelineInfraStatus {
   queues: {
     flowExecutions: { active: number; waiting: number; failed: number; completed: number } | null;
   };
+  /** @deprecated — vide, utiliser gateMessages */
   benthosEvents: Array<{
     index: number;
     raw: string;
     payload: Record<string, unknown> | null;
   }>;
+  gateMessages: GateStreamMessage[];
 }
 
 export interface PipelineHubSanitizedConfig {
@@ -78,7 +103,6 @@ export interface PipelineHubOverview {
   queueJobs: FlowQueueJobPreview[];
 }
 
-/** Réponse `GET /engine/platform-health` (SUPER_ADMIN uniquement). */
 export interface PlatformHealthResponse {
   checkedAt: string;
   api: { ok: true };

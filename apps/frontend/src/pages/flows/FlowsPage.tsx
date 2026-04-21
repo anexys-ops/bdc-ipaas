@@ -18,36 +18,27 @@ import {
   XCircle,
   Clock,
   Ban,
+  AlertTriangle,
+  Inbox,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/auth.store';
 import { engineApi } from '../../api/engine';
 
-const EVENTS_PAGE_SIZE = 12;
+const EVENTS_PAGE_SIZE = 15;
 
-function formatHeartbeatTime(payload: Record<string, unknown> | null): string {
-  if (!payload) return '—';
-  const ts = payload.ts;
-  if (typeof ts !== 'number') return '—';
-  const ms = ts < 1e12 ? ts * 1000 : ts;
+function formatISODate(iso: string | undefined): string {
+  if (!iso) return '—';
   try {
-    return new Date(ms).toLocaleString('fr-FR', {
+    return new Date(iso).toLocaleString('fr-FR', {
       day: '2-digit',
       month: 'short',
-      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
     });
   } catch {
-    return '—';
+    return iso.slice(0, 19).replace('T', ' ');
   }
-}
-
-function payloadField(payload: Record<string, unknown> | null, key: string): string {
-  if (!payload) return '—';
-  const v = payload[key];
-  if (v === undefined || v === null) return '—';
-  return String(v);
 }
 
 export function FlowsPage() {
@@ -64,24 +55,31 @@ export function FlowsPage() {
     refetchInterval: 30_000,
   });
 
-  const filteredEvents = useMemo(() => {
-    if (!data?.benthosEvents?.length) return [];
+  const filteredMessages = useMemo(() => {
+    const msgs = data?.gateMessages ?? [];
     const q = search.trim().toLowerCase();
-    if (!q) return data.benthosEvents;
-    return data.benthosEvents.filter((row) => {
-      if (row.raw.toLowerCase().includes(q)) return true;
-      if (!row.payload) return false;
-      return Object.values(row.payload).some((v) => String(v).toLowerCase().includes(q));
-    });
-  }, [data?.benthosEvents, search]);
+    if (!q) return msgs;
+    return msgs.filter(
+      (m) =>
+        m.clientId.toLowerCase().includes(q) ||
+        m.route.toLowerCase().includes(q) ||
+        m.bodyPreview.toLowerCase().includes(q) ||
+        m.messageId.toLowerCase().includes(q),
+    );
+  }, [data?.gateMessages, search]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / EVENTS_PAGE_SIZE));
-  const pageEvents = useMemo(
-    () => filteredEvents.slice(page * EVENTS_PAGE_SIZE, page * EVENTS_PAGE_SIZE + EVENTS_PAGE_SIZE),
-    [filteredEvents, page],
+  const totalPages = Math.max(1, Math.ceil(filteredMessages.length / EVENTS_PAGE_SIZE));
+  const pageMessages = useMemo(
+    () =>
+      filteredMessages.slice(
+        page * EVENTS_PAGE_SIZE,
+        page * EVENTS_PAGE_SIZE + EVENTS_PAGE_SIZE,
+      ),
+    [filteredMessages, page],
   );
 
   const q = data?.queues?.flowExecutions;
+  const gs = data?.gateStreams;
 
   if (!canView) {
     return (
@@ -95,8 +93,13 @@ export function FlowsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-slate-600">
-              <p>Cette vue (supervision Redis, Benthos et files d&apos;exécution) est réservée aux rôles opérateur ou administrateur.</p>
-              <Link to="/planifier" className="inline-flex items-center gap-2 text-primary-600 font-medium hover:text-primary-700">
+              <p>
+                Cette vue est réservée aux rôles opérateur ou administrateur.
+              </p>
+              <Link
+                to="/planifier"
+                className="inline-flex items-center gap-2 text-primary-600 font-medium hover:text-primary-700"
+              >
                 <GitBranch className="w-4 h-4" />
                 Ouvrir la planification des flux
                 <ArrowRight className="w-4 h-4" />
@@ -111,6 +114,7 @@ export function FlowsPage() {
   return (
     <div className="flex-1 min-h-0 w-full flex flex-col relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
@@ -118,12 +122,18 @@ export function FlowsPage() {
               Flux
             </h1>
             <p className="text-slate-600 mt-1 max-w-2xl">
-              Données réelles : Redis (files BullMQ, heartbeats Benthos) et disponibilité du pipeline Benthos. Pour configurer
-              vos intégrations, utilisez la planification.
+              Supervision en temps réel : gate Redis (streams ingress/DLQ), Benthos gate.edicloud.app
+              et files d&apos;exécution BullMQ.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <Button type="button" variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isFetching}
+            >
               {isFetching ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Actualiser
             </Button>
@@ -147,7 +157,7 @@ export function FlowsPage() {
           <Card className="border border-amber-200 bg-amber-50/80 mb-8">
             <CardContent className="pt-6">
               <p className="text-amber-900 text-sm">
-                Impossible de charger la supervision (API ou droits). Vérifiez votre session ou réessayez plus tard.
+                Impossible de charger la supervision. Vérifiez votre session ou réessayez.
               </p>
             </CardContent>
           </Card>
@@ -155,20 +165,30 @@ export function FlowsPage() {
 
         {data && !isLoading && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {/* ── Infrastructure cards ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {/* Redis local */}
               <Card className="border border-slate-200/80 bg-white/95">
                 <CardContent className="pt-5 pb-5">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-sky-100 border border-sky-200">
-                      <Database className="w-5 h-5 text-sky-600" />
+                    <div
+                      className={`p-2.5 rounded-xl border ${data.redis.ok ? 'bg-sky-50 border-sky-200' : 'bg-red-50 border-red-200'}`}
+                    >
+                      <Database
+                        className={`w-5 h-5 ${data.redis.ok ? 'text-sky-600' : 'text-red-500'}`}
+                      />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Redis</p>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Redis local
+                      </p>
                       <p className="text-lg font-bold text-slate-800">
                         {data.redis.ok ? 'Joignable' : 'Indisponible'}
                       </p>
                       {data.redis.ok && data.redis.latencyMs != null && (
-                        <p className="text-xs text-slate-500 tabular-nums">PING ~ {data.redis.latencyMs} ms</p>
+                        <p className="text-xs text-slate-500 tabular-nums">
+                          PING ~ {data.redis.latencyMs} ms
+                        </p>
                       )}
                       {!data.redis.ok && data.redis.error && (
                         <p className="text-xs text-red-600 break-words">{data.redis.error}</p>
@@ -178,17 +198,29 @@ export function FlowsPage() {
                 </CardContent>
               </Card>
 
+              {/* Benthos gate.edicloud.app */}
               <Card className="border border-slate-200/80 bg-white/95">
                 <CardContent className="pt-5 pb-5">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-indigo-100 border border-indigo-200">
-                      <Workflow className="w-5 h-5 text-indigo-600" />
+                    <div
+                      className={`p-2.5 rounded-xl border ${data.benthos.ok ? 'bg-indigo-50 border-indigo-200' : 'bg-red-50 border-red-200'}`}
+                    >
+                      <Workflow
+                        className={`w-5 h-5 ${data.benthos.ok ? 'text-indigo-600' : 'text-red-500'}`}
+                      />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Benthos</p>
-                      <p className="text-lg font-bold text-slate-800">{data.benthos.ok ? 'En ligne' : 'Hors ligne'}</p>
-                      <p className="text-xs text-slate-500 truncate" title={data.benthos.httpUrl}>
-                        {data.benthos.httpUrl}
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Benthos
+                      </p>
+                      <p className="text-lg font-bold text-slate-800">
+                        {data.benthos.ok ? 'En ligne' : 'Hors ligne'}
+                      </p>
+                      <p
+                        className="text-xs text-slate-500 truncate"
+                        title={data.benthos.httpUrl}
+                      >
+                        {data.benthos.httpUrl.replace('https://', '')}
                       </p>
                       {!data.benthos.ok && data.benthos.error && (
                         <p className="text-xs text-red-600">{data.benthos.error}</p>
@@ -198,54 +230,67 @@ export function FlowsPage() {
                 </CardContent>
               </Card>
 
+              {/* Gate streams ingress */}
               <Card className="border border-slate-200/80 bg-white/95">
                 <CardContent className="pt-5 pb-5">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-100 border border-emerald-200">
-                      <Activity className="w-5 h-5 text-emerald-600" />
+                    <div
+                      className={`p-2.5 rounded-xl border ${gs?.error ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}
+                    >
+                      <Activity
+                        className={`w-5 h-5 ${gs?.error ? 'text-red-500' : 'text-emerald-600'}`}
+                      />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Heartbeats Redis</p>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Gate Ingress
+                      </p>
                       <p className="text-2xl font-bold text-slate-800 tabular-nums">
-                        {data.benthosHeartbeat.listLength != null ? data.benthosHeartbeat.listLength : '—'}
+                        {(gs?.ingressGlobal ?? 0) + (gs?.ingressToyo ?? 0)}
                       </p>
                       <p className="text-xs text-slate-500">
-                        Clé <code className="text-slate-700">{data.benthosHeartbeat.redisKey}</code>
+                        global {gs?.ingressGlobal ?? 0} · toyo {gs?.ingressToyo ?? 0}
                       </p>
-                      {data.benthosHeartbeat.error && (
-                        <p className="text-xs text-red-600">{data.benthosHeartbeat.error}</p>
+                      {gs?.error && (
+                        <p className="text-xs text-red-600">{gs.error}</p>
                       )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border border-slate-200/80 bg-white/95">
+              {/* DLQ */}
+              <Card
+                className={`border bg-white/95 ${(gs?.dlqFlow ?? 0) + (gs?.dlqNoRoute ?? 0) > 0 ? 'border-amber-300' : 'border-slate-200/80'}`}
+              >
                 <CardContent className="pt-5 pb-5">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-violet-100 border border-violet-200">
-                      <ListOrdered className="w-5 h-5 text-violet-600" />
+                    <div
+                      className={`p-2.5 rounded-xl border ${(gs?.dlqFlow ?? 0) + (gs?.dlqNoRoute ?? 0) > 0 ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}
+                    >
+                      <AlertTriangle
+                        className={`w-5 h-5 ${(gs?.dlqFlow ?? 0) + (gs?.dlqNoRoute ?? 0) > 0 ? 'text-amber-500' : 'text-slate-400'}`}
+                      />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">File BullMQ</p>
-                      {q ? (
-                        <p className="text-sm font-semibold text-slate-800 tabular-nums">
-                          actives {q.active} · attente {q.waiting}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-slate-500">Queue non disponible</p>
-                      )}
-                      {q && (
-                        <p className="text-xs text-slate-500 tabular-nums">
-                          échouées {q.failed} · terminées {q.completed}
-                        </p>
-                      )}
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        DLQ
+                      </p>
+                      <p
+                        className={`text-2xl font-bold tabular-nums ${(gs?.dlqFlow ?? 0) + (gs?.dlqNoRoute ?? 0) > 0 ? 'text-amber-600' : 'text-slate-800'}`}
+                      >
+                        {(gs?.dlqFlow ?? 0) + (gs?.dlqNoRoute ?? 0)}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        flow {gs?.dlqFlow ?? 0} · noroute {gs?.dlqNoRoute ?? 0}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
+            {/* ── BullMQ queue stats ── */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
               <Card className="border border-slate-200/80 bg-white/95">
                 <CardContent className="pt-4 pb-4 flex items-center gap-2">
@@ -285,30 +330,31 @@ export function FlowsPage() {
               </Card>
             </div>
 
+            {/* ── Gate Redis messages table ── */}
             <Card className="border border-slate-200/80 bg-white/95 overflow-hidden">
               <CardHeader className="border-b border-slate-100">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <CardTitle className="text-slate-800 flex items-center gap-2">
-                      <Workflow className="w-5 h-5 text-indigo-500" />
-                      Événements Benthos (Redis)
+                      <Inbox className="w-5 h-5 text-indigo-500" />
+                      Derniers messages — ingress:global
                     </CardTitle>
                     <p className="text-sm text-slate-500 mt-1 font-normal">
-                      Messages poussés par le pipeline dans la liste Redis (les plus récents en premier).
+                      Messages reçus par Benthos sur gate.edicloud.app (gate Redis · XREVRANGE).
                     </p>
                   </div>
                   <div className="relative w-full sm:w-80">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input
                       type="search"
-                      placeholder="Filtrer (JSON, source, type…)"
+                      placeholder="Filtrer (client, route, JSON…)"
                       value={search}
                       onChange={(e) => {
                         setSearch(e.target.value);
                         setPage(0);
                       }}
                       className="pl-9"
-                      aria-label="Filtrer les événements"
+                      aria-label="Filtrer les messages"
                     />
                   </div>
                 </div>
@@ -318,41 +364,55 @@ export function FlowsPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="bg-slate-50/80 border-b border-slate-200">
-                        <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">
-                          Horodatage
+                        <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3 whitespace-nowrap">
+                          Reçu le
                         </th>
                         <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">
-                          Source
+                          Client
                         </th>
                         <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">
-                          Type
+                          Route
                         </th>
-                        <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3 min-w-[200px]">
-                          Aperçu JSON
+                        <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">
+                          Auth
+                        </th>
+                        <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3 min-w-[220px]">
+                          Aperçu body
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {pageEvents.length === 0 ? (
+                      {pageMessages.length === 0 ? (
                         <tr>
-                          <td colSpan={4} className="px-4 py-14 text-center text-slate-500 text-sm">
-                            {data.benthosEvents.length === 0
-                              ? 'Aucun heartbeat en liste pour l’instant (attendez ~1 min après le démarrage de Benthos).'
+                          <td
+                            colSpan={5}
+                            className="px-4 py-14 text-center text-slate-500 text-sm"
+                          >
+                            {(data.gateMessages?.length ?? 0) === 0
+                              ? 'Aucun message dans ingress:global pour l'instant.'
                               : 'Aucun résultat pour ce filtre.'}
                           </td>
                         </tr>
                       ) : (
-                        pageEvents.map((row) => (
-                          <tr key={`${row.index}-${row.raw.slice(0, 24)}`} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
+                        pageMessages.map((msg) => (
+                          <tr
+                            key={msg.id}
+                            className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"
+                          >
                             <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
-                              {formatHeartbeatTime(row.payload)}
+                              {formatISODate(msg.receivedAt)}
                             </td>
-                            <td className="px-4 py-3 text-sm font-medium text-slate-800">
-                              {payloadField(row.payload, 'source')}
+                            <td className="px-4 py-3">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                                {msg.clientId || '—'}
+                              </span>
                             </td>
-                            <td className="px-4 py-3 text-sm text-slate-600">{payloadField(row.payload, 'kind')}</td>
-                            <td className="px-4 py-3 text-xs text-slate-500 font-mono break-all max-w-xl">
-                              {row.raw.length > 180 ? `${row.raw.slice(0, 180)}…` : row.raw}
+                            <td className="px-4 py-3 text-sm font-medium text-slate-700">
+                              {msg.route || 'default'}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-slate-500">{msg.authType}</td>
+                            <td className="px-4 py-3 text-xs text-slate-500 font-mono break-all max-w-xs">
+                              {msg.bodyPreview}
                             </td>
                           </tr>
                         ))
@@ -360,11 +420,15 @@ export function FlowsPage() {
                     </tbody>
                   </table>
                 </div>
-                {filteredEvents.length > EVENTS_PAGE_SIZE && (
+                {filteredMessages.length > EVENTS_PAGE_SIZE && (
                   <div className="flex items-center justify-between gap-4 px-4 py-4 border-t border-slate-100 bg-slate-50/50">
                     <p className="text-sm text-slate-600">
-                      {page * EVENTS_PAGE_SIZE + 1}–{Math.min((page + 1) * EVENTS_PAGE_SIZE, filteredEvents.length)} sur{' '}
-                      {filteredEvents.length}
+                      {page * EVENTS_PAGE_SIZE + 1}–
+                      {Math.min(
+                        (page + 1) * EVENTS_PAGE_SIZE,
+                        filteredMessages.length,
+                      )}{' '}
+                      sur {filteredMessages.length}
                     </p>
                     <div className="flex items-center gap-2">
                       <Button
@@ -379,7 +443,7 @@ export function FlowsPage() {
                         Précédent
                       </Button>
                       <span className="text-sm text-slate-600 px-2">
-                        Page {page + 1} / {totalPages}
+                        {page + 1} / {totalPages}
                       </span>
                       <Button
                         type="button"
