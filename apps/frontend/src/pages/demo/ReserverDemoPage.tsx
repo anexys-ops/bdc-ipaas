@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Calendar, Zap, ArrowLeft } from 'lucide-react';
 import { Button, Input, Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui';
-import { AppFooter } from '../../components/layout';
 import { demoApi } from '../../api/demo';
 
 const requestDemoSchema = z.object({
@@ -50,8 +49,8 @@ export function ReserverDemoPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col page-bg-mesh relative overflow-hidden">
-      <div className="flex-1 flex items-center justify-center p-4 relative min-h-0">
+    <div className="flex flex-col flex-1 min-h-0 page-bg-mesh relative overflow-hidden">
+      <div className="flex-1 flex items-center justify-center p-4 py-8 relative min-h-0">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary-200/50 rounded-full blur-3xl animate-float" />
           <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-pastel-lavender/60 rounded-full blur-3xl animate-float" style={{ animationDelay: '-3s' }} />
@@ -132,7 +131,6 @@ export function ReserverDemoPage() {
           </CardContent>
         </Card>
       </div>
-      <AppFooter className="relative z-10 shrink-0" />
     </div>
   );
 }

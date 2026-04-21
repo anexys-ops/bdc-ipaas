@@ -1,3 +1,4 @@
+export { AppHeaderBrand } from './AppHeaderBrand';
 export { AppFooter } from './AppFooter';
 export { BackButton } from './BackButton';
 export { PrivateLayout } from './PrivateLayout';

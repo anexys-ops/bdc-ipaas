@@ -189,8 +189,8 @@ export function SubscribePage() {
       </div>
 
       <p className="mt-8 text-center text-sm text-slate-500">
-        <Link to="/tarifs" className="text-primary-600 font-medium hover:underline">
-          Voir la grille tarifaire publique
+        <Link to="/tarifs#estimateur-devis" className="text-primary-600 font-medium hover:underline">
+          Voir les tarifs et le simulateur de devis
         </Link>
         {' · '}
         <Link to="/billing" className="text-primary-600 font-medium hover:underline">

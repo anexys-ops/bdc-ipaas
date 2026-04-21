@@ -61,7 +61,7 @@ export function AvisPage() {
 
       <p className="mt-12 text-center text-xs text-slate-500 max-w-xl mx-auto leading-relaxed">
         Ces témoignages illustrent des usages types de la plateforme. Pour un accompagnement ou une référence détaillée,
-        contactez-nous depuis la page Tarifs ou l’espace connecté.
+        contactez-nous depuis la page Tarifs (simulateur de devis) ou l’espace connecté.
       </p>
     </div>
   );

@@ -16,5 +16,10 @@ RÈGLES OBLIGATOIRES :
 12. Logs : utiliser LoggerService NestJS, jamais console.log
 
 VERSIONNEMENT ET GIT (OBLIGATOIRE) :
-- À chaque `git push` ou modification majeure (fonctionnalité, rupture de comportement, refonte notable) : incrémenter la version semver dans `package.json` à la racine du monorepo **et** dans `apps/frontend/package.json` (patch par défaut ; minor/major si le changement le justifie), puis pousser sur la branche distante dans le même flux de travail.
-- La version affichée dans le footer du frontend provient de `apps/frontend/package.json` : toute release utilisateur-visible doit y refléter le bon numéro avant le push.
+- À chaque modification majeure (fonctionnalité, schéma Prisma / migration API, refonte UI notable, lot de correctifs prod) : incrémenter la version semver dans `package.json` à la racine, `apps/frontend/package.json`, et **`apps/api/package.json` si l’API ou Prisma a changé** (patch par défaut ; minor si nouvelle capacité rétro-compatible ; major si rupture).
+- La version affichée dans le footer provient de `apps/frontend/package.json` (injectée au build Vite) : tout bump doit être fait **avant** le commit de release.
+- Après bump + vérifications build/tests utiles : **commit** puis **`git push origin main`** dans la même session de travail quand c’est possible.
+
+DÉPLOIEMENT PRODUCTION :
+- Le workflow GitHub `.github/workflows/deploy.yml` se déclenche sur **chaque push vers `main`** : déploiement SSH sur le serveur (`git pull` dans `/opt/bdc-ipaas`, `docker compose -f docker-compose.prod.yml build` puis `up -d`).
+- Si une migration Prisma est livrée, vérifier côté ops / Dockerfile / scripts que `prisma migrate deploy` est bien exécuté en prod (souvent à intégrer au pipeline ou à lancer manuellement après déploiement si ce n’est pas automatisé).

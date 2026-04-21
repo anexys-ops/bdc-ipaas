@@ -1,11 +1,12 @@
 import { useRef, useEffect, useState } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/auth.store';
-import { Zap, LogOut, Settings, User, Key, CreditCard, ShieldCheck, UserCog, Users, PieChart } from 'lucide-react';
+import { LogOut, Settings, User, Key, CreditCard, ShieldCheck, UserCog, Users, PieChart } from 'lucide-react';
 import { authApi } from '../../api/auth';
 import { toast } from 'sonner';
 import { AppMainNav } from './AppMainNav';
 import { AppFooter } from './AppFooter';
+import { AppHeaderBrand } from './AppHeaderBrand';
 
 interface PrivateLayoutProps {
   children?: React.ReactNode;
@@ -46,17 +47,7 @@ export function PrivateLayout({ children }: PrivateLayoutProps) {
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm overflow-visible">
         <div className="max-w-[min(100rem,100%)] mx-auto px-2 sm:px-4 lg:px-6">
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 min-h-[3.5rem] py-2 overflow-visible">
-            <Link to="/dashboard" className="flex items-center gap-2 shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-violet-600 flex items-center justify-center shadow-sm">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
-              <div className="hidden sm:flex flex-col leading-tight shrink-0">
-                <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">
-                  Ultimate <span className="text-primary-600">Edicloud</span>
-                </span>
-                <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Le connecteur</span>
-              </div>
-            </Link>
+            <AppHeaderBrand homeTo="/dashboard" />
 
             <nav
               className="hidden xl:flex items-center gap-2 shrink-0 text-[11px] font-medium text-slate-500 border-l border-slate-200/90 pl-3 ml-1"

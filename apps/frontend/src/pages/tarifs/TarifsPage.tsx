@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Check, Sparkles, Building2 } from 'lucide-react';
 import { billingApi, type BillingPlan } from '../../api/billing';
+import { QuoteEstimatorSection } from '../../components/tarifs/QuoteEstimatorSection';
 
 const PLAN_LABEL: Record<BillingPlan, string> = {
   FREE: 'Gratuit',
@@ -120,21 +121,16 @@ export function TarifsPage() {
         })}
       </div>
 
-      <div className="mt-14 rounded-2xl border border-slate-200 bg-slate-50/80 p-6 sm:p-8">
-        <h3 className="text-lg font-semibold text-slate-900">Devis & sur mesure</h3>
-        <p className="mt-2 text-sm text-slate-600 max-w-3xl">
-          Enterprise, volumes spécifiques ou connecteurs dédiés : nous établissons un devis après audit. L’offre
-          Ultimate reste alignée sur votre contexte métier.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link to="/reserver-demo" className="btn-primary inline-flex items-center gap-2 text-sm no-underline">
-            Demander un devis
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link to="/avis" className="btn-outline inline-flex items-center gap-2 text-sm no-underline">
-            Voir les avis
-          </Link>
-        </div>
+      <QuoteEstimatorSection layout="full" />
+
+      <div className="mt-10 flex flex-wrap justify-center gap-3">
+        <Link to="/reserver-demo" className="btn-outline inline-flex items-center gap-2 text-sm no-underline">
+          Réserver une démo
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+        <Link to="/avis" className="btn-outline inline-flex items-center gap-2 text-sm no-underline">
+          Voir les avis
+        </Link>
       </div>
 
       <p className="mt-8 text-center text-sm text-slate-500">

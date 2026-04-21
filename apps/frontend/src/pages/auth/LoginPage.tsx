@@ -6,7 +6,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { LogIn, Zap } from 'lucide-react';
 import { Button, Input, Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui';
-import { AppFooter } from '../../components/layout';
 import { authApi } from '../../api/auth';
 import { useAuthStore } from '../../stores/auth.store';
 
@@ -63,8 +62,8 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col page-bg-mesh relative overflow-hidden">
-      <div className="flex-1 flex items-center justify-center p-4 relative min-h-0">
+    <div className="flex flex-col flex-1 min-h-0 page-bg-mesh relative overflow-hidden">
+      <div className="flex-1 flex items-center justify-center p-4 py-8 relative min-h-0">
         {/* Orbes décoratives pastel */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary-200/50 rounded-full blur-3xl animate-float" />
@@ -128,7 +127,6 @@ export function LoginPage() {
           </CardContent>
         </Card>
       </div>
-      <AppFooter className="relative z-10 shrink-0" />
     </div>
   );
 }

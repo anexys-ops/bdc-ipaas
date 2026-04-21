@@ -25,11 +25,16 @@ import {
   Orbit,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
+import { QuoteEstimatorSection } from '../../components/tarifs/QuoteEstimatorSection';
 
 const VALUE_PROPS = [
   { icon: HeadphonesIcon, title: 'Support dédié', description: 'Une équipe à vos côtés pour vos intégrations.' },
   { icon: Rocket, title: 'Intégration rapide', description: 'Connectez vos systèmes en quelques jours.' },
-  { icon: FileCheck, title: 'Devis gratuit', description: 'Étude de faisabilité et chiffrage sur mesure.' },
+  {
+    icon: FileCheck,
+    title: 'Devis & simulateur',
+    description: 'Estimation en ligne et envoi automatique au pôle commercial.',
+  },
 ] as const;
 
 const CONNECTOR_BRICKS = [
@@ -192,9 +197,9 @@ export function HomePage() {
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                 </Link>
-                <Link to="/tarifs">
+                <Link to="/tarifs#estimateur-devis">
                   <Button variant="outline" size="lg">
-                    Tarifs & abonnements
+                    Tarifs & simulateur
                   </Button>
                 </Link>
                 <Link to="/reserver-demo">
@@ -216,6 +221,8 @@ export function HomePage() {
           </div>
         </div>
       </section>
+
+      <QuoteEstimatorSection layout="hero" />
 
       <HomeMarketplaceLogos />
 

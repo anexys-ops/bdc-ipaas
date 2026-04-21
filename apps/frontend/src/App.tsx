@@ -84,11 +84,10 @@ function App() {
         <Route index element={<HomePage />} />
         <Route path="tarifs" element={<TarifsPage />} />
         <Route path="avis" element={<AvisPage />} />
+        <Route path="login" element={<LoginPage />} />
+        <Route path="signup-trial" element={<SignupTrialPage />} />
+        <Route path="reserver-demo" element={<ReserverDemoPage />} />
       </Route>
-
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup-trial" element={<SignupTrialPage />} />
-      <Route path="/reserver-demo" element={<ReserverDemoPage />} />
 
       {/* Marketplace : si authentifié → PrivateLayout (rester connecté), sinon → PublicLayout */}
       <Route path="/marketplace" element={<MarketplaceLayout />}>

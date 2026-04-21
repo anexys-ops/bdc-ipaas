@@ -5,6 +5,8 @@
 export const PUBLIC_ROUTES = [
   { path: '/', name: 'Accueil' },
   { path: '/login', name: 'Connexion' },
+  { path: '/signup-trial', name: 'Inscription essai' },
+  { path: '/reserver-demo', name: 'Réserver une démo' },
   { path: '/marketplace', name: 'Marketplace' },
   { path: '/tarifs', name: 'Tarifs' },
   { path: '/avis', name: 'Avis' },
