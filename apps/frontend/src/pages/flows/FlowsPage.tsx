@@ -11,7 +11,6 @@ import {
   Workflow,
   Activity,
   Loader2,
-  ListOrdered,
   ArrowRight,
   GitBranch,
   CheckCircle2,
