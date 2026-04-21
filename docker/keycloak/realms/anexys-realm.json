@@ -1,0 +1,62 @@
+{
+  "id": "f0e0c0a0-1111-2222-3333-444455556666",
+  "realm": "anexys",
+  "displayName": "Anexys",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [],
+    "client": {}
+  },
+  "defaultRoles": [],
+  "requiredCredentials": ["password"],
+  "clients": [
+    {
+      "id": "a0b1c2d3-e4f5-6789-abcd-ef0123456789",
+      "clientId": "ipaas-app",
+      "name": "BDC iPaaS (Ultimate Edicloud)",
+      "description": "Client public OIDC pour le frontend + échange de jeton côté API",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "https://ultimate.edicloud.app/*",
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "https://ultimate.edicloud.app",
+        "http://localhost:5173"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "+"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1
+    }
+  ],
+  "users": []
+}

@@ -156,7 +156,7 @@ export function LoginPage() {
                 onClick={() => void handleKeycloakClick()}
               >
                 <Shield className="w-4 h-4 mr-2" />
-                Se connecter avec Keycloak
+                Se connecter en SSO
               </Button>
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center" aria-hidden>

@@ -9,6 +9,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-anexys_master}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-anexys} -d ${POSTGRES_DB:-anexys_master}"]
       interval: 5s
@@ -38,6 +39,31 @@ services:
     command: ["-c", "/benthos.yaml"]
     depends_on:
       redis: { condition: service_healthy }
+    restart: unless-stopped
+
+  # Keycloak (BDC-99) — https://auth.edicloud.app — realm `anexys` importé au premier démarrage
+  keycloak:
+    image: docker.io/keycloak/keycloak:26.0
+    container_name: anexys-keycloak
+    command: ["start", "--import-realm"]
+    env_file:
+      - ../.env.production
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER:-anexys}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_HOSTNAME: https://auth.edicloud.app
+      KC_HOSTNAME_STRICT: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    volumes:
+      - ./keycloak/realms:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres: { condition: service_healthy }
     restart: unless-stopped
 
   migrate:
@@ -112,6 +138,9 @@ services:
       dockerfile: docker/Dockerfile.frontend
       args:
         VITE_API_URL: ${VITE_API_URL:-/api/v1}
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-}
     container_name: anexys-frontend
     restart: unless-stopped
 
@@ -125,6 +154,7 @@ services:
     depends_on:
       - api
       - frontend
+      - keycloak
     restart: unless-stopped
 
 volumes:

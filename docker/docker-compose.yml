@@ -11,6 +11,7 @@ services:
     depends_on:
       - api
       - frontend
+      - keycloak
     networks:
       - anexys-network
     restart: unless-stopped
@@ -19,10 +20,12 @@ services:
     build:
       context: ../apps/frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api/v1}
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-}
     container_name: anexys-frontend
-    environment:
-      # URL relative pour que le navigateur envoie les requêtes au même domaine ; nginx proxy /api/ vers l'API.
-      - VITE_API_URL=/api/v1
     depends_on:
       - api
     networks:
@@ -91,6 +94,9 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
+      - FRONTEND_URL=${FRONTEND_URL:-https://ultimate.edicloud.app}
+      - KEYCLOAK_ISSUER=${KEYCLOAK_ISSUER:-}
+      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -152,6 +158,32 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Keycloak (BDC-99) — https://auth.edicloud.app — realm `anexys` (import JSON)
+  keycloak:
+    image: docker.io/keycloak/keycloak:26.0
+    container_name: anexys-keycloak
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: anexys
+      KC_DB_PASSWORD: ${DB_PASSWORD}
+      KC_HOSTNAME: https://auth.edicloud.app
+      KC_HOSTNAME_STRICT: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    volumes:
+      - ./keycloak/realms:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - anexys-network
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine

@@ -4,6 +4,9 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 ARG VITE_API_URL=/api/v1
+ARG VITE_KEYCLOAK_URL=
+ARG VITE_KEYCLOAK_REALM=
+ARG VITE_KEYCLOAK_CLIENT_ID=
 
 # Racine monorepo (lockfile à la racine)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -14,6 +17,9 @@ COPY apps/frontend apps/frontend
 
 WORKDIR /app/apps/frontend
 ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_KEYCLOAK_URL=${VITE_KEYCLOAK_URL}
+ENV VITE_KEYCLOAK_REALM=${VITE_KEYCLOAK_REALM}
+ENV VITE_KEYCLOAK_CLIENT_ID=${VITE_KEYCLOAK_CLIENT_ID}
 RUN pnpm build
 
 # Stage production
