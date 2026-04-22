@@ -235,7 +235,7 @@ export function UsersPage() {
             Création, rôles, activation / désactivation des comptes du tenant
           </p>
         </div>
-        <Button onClick={() => setShowCreate((v) => !v)} className="flex items-center gap-2" variant="default">
+        <Button onClick={() => setShowCreate((v) => !v)} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
           {showCreate ? 'Fermer' : 'Nouvel utilisateur'}
         </Button>
