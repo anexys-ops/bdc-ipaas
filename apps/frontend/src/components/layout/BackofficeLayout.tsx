@@ -213,10 +213,10 @@ export function BackofficeLayout() {
   const pathname = location.pathname;
 
   return (
-    <div className="flex min-h-[calc(100vh-3.75rem)]">
+    <div className="flex min-h-full">
       {/* ── Sidebar ── */}
       <aside className="w-[min(20rem,92vw)] shrink-0 border-r border-slate-200 bg-white">
-        <div className="sticky top-[3.75rem] max-h-[calc(100vh-3.75rem)] overflow-y-auto">
+        <div className="sticky top-0 max-h-full overflow-y-auto">
           <div className="p-3 border-b border-slate-100 bg-slate-50/80">
             <p className="text-xs font-semibold text-slate-800 uppercase tracking-wide">Back-office</p>
             <p className="text-[11px] text-slate-500 mt-1 leading-snug">
