@@ -142,6 +142,9 @@ services:
         VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-}
         VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-}
     container_name: anexys-frontend
+    # Injecté à l’exécution : l’entrypoint génère /keycloak-env.js (SSO sans dépendre du seul build Vite).
+    env_file:
+      - ../.env.production
     restart: unless-stopped
 
   nginx:

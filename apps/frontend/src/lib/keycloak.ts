@@ -1,5 +1,5 @@
 import Keycloak from 'keycloak-js';
-import { isKeycloakConfigured } from './keycloak-config';
+import { getKeycloakSettings, isKeycloakConfigured } from './keycloak-config';
 
 let instance: Keycloak | null = null;
 
@@ -8,10 +8,11 @@ export function getKeycloak(): Keycloak {
     throw new Error('Keycloak non configuré (VITE_KEYCLOAK_URL, VITE_KEYCLOAK_REALM, VITE_KEYCLOAK_CLIENT_ID)');
   }
   if (!instance) {
+    const cfg = getKeycloakSettings()!;
     instance = new Keycloak({
-      url: import.meta.env.VITE_KEYCLOAK_URL!.replace(/\/$/, ''),
-      realm: import.meta.env.VITE_KEYCLOAK_REALM!,
-      clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID!,
+      url: cfg.url,
+      realm: cfg.realm,
+      clientId: cfg.clientId,
     });
   }
   return instance;
