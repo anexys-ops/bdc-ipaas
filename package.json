@@ -1,6 +1,6 @@
 {
   "name": "anexys-ipaas",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "packageManager": "pnpm@9.0.0",
   "scripts": {
@@ -10,7 +10,8 @@
     "dev:all": "turbo run dev",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "sync:brand-logos": "node scripts/sync-brand-logos.mjs"
   },
   "devDependencies": {
     "prettier": "^3.2.5",

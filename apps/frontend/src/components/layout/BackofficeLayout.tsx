@@ -32,7 +32,7 @@ type AsideSection = {
 const sections: AsideSection[] = [
   {
     id: 'overview',
-    title: 'Vue d’ensemble',
+    title: "Vue d'ensemble",
     subtitle: 'Indicateurs et navigation admin',
     prefixes: ['/backoffice'],
     items: [
@@ -152,10 +152,6 @@ function itemIsActive(pathname: string, to: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
-/**
- * <details> contrôlé : avec seulement open={route} sans onToggle, React ré-ferme la section à chaque rendu
- * et l’utilisateur ne peut pas ouvrir les sous-menus manuellement.
- */
 function BackofficeNavSection({ section, pathname }: { section: AsideSection; pathname: string }) {
   const routeWantsOpen = sectionHasActive(pathname, section);
   const [manualOpen, setManualOpen] = useState<boolean | null>(null);
@@ -218,6 +214,7 @@ export function BackofficeLayout() {
 
   return (
     <div className="flex min-h-[calc(100vh-3.75rem)]">
+      {/* ── Sidebar ── */}
       <aside className="w-[min(20rem,92vw)] shrink-0 border-r border-slate-200 bg-white">
         <div className="sticky top-[3.75rem] max-h-[calc(100vh-3.75rem)] overflow-y-auto">
           <div className="p-3 border-b border-slate-100 bg-slate-50/80">
@@ -234,15 +231,25 @@ export function BackofficeLayout() {
           </nav>
         </div>
       </aside>
-      <main className="flex-1 min-w-0 bg-transparent border-l border-slate-100/80">
-        <div className="px-4 py-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between text-xs text-slate-600 bg-white/90 border-b border-slate-200/80">
-          <p className="min-w-0 leading-snug">
-            Espace réservé au rôle <strong className="text-slate-800">SUPER_ADMIN</strong> — les liens « support » rejouent les
-            pages client sous le préfixe <code className="text-[11px] bg-slate-100 px-1 rounded">/backoffice</code>.
-          </p>
-          <BackofficeServerStatusStrip />
+
+      {/* ── Contenu principal ── */}
+      <main className="flex-1 min-w-0 bg-transparent border-l border-slate-100/80 flex flex-col">
+        {/* ── Bandeau SUPER_ADMIN + status strip — sticky sur toutes les pages ── */}
+        <div className="sticky top-[3.75rem] z-20 w-full bg-white/95 backdrop-blur-sm border-b border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,.04)]">
+          <div className="px-4 py-1.5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between text-xs text-slate-600">
+            <p className="min-w-0 leading-snug shrink-0">
+              Espace réservé au rôle <strong className="text-slate-800">SUPER_ADMIN</strong>{' '}
+              — les liens «&nbsp;support&nbsp;» rejouent les pages client sous le préfixe{' '}
+              <code className="text-[11px] bg-slate-100 px-1 rounded">/backoffice</code>.
+            </p>
+            <BackofficeServerStatusStrip />
+          </div>
         </div>
-        <Outlet />
+
+        {/* ── Page content ── */}
+        <div className="flex-1">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

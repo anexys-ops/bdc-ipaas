@@ -9,6 +9,7 @@ import { BenthosConfigBuilder } from './benthos-config.builder';
 import { BenthosService } from './benthos.service';
 import { PipelineInfraService } from './pipeline-infra.service';
 import { PipelineHubService } from './pipeline-hub.service';
+import { DockerStatsService } from './docker-stats.service';
 
 @Module({
   imports: [ConnectorsModule, FlowsModule],
@@ -20,6 +21,7 @@ import { PipelineHubService } from './pipeline-hub.service';
     BenthosService,
     PipelineInfraService,
     PipelineHubService,
+    DockerStatsService,
   ],
   exports: [EngineService],
 })

@@ -7,6 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { EngineService } from './engine.service';
 import { FlowsRuntimeStatus, PipelineInfraService, PipelineInfraStatus } from './pipeline-infra.service';
 import { PipelineHubOverview, PipelineHubService } from './pipeline-hub.service';
+import { DockerStatsService } from './docker-stats.service';
 import { PlatformHealthResponseDto } from './dto/platform-health.dto';
 
 @ApiTags('Infrastructure pipeline')
@@ -20,6 +21,7 @@ export class EngineInfraController {
     private readonly pipelineInfra: PipelineInfraService,
     private readonly engineService: EngineService,
     private readonly pipelineHub: PipelineHubService,
+    private readonly dockerStats: DockerStatsService,
   ) {}
 
   @Get('pipeline-infra')
@@ -84,10 +86,11 @@ export class EngineInfraController {
       }
     })();
 
-    const [infra, database, queues] = await Promise.all([
+    const [infra, database, queues, dockerContainers] = await Promise.all([
       this.pipelineInfra.getStatus(),
       databasePromise,
       this.engineService.getQueueStats(),
+      this.dockerStats.getStats(),
     ]);
 
     const workerQueue =
@@ -109,6 +112,7 @@ export class EngineInfraController {
         error: infra.benthosHeartbeat.error,
       },
       workerQueue,
+      dockerContainers,
     };
   }
 

@@ -106,6 +106,7 @@ services:
     volumes:
       - ../connectors:/app/connectors:ro
       - pipeline_data:/pipeline
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - anexys-network
     restart: unless-stopped

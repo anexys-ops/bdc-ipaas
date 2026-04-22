@@ -12,7 +12,10 @@ export class PlatformHealthProbeDto {
 }
 
 export class PlatformHealthWorkerQueueDto {
-  @ApiProperty({ description: 'Accès Redis/BullMQ depuis l’API (ne garantit pas le processus worker Docker)' })
+  @ApiProperty({
+    description:
+      "Accès Redis/BullMQ depuis l'API (ne garantit pas le processus worker Docker)",
+  })
   ok!: boolean;
 
   @ApiProperty({ required: false })
@@ -20,6 +23,29 @@ export class PlatformHealthWorkerQueueDto {
 
   @ApiProperty({ required: false })
   counts?: { active: number; waiting: number; failed: number; completed: number };
+}
+
+export class DockerContainerStatDto {
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty({ enum: ['running', 'exited', 'unknown'] })
+  status!: 'running' | 'exited' | 'unknown';
+
+  @ApiProperty()
+  cpuPercent!: number;
+
+  @ApiProperty()
+  memUsageMb!: number;
+
+  @ApiProperty()
+  memLimitMb!: number;
+
+  @ApiProperty()
+  memPercent!: number;
 }
 
 export class PlatformHealthResponseDto {
@@ -43,4 +69,7 @@ export class PlatformHealthResponseDto {
 
   @ApiProperty({ type: PlatformHealthWorkerQueueDto })
   workerQueue!: PlatformHealthWorkerQueueDto;
+
+  @ApiProperty({ type: [DockerContainerStatDto], description: 'Stats CPU/mém des conteneurs Docker (vide si socket non disponible)' })
+  dockerContainers!: DockerContainerStatDto[];
 }
