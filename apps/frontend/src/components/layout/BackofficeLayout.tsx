@@ -235,7 +235,7 @@ export function BackofficeLayout() {
       {/* ── Contenu principal ── */}
       <main className="flex-1 min-w-0 bg-transparent border-l border-slate-100/80 flex flex-col">
         {/* ── Bandeau SUPER_ADMIN + status strip — sticky sur toutes les pages ── */}
-        <div className="sticky top-[3.75rem] z-20 w-full bg-white/95 backdrop-blur-sm border-b border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,.04)]">
+        <div className="sticky top-0 z-20 w-full bg-white/95 backdrop-blur-sm border-b border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,.04)]">
           <div className="px-4 py-1.5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between text-xs text-slate-600">
             <p className="min-w-0 leading-snug shrink-0">
               Espace réservé au rôle <strong className="text-slate-800">SUPER_ADMIN</strong>{' '}

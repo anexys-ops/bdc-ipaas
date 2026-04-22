@@ -154,7 +154,7 @@ export function PrivateLayout({ children }: PrivateLayoutProps) {
       </header>
       <main className="flex-1 min-h-0 relative overflow-hidden flex flex-col">
         <AppPageBackground />
-        <div className="relative z-[1] flex-1 min-h-0 flex flex-col">{children ?? <Outlet />}</div>
+        <div className="relative z-[1] flex-1 min-h-0 overflow-y-auto flex flex-col">{children ?? <Outlet />}</div>
       </main>
       <AppFooter />
     </div>
