@@ -1,7 +1,3 @@
-# Benthos — supervision (heartbeat → Redis) + ingress HTTP CSV (simule une entrée type webhook / passerelle).
-# Le corps POST brut est écrit dans /pipeline/inbound/ingress.csv (volume partagé avec l’API et le worker).
-# Tester : curl -sS -X POST http://localhost:4195/ingest/csv -H 'Content-Type: text/csv' --data-binary $'a,b\n1,2\n'
-
 http:
   enabled: true
   address: 0.0.0.0:4195
@@ -11,23 +7,48 @@ input:
     inputs:
       - generate:
           interval: "@every 60s"
-          mapping: 'root = {"ts":timestamp_unix(),"source":"benthos","kind":"heartbeat"}'
+          mapping: |
+            meta benthos_kind = "heartbeat"
+            root = {"ts": timestamp_unix(), "source": "benthos", "kind": "heartbeat"}
+
       - http_server:
-          path: /ingest/csv
+          path: /hook/{product}
+          allowed_verbs: [POST, PUT, GET]
+
+      - http_server:
+          path: /http/{source}/{doc_type}
+          allowed_verbs: [POST, PUT]
+
+      - http_server:
+          path: /as2/{partner}
           allowed_verbs: [POST]
 
 pipeline:
-  processors: []
+  processors:
+    - mapping: |
+        meta message_id  = uuid_v4()
+        meta client_id   = meta("X-Client-Id").or("unknown")
+        meta token       = meta("X-Gate-Token").or("").slice(0, 24)
+        meta route       = meta("X-Route").or("default")
+        meta received_at = now().format_timestamp("2006-01-02T15:04:05Z")
+        meta valid       = if meta("X-Gate-Token") != "" { "true" } else { "false" }
+        meta auth_type   = if meta("X-Gate-Token") != "" { "token" } else { "none" }
+        root = content().string().slice(0, 2048)
 
 output:
   switch:
     cases:
-      - check: meta("http_server_request_path") == "/ingest/csv"
+      - check: '@benthos_kind == "heartbeat"'
         output:
-          file:
-            path: /pipeline/inbound/ingress.csv
-            codec: all-bytes
-      - output:
           redis_list:
             url: redis://redis:6379
             key: benthos_heartbeat
+
+      - output:
+          redis_streams:
+            url: redis://redis:6379
+            stream: ingress:global
+            body_key: body
+            max_length: 50000
+            metadata:
+              exclude_prefixes: ["X-", "Content", "Accept", "User", "benthos", "product", "source", "doc_type", "partner"]

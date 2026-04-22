@@ -97,6 +97,7 @@ services:
       - FRONTEND_URL=${FRONTEND_URL:-https://ultimate.edicloud.app}
       - KEYCLOAK_ISSUER=${KEYCLOAK_ISSUER:-}
       - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-}
+      - GATE_REDIS_URL=${GATE_REDIS_URL:-redis://redis:6379}
     depends_on:
       postgres:
         condition: service_healthy
