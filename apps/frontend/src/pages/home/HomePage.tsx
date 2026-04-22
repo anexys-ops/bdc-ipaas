@@ -399,10 +399,10 @@ export function HomePage() {
                   ))}
                 </ul>
                 <Link
-                  to="/reserver-demo"
+                  to="/marketplace"
                   className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-800 hover:underline w-fit"
                 >
-                  En savoir plus
+                  Voir les connecteurs
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
