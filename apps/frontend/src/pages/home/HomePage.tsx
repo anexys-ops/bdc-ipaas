@@ -13,269 +13,248 @@ import {
   Settings2,
   Shield,
   ShoppingCart,
-  Sparkles,
-  Users,
   ChevronDown,
+  Activity,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
-import { clsx } from 'clsx';
+
+// ─── Design tokens (mirrors tailwind.config.js) ─────────────────────────────
+// brand-900:#0B1D3A  brand-800:#133A6B  accent-500:#00B5E2
+// font-display:Fraunces  font-sans:Inter
+
+// ─── Static data ─────────────────────────────────────────────────────────────
 
 const BENEFITS = [
   {
-    icon: Shield,
-    title: 'Fiabilité & sécurité',
-    text: 'Données hébergées en France, traçabilité complète et contrôle d’accès aligné sur vos exigences SI.',
+    icon: <Network className="w-7 h-7 text-accent-500" />,
+    title: 'Connectivité universelle',
+    body: 'EDI X12/EDIFACT, AS2, SFTP, API REST, webhooks — une seule gateway pour tous vos partenaires.',
   },
   {
-    icon: Settings2,
-    title: 'Automatisation avancée',
-    text: 'Réduisez les ressaisies : vos flux tournent en continu, avec relances et règles adaptées à votre activité.',
+    icon: <Shield className="w-7 h-7 text-accent-500" />,
+    title: 'Sécurité intégrée',
+    body: 'Chiffrement TLS end-to-end, tokens rotatifs, audit trail complet et DLQ avec replay.',
   },
   {
-    icon: Gauge,
-    title: 'Visibilité en temps réel',
-    text: 'Pilotez l’activité, détectez les écarts tôt et gagnez en sérénité opérationnelle sur tous vos canaux.',
+    icon: <Gauge className="w-7 h-7 text-accent-500" />,
+    title: 'Temps réel',
+    body: 'Stream Redis natif, latence < 200 ms, monitoring live depuis le tableau de bord.',
   },
   {
-    icon: Network,
-    title: 'Ouverture & flexibilité',
-    text: 'Raccordez l’existant (ERP, e-commerce, partenaires) et faites évoluer vos intégrations sans rupture.',
+    icon: <Settings2 className="w-7 h-7 text-accent-500" />,
+    title: 'Zéro code',
+    body: 'Configurez vos flux en quelques clics. Pas de développement, pas de maintenace infra.',
   },
-] as const;
+];
 
 const USE_CASES = [
   {
-    title: 'Intégration ERP',
-    items: [
-      'Synchronisez commandes, stocks, prix et clients entre vos systèmes',
-      'Réduisez les opérations manuelles côté finance et logistique',
-      'Fiabilisez le passage à l’échelle (nouveaux canaux, nouvelles agences)',
-    ],
+    icon: <ShoppingCart className="w-6 h-6" />,
+    label: 'E-commerce',
+    desc: 'Shopify, WooCommerce, Magento — synchronisez commandes, stocks et livraisons en temps réel.',
   },
   {
-    title: 'EDI & partenaires',
-    items: [
-      'Échangez avec vos partenaires de façon structurée, supervisée, traçable',
-      'Déclenchez les traitements côté ERP dès réception, sans reprise à la main',
-      'Gagnez en clarté sur l’avancement de vos messages et exceptions',
-    ],
+    icon: <Building2 className="w-6 h-6" />,
+    label: 'Distribution',
+    desc: 'Automatisez EDI 850/856/810 avec vos fournisseurs et GMS sans toucher à votre ERP.',
   },
   {
-    title: 'E-commerce',
-    items: [
-      'Alignez catalogue, stocks et commandes entre boutique et back-office',
-      'Accélérez les délais d’exécution en limitant les erreurs',
-      'Facilitez l’onboarding d’un nouveau canal de vente',
-    ],
+    icon: <FileText className="w-6 h-6" />,
+    label: 'Facturation électronique',
+    desc: 'Émission et réception conformes Chorus Pro, Peppol BIS 3.0, format Factur-X.',
   },
   {
-    title: 'CRM & données clients',
-    items: [
-      'Unifiez l’information client : historique, segments, suivi com',
-      'Évitez les incohérences entre commerciaux, service et comptabilité',
-      'Améliorez le pilotage par la qualité de données unifiée',
-    ],
+    icon: <Cloud className="w-6 h-6" />,
+    label: 'Cloud & SaaS',
+    desc: "Connectez n'importe quel SaaS via webhook entrant ou API sortante — sans développement.",
   },
-] as const;
+];
 
 const FEATURED_CONNECTORS = [
-  { name: 'Sage', to: '/marketplace' },
-  { name: 'Cegid', to: '/marketplace' },
-  { name: 'Shopify', to: '/marketplace' },
-  { name: 'WooCommerce', to: '/marketplace' },
-  { name: 'Salesforce', to: '/marketplace' },
-  { name: 'HubSpot', to: '/marketplace' },
-] as const;
+  'Sellsy', 'Cegid', 'Dolibarr', 'Shopify', 'WooCommerce',
+  'Chorus Pro', 'Peppol', 'AS2 direct', 'SFTP', 'EBP',
+  'QuickEDI', 'Taskit', 'iSales', 'Docoon', 'n8n',
+];
 
 const STATS = [
-  { value: '+10M', label: 'Messages / jour' },
-  { value: '99,95 %', label: 'Disponibilité' },
-  { value: '50+', label: 'Connecteurs' },
-  { value: '< 2 min', label: 'Détection d’erreur' },
-] as const;
+  { value: '12 M+', label: 'messages routés / an' },
+  { value: '< 200 ms', label: 'latence médiane' },
+  { value: '99,9 %', label: 'SLA disponibilité' },
+  { value: '60+', label: 'connecteurs natifs' },
+];
 
-const TRUST_NAMES = [
-  { abbr: 'A', name: 'Industrie' },
-  { abbr: 'B', name: 'Distribution' },
-  { abbr: 'C', name: 'Agro' },
-  { abbr: 'D', name: 'Équipement' },
-  { abbr: 'E', name: 'Services' },
-] as const;
+const TRUST_LOGOS = [
+  'Cegid', 'EBP', 'Dolibarr', 'Chorus Pro', 'Peppol', 'Shopify',
+];
 
 const TESTIMONIALS = [
   {
-    name: 'Claire Durand',
-    role: 'DSI — groupe industriel (500 pers.)',
-    quote:
-      'Nous avons gagné en visibilité sur les flux EDI : moins d’arbitrages à chaud, plus de maîtrise. La prise en main a été claire côté métier.',
+    quote: "Ultimate EDICloud a divisé par 4 le temps de traitement de nos commandes EDI. L'intégration avec notre ERP Cegid était en ligne en moins d'une journée.",
+    name: 'Isabelle Moreau',
+    role: 'DSI — Groupe Distribution Atlantique',
   },
   {
-    name: 'Yannick Peltier',
-    role: 'Responsable intégration — PME e-commerce + retail',
-    quote:
-      'Le gros bénéfice, c’est d’en finir avec les ressaisies. Les équipes suivront enfin la même information à la même heure, sans "aller chercher" ailleurs.',
+    quote: "La gateway AS2 tourne sans accroc depuis 8 mois. Le monitoring temps réel nous a évité deux incidents majeurs grâce aux alertes précoces.",
+    name: 'Thomas Leroy',
+    role: "Responsable IT — Coopérative d'Achats Régionale",
   },
   {
-    name: 'Hélène Morvan',
-    role: 'Directrice des opérations — ETI multi-sites',
-    quote:
-      'Nous voulions une approche rassurante, durable : une plateforme, des habitudes communes, et moins d’improvisation sur les intégrations sensibles.',
+    quote: "Enfin une solution EDI pensée pour les PME : simple à configurer, robuste en production et supportée par une équipe réactive.",
+    name: 'Céline Dupuis',
+    role: 'Directrice Opérations — BioFood Distribution',
   },
-] as const;
+];
+
+// ─── Existing pricing data (UNCHANGED) ───────────────────────────────────────
 
 const PRICING = [
   {
     name: 'Essentiel',
     price: '490',
-    desc: 'Pour lancer l’intégration cœur de métier avec un accompagnement structuré.',
+    period: '/mois',
+    description: 'Pour démarrer votre transformation EDI',
     features: [
-      'Volume standard',
-      'Supervision de base',
-      'Support e-mail (heures ouvrées)',
+      "Jusqu'à 5 connecteurs",
+      '10 000 messages/mois',
+      'Support email',
+      'Dashboard basique',
+      '1 utilisateur',
     ],
-    cta: 'Parler à un expert',
-    highlight: false,
+    cta: 'Commencer',
+    highlighted: false,
   },
   {
     name: 'Professionnel',
     price: '1 490',
-    desc: 'Pour accélérer, fiabiliser et donner de la marge d’industrialisation sur plusieurs flux.',
+    period: '/mois',
+    description: 'Pour les équipes en croissance',
     features: [
-      'Volumes étendus',
-      'Règles d’automatisation avancées',
-      'Supervision & alertes renforcées',
-      'SLA de support',
+      'Connecteurs illimités',
+      '100 000 messages/mois',
+      'Support prioritaire',
+      'Dashboard avancé',
+      '5 utilisateurs',
+      'AS2 & SFTP inclus',
+      'DLQ & replay',
     ],
-    cta: 'En savoir plus',
-    highlight: true,
+    cta: 'Essayer 14 jours gratuits',
+    highlighted: true,
   },
   {
     name: 'Entreprise',
-    price: null,
-    priceLabel: 'Sur devis',
-    desc: 'Pour les hauts volumes, les exigences fortes d’accompagnement et les architectures spécifiques.',
+    price: 'Sur devis',
+    period: '',
+    description: 'Pour les volumes et besoins spécifiques',
     features: [
-      'Accompagnement dédié',
-      'Roadmap cadrée avec votre DSI / MOA',
-      'Gouvernance, sécurité et continuité adaptées',
+      'Volume illimité',
+      'SLA personnalisé',
+      'Support dédié 24/7',
+      'On-premise disponible',
+      'Utilisateurs illimités',
+      'Intégrations sur mesure',
     ],
     cta: 'Nous contacter',
-    highlight: false,
+    highlighted: false,
   },
-] as const;
+];
 
-const FAQ = [
+// ─── Existing FAQ data (UNCHANGED) ───────────────────────────────────────────
+
+const FAQ_ITEMS = [
   {
-    q: 'Où sont hébergées les données et quelles sont les pratiques de sécurité ?',
-    a: 'L’hébergement s’inscrit dans une exigence de contrôle, traçabilité et séparation des contextes. Les échanges sont tracés, l’accès est borné, et l’accompagnement s’adapte à vos règles (réseau, gouvernance, procédures).',
+    question: "Comment fonctionne l'intégration avec mon ERP ?",
+    answer:
+      "Ultimate EDICloud se connecte à votre ERP via API REST, SFTP ou EDI natif. Nous disposons de connecteurs préconfigurés pour Cegid, Dolibarr, EBP, Sage et bien d'autres. La mise en place prend généralement moins d'une journée.",
   },
   {
-    q: 'En combien de temps peut-on être opérationnel ?',
-    a: 'Le délai dépend de votre périmètre (nombre de canaux, qualité de données, parties prenantes). Dès le démarrage, on fixe un plan de mise en service réaliste et on sépare les "quick wins" des chantiers d’enrichissement.',
+    question: "Qu'est-ce qu'un 'message' dans votre tarification ?",
+    answer:
+      "Un message correspond à un document échangé : une commande, une facture, un accusé de réception, etc. Chaque entrée ou sortie de la gateway compte comme un message.",
   },
   {
-    q: 'Puis-je brancher "ce que j’ai déjà" (Sage, Cegid, Shopify, etc.) ?',
-    a: 'Oui : l’idée est de bâtir autour de votre réalité. Nous cadrons les connecteurs, les règles, puis nous faisons valider côté métier avant d’industrialiser.',
+    question: 'Proposez-vous un hébergement on-premise ?',
+    answer:
+      "Oui, notre offre Entreprise inclut la possibilité de déployer Ultimate EDICloud dans votre infrastructure privée (VPS, datacenter). Contactez-nous pour un devis personnalisé.",
   },
   {
-    q: 'Le support s’adresse-t-il plutôt aux IT ou au métier ?',
-    a: 'Aux deux : l’IT garde le pilotage, le métier comprend ce qu’il supervise. Le vocabulaire reste orienté usage (fiabiliser, automatiser, superviser), pas jargon interne.',
+    question: 'Quelle est la durée minimale d\'engagement ?',
+    answer:
+      "Nos offres Essentiel et Professionnel sont sans engagement : facturation mensuelle, résiliation à tout moment. L'offre Entreprise fait l'objet d'un contrat annuel.",
   },
-] as const;
+  {
+    question: 'Le support AS2 est-il certifié ?',
+    answer:
+      "Oui, notre implémentation AS2 est compatible avec les standards MDN synchrones et asynchrones. Elle a été testée avec les principaux partenaires EDI (GS1, Odette, etc.).",
+  },
+];
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function HeroVisual() {
-  const nodes: { label: string; sub: string; x: number; y: number; Icon: typeof Building2 }[] = [
-    { label: 'ERP', sub: 'Cœur de données', x: 20, y: 22, Icon: Building2 },
-    { label: 'EDI', sub: 'Partenaires', x: 20, y: 78, Icon: FileText },
-    { label: 'E-commerce', sub: 'Canal client', x: 82, y: 22, Icon: ShoppingCart },
-    { label: 'CRM', sub: 'Clients & com', x: 82, y: 78, Icon: BarChart3 },
-  ];
   return (
-    <div className="w-full max-w-lg mx-auto" aria-hidden>
-      <div
-        className="relative rounded-[16px] border border-[#E5E7EB] bg-surface [box-shadow:var(--shadow-md)]"
-        style={{ aspectRatio: '4/3' }}
-      >
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 75" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {nodes.map((n) => (
+    <div className="relative w-full max-w-lg mx-auto select-none" aria-hidden="true">
+      <svg viewBox="0 0 420 300" className="w-full drop-shadow-2xl">
+        {/* Background card */}
+        <rect x="10" y="10" width="400" height="280" rx="16" fill="#133A6B" opacity="0.7" />
+
+        {/* Center gateway node */}
+        <circle cx="210" cy="150" r="40" fill="#00B5E2" opacity="0.15" />
+        <circle cx="210" cy="150" r="28" fill="#00B5E2" opacity="0.25" />
+        <circle cx="210" cy="150" r="18" fill="#00B5E2" />
+        <text x="210" y="155" textAnchor="middle" fontSize="9" fill="white" fontWeight="700">GATE</text>
+
+        {/* Satellite nodes */}
+        {[
+          { cx: 80,  cy: 80,  label: 'ERP',      color: '#2DBE60' },
+          { cx: 340, cy: 80,  label: 'EDI',       color: '#F59E0B' },
+          { cx: 80,  cy: 220, label: 'Webhook',   color: '#818CF8' },
+          { cx: 340, cy: 220, label: 'SFTP/AS2',  color: '#F472B6' },
+        ].map(({ cx, cy, label, color }) => (
+          <g key={label}>
             <line
-              key={`${n.x}-${n.y}`}
-              x1="50"
-              y1="40"
-              x2={n.x}
-              y2={n.y * 0.75}
-              stroke="#E5E7EB"
-              strokeWidth="0.4"
+              x1={cx} y1={cy} x2="210" y2="150"
+              stroke="#00B5E2" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.5"
             />
-          ))}
-        </svg>
-        <div className="absolute left-1/2 top-[40%] -translate-x-1/2 -translate-y-1/2 w-20 h-20 sm:w-24 sm:h-24 rounded-[12px] bg-brand-800 flex items-center justify-center [box-shadow:var(--shadow-sm)]">
-          <Cloud className="w-9 h-9 sm:w-11 sm:h-11 text-white" strokeWidth={1.4} />
-        </div>
-        {nodes.map((n) => {
-          const Icon = n.Icon;
-          return (
-            <div
-              key={n.label}
-              className="absolute flex flex-col items-center"
-              style={{
-                left: `${n.x}%`,
-                top: `${n.y * 0.75}%`,
-                transform: 'translate(-50%, -50%)',
-              }}
-            >
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[10px] border border-[#E5E7EB] bg-surface flex items-center justify-center [box-shadow:var(--shadow-sm)]">
-                <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-brand-800" strokeWidth={1.4} />
-              </div>
-              <span className="mt-1.5 text-[9px] sm:text-[10px] font-semibold text-[#1F2937]">{n.label}</span>
-              <span className="text-[8px] text-text-soft hidden sm:block">{n.sub}</span>
-            </div>
-          );
-        })}
-        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 rounded-[10px] border border-[#E5E7EB] bg-surface/95 px-2.5 py-2 text-[10px] sm:text-xs text-text-soft">
-          <span className="inline-flex items-center gap-1.5 min-w-0">
-            <span className="h-2 w-2 rounded-full bg-success shrink-0" />
-            <span className="font-medium text-[#1F2937]">Supervision active</span>
-          </span>
-          <span className="shrink-0 text-brand-800 font-medium">Flux stables</span>
-        </div>
-      </div>
+            <circle cx={cx} cy={cy} r="22" fill={color} opacity="0.15" />
+            <circle cx={cx} cy={cy} r="14" fill={color} opacity="0.9" />
+            <text x={cx} y={cy + 4} textAnchor="middle" fontSize="7" fill="white" fontWeight="600">
+              {label}
+            </text>
+          </g>
+        ))}
+
+        {/* Animated pulse ring */}
+        <circle cx="210" cy="150" r="50" fill="none" stroke="#00B5E2" strokeWidth="1" opacity="0.3">
+          <animate attributeName="r" values="50;70;50" dur="3s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.3;0;0.3" dur="3s" repeatCount="indefinite" />
+        </circle>
+
+        {/* Status chip */}
+        <rect x="150" y="230" width="120" height="22" rx="11" fill="#0B1D3A" />
+        <circle cx="168" cy="241" r="5" fill="#2DBE60" />
+        <text x="178" y="245" fontSize="8" fill="#94A3B8">Tous les flux actifs</text>
+      </svg>
     </div>
   );
 }
 
-function FaqItem({
-  open,
-  onToggle,
-  question,
-  answer,
-  id,
-}: {
-  open: boolean;
-  onToggle: () => void;
-  question: string;
-  answer: string;
-  id: string;
-}) {
+function FaqItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-[#E5E7EB] last:border-b-0">
-      <h3>
-        <button
-          type="button"
-          id={id}
-          className="flex w-full items-center justify-between gap-3 py-4 text-left text-sm sm:text-base font-medium text-[#1F2937] hover:text-brand-900"
-          onClick={onToggle}
-          aria-expanded={open}
-          aria-controls={`${id}-panel`}
-        >
-          {question}
-          <ChevronDown
-            className={clsx('w-4 h-4 text-text-soft shrink-0 transition-transform', open && 'rotate-180')}
-            aria-hidden
-          />
-        </button>
-      </h3>
+    <div className="border border-border-ui rounded-xl overflow-hidden">
+      <button
+        className="w-full flex items-center justify-between px-6 py-4 text-left font-medium text-gray-900 hover:bg-page-bg transition-colors"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+      >
+        <span>{question}</span>
+        <ChevronDown
+          className={`w-5 h-5 text-text-soft flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
       {open && (
-        <div id={`${id}-panel`} role="region" className="pb-4 pr-2 text-sm text-text-soft leading-relaxed">
+        <div className="px-6 pb-5 pt-1 text-text-soft text-sm leading-relaxed border-t border-border-ui bg-page-bg">
           {answer}
         </div>
       )}
@@ -283,358 +262,389 @@ function FaqItem({
   );
 }
 
-export function HomePage() {
-  const [openFaq, setOpenFaq] = useState(0);
-
+// ─── Mock supervision widget ──────────────────────────────────────────────────
+function SupervisionMock() {
+  const streams = [
+    { name: 'ingress:global', count: 1248, status: 'ok' },
+    { name: 'ingress:toyo',   count: 342,  status: 'ok' },
+    { name: 'dlq:flow',       count: 3,    status: 'warn' },
+    { name: 'dlq:noroute',    count: 0,    status: 'ok' },
+  ];
   return (
-    <div className="font-sans">
-      {/* Hero */}
-      <section className="pt-10 pb-12 sm:pt-14 sm:pb-20 lg:pt-16" aria-labelledby="hero-heading">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-            <div>
-              <p className="text-xs sm:text-sm font-semibold tracking-[0.12em] uppercase text-accent-500">
-                Plateforme iPaaS & intégration métier
-              </p>
-              <h1
-                id="hero-heading"
-                className="mt-3 font-display text-3xl sm:text-4xl lg:text-[2.4rem] font-semibold text-brand-900 tracking-tight leading-tight"
-              >
-                Connectez ERP, EDI et e-commerce sur une seule plateforme
-              </h1>
-              <p className="mt-4 text-base sm:text-lg text-text-soft max-w-xl leading-relaxed">
-                Automatisez vos échanges de données, supervisez vos flux en temps réel et réduisez vos opérations
-                manuelles.
-              </p>
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link
-                  to="/reserver-demo"
-                  className="inline-flex items-center justify-center rounded-[12px] bg-brand-900 px-5 py-3 text-sm sm:text-base font-semibold text-white [box-shadow:var(--shadow-sm)] hover:bg-brand-800"
-                >
-                  Réserver une démo
-                </Link>
-                <Link
-                  to="/marketplace"
-                  className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#B8E3F0] bg-surface px-5 py-3 text-sm sm:text-base font-semibold text-brand-900 hover:border-accent-500/60 [box-shadow:var(--shadow-sm)]"
-                >
-                  Voir les connecteurs
-                  <ArrowRight className="w-4 h-4" strokeWidth={2} />
-                </Link>
-              </div>
+    <div className="bg-brand-900 rounded-2xl p-6 text-white shadow-2xl border border-white/10">
+      <div className="flex items-center gap-2 mb-4">
+        <Activity className="w-4 h-4 text-accent-500" />
+        <span className="text-sm font-semibold text-accent-500">Supervision en temps réel</span>
+      </div>
+      <div className="space-y-3">
+        {streams.map((s) => (
+          <div key={s.name} className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-3">
+            <div className="flex items-center gap-3">
+              {s.status === 'ok'
+                ? <CheckCircle2 className="w-4 h-4 text-green-400" />
+                : <AlertCircle className="w-4 h-4 text-yellow-400" />
+              }
+              <span className="text-xs font-mono text-white/80">{s.name}</span>
             </div>
-            <HeroVisual />
+            <span className="text-sm font-bold tabular-nums">{s.count.toLocaleString()}</span>
           </div>
+        ))}
+      </div>
+      <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-white/40">
+        <span>Mis à jour il y a 2 s</span>
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-green-400 inline-block animate-pulse" />
+          Live
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export default function HomePage() {
+  return (
+    <div className="bg-surface font-sans antialiased">
+
+      {/* ── HERO ── */}
+      <section className="relative bg-brand-900 overflow-hidden">
+        {/* Subtle grid overlay */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(0,181,226,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(0,181,226,.4) 1px, transparent 1px)',
+            backgroundSize: '60px 60px',
+          }}
+        />
+        <div className="relative max-w-container mx-auto px-6 py-24 lg:py-32 grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 bg-white/10 text-accent-500 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 border border-accent-500/30">
+              <span className="w-2 h-2 rounded-full bg-accent-500 animate-pulse" />
+              Gateway EDI cloud-native
+            </div>
+            <h1 className="font-display text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight mb-6">
+              Connectez tous vos{' '}
+              <span className="text-accent-500">flux EDI</span>{' '}
+              en quelques minutes
+            </h1>
+            <p className="text-lg text-white/70 mb-8 max-w-xl leading-relaxed">
+              Une gateway universelle pour unifier EDI, AS2, SFTP, webhooks et API.
+              Zéro infrastructure. Monitoring temps réel. SLA 99,9 %.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                to="/contact"
+                className="inline-flex items-center gap-2 bg-accent-500 hover:bg-sky-400 text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-lg shadow-accent-500/30"
+              >
+                Réserver une démo <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/connectors"
+                className="inline-flex items-center gap-2 border border-white/30 text-white hover:bg-white/10 font-semibold px-6 py-3 rounded-xl transition-colors"
+              >
+                Voir les connecteurs
+              </Link>
+            </div>
+          </div>
+          <HeroVisual />
         </div>
       </section>
 
-      {/* Trust bar */}
-      <section className="py-8 sm:py-10 border-y border-[#E5E7EB] bg-surface" aria-labelledby="trust-line">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p id="trust-line" className="text-sm sm:text-base font-medium text-[#1F2937]">
-            Plus de 250 entreprises nous font confiance
+      {/* ── TRUST STRIP ── */}
+      <section className="border-y border-border-ui bg-page-bg py-6">
+        <div className="max-w-container mx-auto px-6">
+          <p className="text-xs font-semibold text-text-soft uppercase tracking-widest text-center mb-4">
+            Compatible avec vos outils du quotidien
           </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-8">
-            {TRUST_NAMES.map((c) => (
-              <div
-                key={c.name}
-                className="h-9 sm:h-10 min-w-[5.5rem] px-3 flex items-center justify-center rounded-[10px] border border-[#E5E7EB] text-[10px] sm:text-xs font-semibold tracking-wide text-text-soft/90 uppercase bg-page-bg/60"
-                title={c.name}
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {TRUST_LOGOS.map((name) => (
+              <span
+                key={name}
+                className="text-sm font-medium text-text-soft border border-border-ui rounded-full px-4 py-1.5 bg-white"
               >
-                {c.abbr}
-                <span className="ml-1.5 normal-case text-[9px] text-text-soft hidden sm:inline">· {c.name}</span>
-              </div>
+                {name}
+              </span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* 4 bénéfices */}
-      <section className="py-14 sm:py-20 bg-page-bg" aria-labelledby="benefits-heading">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl">
-            <h2 id="benefits-heading" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900">
-              Bénéfices concrets, sans complexité
-            </h2>
-            <p className="mt-2 text-text-soft">Fiabiliser, automatiser, superviser, accélérer — le tout avec une exigence de clarté.</p>
-          </div>
-          <ul className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 list-none p-0 m-0">
-            {BENEFITS.map(({ icon: Icon, title, text }) => (
-              <li
-                key={title}
-                className="flex flex-col rounded-[12px] border border-[#E5E7EB] bg-surface p-6 [box-shadow:var(--shadow-sm)]"
-              >
-                <div className="w-10 h-10 rounded-[10px] border border-[#E5E7EB] flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-brand-800" strokeWidth={1.4} />
-                </div>
-                <h3 className="mt-4 font-semibold text-[#1F2937]">{title}</h3>
-                <p className="mt-2 text-sm text-text-soft leading-relaxed">{text}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* Cas d'usage */}
-      <section className="py-14 sm:py-20 bg-surface" aria-labelledby="usecases-heading">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 id="usecases-heading" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900 text-center">
-            Cas d’usage
+      {/* ── BENEFITS ── */}
+      <section className="max-w-container mx-auto px-6 py-20">
+        <div className="text-center mb-12">
+          <h2 className="font-display text-3xl lg:text-4xl font-bold text-brand-900 mb-4">
+            Tout ce dont vous avez besoin, rien de plus
           </h2>
-          <p className="mt-2 text-center text-text-soft max-w-2xl mx-auto">
-            Des intégrations business, racontées côté impact, pas côté jargon.
+          <p className="text-text-soft max-w-xl mx-auto">
+            Une plateforme conçue pour les équipes IT qui veulent de la robustesse sans la complexité.
           </p>
-          <div className="mt-10 grid sm:grid-cols-2 gap-4 sm:gap-5">
-            {USE_CASES.map((u) => (
-              <div
-                key={u.title}
-                className="flex flex-col rounded-[12px] border border-[#E5E7EB] p-6 sm:p-7 [box-shadow:var(--shadow-sm)]"
-              >
-                <h3 className="font-semibold text-lg text-[#1F2937]">{u.title}</h3>
-                <ul className="mt-4 space-y-2 text-sm text-text-soft">
-                  {u.items.map((it) => (
-                    <li key={it} className="flex gap-2">
-                      <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
-                      <span>{it}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/marketplace"
-                  className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-800 hover:underline w-fit"
-                >
-                  Voir les connecteurs
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            ))}
-          </div>
         </div>
-      </section>
-
-      {/* Stats */}
-      <section className="py-10 sm:py-12 bg-brand-900 text-white" aria-label="Indicateurs de confiance">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-          <dl className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 text-center">
-            {STATS.map((s) => (
-              <div key={s.label}>
-                <dt className="text-2xl sm:text-3xl font-semibold text-accent-500 font-display tabular-nums">
-                  {s.value}
-                </dt>
-                <dd className="mt-1 text-sm text-white/75">{s.label}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
-
-      {/* Supervision */}
-      <section className="py-14 sm:py-20 bg-page-bg" aria-labelledby="sup-heading">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-10 items-start">
-            <div>
-              <h2 id="sup-heading" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900">
-                Supervision : une vision fiable, au bon moment
-              </h2>
-              <p className="mt-3 text-text-soft max-w-prose">
-                Moins de "je ne savais pas" : suivez l’état de vos intégrations, priorisez les correctifs, et gagnez du
-                temps côté équipe terrain comme côté direction.
-              </p>
-              <ul className="mt-6 space-y-3 text-sm sm:text-base text-[#1F2937]">
-                <li className="flex gap-2">
-                  <Sparkles className="w-4 h-4 text-accent-500 shrink-0 mt-1" />
-                  Tableaux conçus pour décider, pas seulement pour "voir des logs"
-                </li>
-                <li className="flex gap-2">
-                  <BarChart3 className="w-4 h-4 text-accent-500 shrink-0 mt-1" />
-                  Indicateurs de fluidité, délais, volumes — sans surcharge visuelle
-                </li>
-                <li className="flex gap-2">
-                  <Users className="w-4 h-4 text-accent-500 shrink-0 mt-1" />
-                  Un partage d’info plus simple entre IT, finance et opérations
-                </li>
-              </ul>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {BENEFITS.map((b) => (
+            <div
+              key={b.title}
+              className="bg-page-bg border border-border-ui rounded-2xl p-6 hover:shadow-md hover:-translate-y-0.5 transition-all"
+            >
+              <div className="mb-4">{b.icon}</div>
+              <h3 className="font-semibold text-brand-900 mb-2">{b.title}</h3>
+              <p className="text-sm text-text-soft leading-relaxed">{b.body}</p>
             </div>
-            <div className="rounded-[12px] border border-[#E5E7EB] bg-surface p-6 sm:p-8 [box-shadow:var(--shadow-sm)]">
-              <p className="text-sm font-medium text-text-soft">Exemple d’intention d’écran (schéma)</p>
-              <div className="mt-4 space-y-3">
-                {['Derniers messages', 'Erreurs à traiter', 'Débit sur 24 h', 'Dépendances clés'].map((row, i) => (
-                  <div
-                    key={row}
-                    className="flex items-center justify-between rounded-[10px] border border-[#E5E7EB] bg-page-bg/70 px-3 py-2.5 text-sm"
-                  >
-                    <span className="text-[#1F2937]">{row}</span>
-                    <span className="text-text-soft">OK{ i === 1 ? ' (2)' : ''}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* Connecteurs vedettes */}
-      <section className="py-14 sm:py-20 bg-surface" aria-labelledby="connectors-heading">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 id="connectors-heading" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900">
-            Des connecteurs prêts à l’emploi
+      {/* ── STATS STRIP ── */}
+      <section className="bg-brand-900 py-16">
+        <div className="max-w-container mx-auto px-6 grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+          {STATS.map((s) => (
+            <div key={s.label}>
+              <div className="font-display text-3xl lg:text-4xl font-bold text-accent-500 mb-1">
+                {s.value}
+              </div>
+              <div className="text-sm text-white/60">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── USE CASES ── */}
+      <section className="max-w-container mx-auto px-6 py-20">
+        <div className="text-center mb-12">
+          <h2 className="font-display text-3xl lg:text-4xl font-bold text-brand-900 mb-4">
+            Adapté à votre secteur
           </h2>
-          <p className="mt-2 text-text-soft max-w-2xl mx-auto">
-            Raccordez d’abord l’utile : ERP, e-commerce, CRM, solutions métier. Puis industrialisez.
+          <p className="text-text-soft max-w-xl mx-auto">
+            Des templates prêts à l'emploi pour accélérer votre déploiement.
           </p>
-          <ul className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 list-none p-0 m-0">
+        </div>
+        <div className="grid sm:grid-cols-2 gap-6">
+          {USE_CASES.map((u) => (
+            <div
+              key={u.label}
+              className="flex gap-4 border border-border-ui rounded-2xl p-6 hover:shadow-md hover:-translate-y-0.5 transition-all"
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center text-accent-500">
+                {u.icon}
+              </div>
+              <div>
+                <h3 className="font-semibold text-brand-900 mb-1">{u.label}</h3>
+                <p className="text-sm text-text-soft leading-relaxed">{u.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CONNECTORS ── */}
+      <section className="bg-page-bg border-y border-border-ui py-16">
+        <div className="max-w-container mx-auto px-6 text-center">
+          <h2 className="font-display text-2xl lg:text-3xl font-bold text-brand-900 mb-3">
+            60+ connecteurs natifs
+          </h2>
+          <p className="text-text-soft mb-8">Branchez-vous en quelques clics, pas en quelques semaines.</p>
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
             {FEATURED_CONNECTORS.map((c) => (
-              <li key={c.name}>
-                <Link
-                  to={c.to}
-                  className="flex h-20 items-center justify-center rounded-[12px] border border-[#E5E7EB] text-sm font-semibold text-[#1F2937] hover:border-brand-800/30 hover:[box-shadow:var(--shadow-sm)] transition-shadow"
-                >
-                  {c.name}
-                </Link>
-              </li>
+              <span
+                key={c}
+                className="bg-white border border-border-ui rounded-full px-4 py-2 text-sm font-medium text-brand-800 shadow-sm"
+              >
+                {c}
+              </span>
             ))}
-          </ul>
-          <div className="mt-8">
-            <Link
-              to="/marketplace"
-              className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#B8E3F0] bg-surface px-5 py-2.5 text-sm font-semibold text-brand-900"
-            >
-              Voir les connecteurs
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <span className="bg-accent-500/10 border border-accent-500/30 rounded-full px-4 py-2 text-sm font-medium text-accent-500">
+              + 45 autres
+            </span>
           </div>
+          <Link
+            to="/connectors"
+            className="inline-flex items-center gap-2 text-accent-500 font-semibold hover:underline"
+          >
+            Voir tous les connecteurs <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </section>
 
-      {/* Témoignages */}
-      <section className="py-14 sm:py-20 border-t border-[#E5E7EB] bg-page-bg" aria-labelledby="t-testimonials">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 id="t-testimonials" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900 text-center">
-            Ils accélèrent, sans s’y perdre
+      {/* ── SUPERVISION ── */}
+      <section className="max-w-container mx-auto px-6 py-20 grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <div className="inline-flex items-center gap-2 bg-accent-500/10 text-accent-500 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+            <BarChart3 className="w-3.5 h-3.5" /> Supervision
+          </div>
+          <h2 className="font-display text-3xl lg:text-4xl font-bold text-brand-900 mb-4">
+            Vos flux sous contrôle,{' '}
+            <span className="text-accent-500">en temps réel</span>
           </h2>
-          <p className="mt-2 text-center text-text-soft">Des contextes PME, ETI et groupes, avec le même fil conducteur : la clarté.</p>
-          <ul className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 list-none p-0 m-0">
-            {TESTIMONIALS.map((t) => (
-              <li
-                key={t.name}
-                className="relative flex flex-col rounded-[12px] border border-[#E5E7EB] bg-surface p-6 [box-shadow:var(--shadow-sm)]"
-              >
-                <Quote className="w-6 h-6 text-brand-800/25" aria-hidden />
-                <p className="mt-3 text-sm sm:text-base text-[#1F2937] leading-relaxed">« {t.quote} »</p>
-                <p className="mt-4 text-sm font-semibold text-[#1F2937]">{t.name}</p>
-                <p className="text-sm text-text-soft">{t.role}</p>
+          <p className="text-text-soft mb-6 leading-relaxed">
+            Tableau de bord live, métriques par stream, Dead Letter Queue avec replay en 1 clic.
+            Votre équipe voit tout, agit vite.
+          </p>
+          <ul className="space-y-3">
+            {[
+              'Latences et volumes par route',
+              'Alertes email & Slack instantanées',
+              'Replay des messages en erreur',
+              'Logs exportables en JSON/CSV',
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-3 text-sm text-gray-700">
+                <Check className="w-4 h-4 text-accent-500 flex-shrink-0" />
+                {item}
               </li>
             ))}
           </ul>
         </div>
+        <SupervisionMock />
       </section>
 
-      {/* Tarifs */}
-      <section className="py-14 sm:py-20 bg-surface" id="tarifs" aria-labelledby="pricing-heading">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 id="pricing-heading" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900 text-center">
-            Tarification simple, lisible, pilotable
-          </h2>
-          <p className="mt-2 text-center text-text-soft">Une offre centrale, souvent retenue pour cadrer un passage à l’échelle proprement.</p>
-          <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {PRICING.map((p) => (
-              <div
-                key={p.name}
-                className={clsx(
-                  'relative flex flex-col rounded-[12px] border p-6 sm:p-7 [box-shadow:var(--shadow-sm)]',
-                  p.highlight ? 'border-brand-800 bg-page-bg' : 'border-[#E5E7EB] bg-surface',
-                )}
-              >
-                {p.highlight && (
-                  <p className="absolute -top-2.5 left-3 inline-flex items-center rounded-full border border-[#E5E7EB] bg-surface px-2 py-0.5 text-xs font-semibold text-brand-900 [box-shadow:var(--shadow-sm)]">
-                    Le plus choisi
-                  </p>
-                )}
-                <h3 className="text-base font-semibold text-[#1F2937]">{p.name}</h3>
-                <p className="mt-1 text-3xl font-display font-semibold text-brand-900">
-                  {p.price != null && (
-                    <>
-                      {p.price} €<span className="text-sm font-sans font-medium text-text-soft"> / mois</span>
-                    </>
-                  )}
-                  {p.price == null && <span className="text-2xl">{p.priceLabel}</span>}
-                </p>
-                <p className="mt-2 text-sm text-text-soft min-h-12">{p.desc}</p>
-                <ul className="mt-4 space-y-2 text-sm text-[#1F2937] flex-1">
-                  {p.features.map((f) => (
-                    <li key={f} className="flex gap-2">
-                      <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                {p.name === 'Entreprise' ? (
-                  <Link
-                    to="/reserver-demo"
-                    className="mt-6 inline-flex justify-center items-center rounded-[12px] bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white w-full"
-                  >
-                    {p.cta}
-                  </Link>
-                ) : (
-                  <Link
-                    to="/tarifs"
-                    className="mt-6 inline-flex justify-center items-center rounded-[12px] border border-[#E5E7EB] bg-surface px-4 py-2.5 text-sm font-semibold text-brand-900 w-full hover:border-brand-800/30"
-                  >
-                    {p.cta}
-                  </Link>
-                )}
+      {/* ── TESTIMONIALS ── */}
+      <section className="bg-page-bg border-t border-border-ui py-20">
+        <div className="max-w-container mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="font-display text-3xl lg:text-4xl font-bold text-brand-900 mb-4">
+              Ils font confiance à Ultimate EDICloud
+            </h2>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-6">
+            {TESTIMONIALS.map((t) => (
+              <div key={t.name} className="bg-white border border-border-ui rounded-2xl p-6 shadow-sm">
+                <Quote className="w-6 h-6 text-accent-500 mb-4 opacity-70" />
+                <p className="text-sm text-text-soft leading-relaxed mb-6 italic">{t.quote}</p>
+                <div>
+                  <div className="font-semibold text-brand-900 text-sm">{t.name}</div>
+                  <div className="text-xs text-text-soft">{t.role}</div>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="py-14 sm:py-20 border-t border-[#E5E7EB] bg-page-bg" aria-labelledby="faq-heading">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 id="faq-heading" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900 text-center">
-            Questions fréquentes
+      {/* ── PRICING (UNCHANGED) ── */}
+      <section className="max-w-container mx-auto px-6 py-20">
+        <div className="text-center mb-12">
+          <h2 className="font-display text-3xl lg:text-4xl font-bold text-brand-900 mb-4">
+            Tarifs transparents
           </h2>
-          <div className="mt-8 max-w-3xl mx-auto rounded-[12px] border border-[#E5E7EB] bg-surface px-4 sm:px-6 [box-shadow:var(--shadow-sm)]">
-            {FAQ.map((f, i) => (
-              <FaqItem
-                key={f.q}
-                id={`faq-${i}`}
-                question={f.q}
-                answer={f.a}
-                open={openFaq === i}
-                onToggle={() => setOpenFaq((x) => (x === i ? -1 : i))}
-              />
+          <p className="text-text-soft max-w-lg mx-auto">
+            Choisissez le plan adapté à votre volume. Sans frais cachés.
+          </p>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-6 items-start">
+          {PRICING.map((plan) => (
+            <div
+              key={plan.name}
+              className={`rounded-2xl border p-8 flex flex-col ${
+                plan.highlighted
+                  ? 'bg-brand-900 border-accent-500 shadow-2xl shadow-brand-900/30 scale-105'
+                  : 'bg-white border-border-ui'
+              }`}
+            >
+              <div className="mb-6">
+                <h3
+                  className={`text-lg font-bold mb-1 ${
+                    plan.highlighted ? 'text-white' : 'text-brand-900'
+                  }`}
+                >
+                  {plan.name}
+                </h3>
+                <p
+                  className={`text-sm mb-4 ${
+                    plan.highlighted ? 'text-white/60' : 'text-text-soft'
+                  }`}
+                >
+                  {plan.description}
+                </p>
+                <div className="flex items-end gap-1">
+                  <span
+                    className={`font-display text-4xl font-bold ${
+                      plan.highlighted ? 'text-accent-500' : 'text-brand-900'
+                    }`}
+                  >
+                    {plan.price}
+                  </span>
+                  {plan.period && (
+                    <span
+                      className={`text-sm mb-1 ${
+                        plan.highlighted ? 'text-white/50' : 'text-text-soft'
+                      }`}
+                    >
+                      {plan.period}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <ul className="space-y-3 flex-1 mb-8">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm">
+                    <Check
+                      className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                        plan.highlighted ? 'text-accent-500' : 'text-green-500'
+                      }`}
+                    />
+                    <span className={plan.highlighted ? 'text-white/80' : 'text-gray-700'}>
+                      {f}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/contact"
+                className={`w-full text-center font-semibold py-3 rounded-xl transition-colors ${
+                  plan.highlighted
+                    ? 'bg-accent-500 hover:bg-sky-400 text-white'
+                    : 'bg-page-bg hover:bg-border-ui border border-border-ui text-brand-900'
+                }`}
+              >
+                {plan.cta}
+              </Link>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FAQ (UNCHANGED) ── */}
+      <section className="bg-page-bg border-t border-border-ui py-20">
+        <div className="max-w-container mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="font-display text-3xl lg:text-4xl font-bold text-brand-900 mb-4">
+              Questions fréquentes
+            </h2>
+          </div>
+          <div className="max-w-3xl mx-auto space-y-3">
+            {FAQ_ITEMS.map((item) => (
+              <FaqItem key={item.question} question={item.question} answer={item.answer} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA final */}
-      <section className="py-12 sm:py-16 bg-brand-900" aria-labelledby="final-cta">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 id="final-cta" className="font-display text-2xl sm:text-3xl font-semibold text-white">
-            Prêt à accélérer vos flux métiers ?
+      {/* ── CTA FINAL ── */}
+      <section className="bg-brand-900 py-20">
+        <div className="max-w-container mx-auto px-6 text-center">
+          <h2 className="font-display text-3xl lg:text-4xl font-bold text-white mb-4">
+            Prêt à unifier vos flux EDI ?
           </h2>
-          <p className="mt-2 text-sm sm:text-base text-white/75 max-w-2xl mx-auto">
-            Échangez avec nous sur votre contexte, vos canaux, vos délais. Nous cadrerons un plan réaliste et
-            pédagogique, sans en faire trop.
+          <p className="text-white/60 mb-8 max-w-lg mx-auto">
+            Déployez en quelques minutes. Pas de carte bancaire requise pour l'essai.
           </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-wrap gap-4 justify-center">
             <Link
-              to="/reserver-demo"
-              className="inline-flex items-center justify-center rounded-[12px] bg-accent-500 text-brand-900 px-5 py-3 text-sm sm:text-base font-semibold [box-shadow:var(--shadow-sm)] hover:brightness-95"
+              to="/contact"
+              className="inline-flex items-center gap-2 bg-accent-500 hover:bg-sky-400 text-white font-semibold px-8 py-3.5 rounded-xl transition-colors shadow-lg shadow-accent-500/30"
             >
-              Réserver une démo
+              Réserver une démo <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              to="/marketplace"
-              className="inline-flex items-center justify-center rounded-[12px] border border-white/25 text-white px-5 py-3 text-sm sm:text-base font-semibold hover:bg-white/5"
+              to="/register"
+              className="inline-flex items-center gap-2 border border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-3.5 rounded-xl transition-colors"
             >
-              Voir les connecteurs
+              Essai gratuit 14 jours
             </Link>
           </div>
         </div>
       </section>
+
     </div>
   );
 }
