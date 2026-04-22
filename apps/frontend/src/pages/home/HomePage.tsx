@@ -1,504 +1,636 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { marketplaceApi } from '../../api/marketplace';
-import { resolveMarketplaceLogoUrl } from '../../lib/connector-logos';
-import { SoftwareLogoImg } from '../../components/marketplace/SoftwareLogoImg';
 import {
-  Zap,
   ArrowRight,
-  HeadphonesIcon,
-  Rocket,
-  FileCheck,
-  Database,
-  RefreshCw,
-  Upload,
-  Shield,
-  Layers,
   BarChart3,
-  Wrench,
-  ShoppingCart,
   Building2,
+  Check,
+  Cloud,
   FileText,
-  Package,
-  Box,
-  CheckCircle2,
-  TrendingUp,
-  Clock,
-  Globe,
+  Gauge,
+  Network,
+  Quote,
+  Settings2,
+  Shield,
+  ShoppingCart,
+  Sparkles,
+  Users,
+  ChevronDown,
 } from 'lucide-react';
-import { Button } from '../../components/ui';
-import { QuoteEstimatorSection } from '../../components/tarifs/QuoteEstimatorSection';
+import { clsx } from 'clsx';
 
-const VALUE_PROPS = [
-  { icon: HeadphonesIcon, title: 'Support dédié', description: 'Une équipe à vos côtés pour vos intégrations.' },
-  { icon: Rocket, title: 'Intégration rapide', description: 'Connectez vos systèmes en quelques jours.' },
+const BENEFITS = [
   {
-    icon: FileCheck,
-    title: 'Devis & simulateur',
-    description: 'Estimation en ligne et envoi automatique au pôle commercial.',
+    icon: Shield,
+    title: 'Fiabilité & sécurité',
+    text: 'Données hébergées en France, traçabilité complète et contrôle d’accès aligné sur vos exigences SI.',
+  },
+  {
+    icon: Settings2,
+    title: 'Automatisation avancée',
+    text: 'Réduisez les ressaisies : vos flux tournent en continu, avec relances et règles adaptées à votre activité.',
+  },
+  {
+    icon: Gauge,
+    title: 'Visibilité en temps réel',
+    text: 'Pilotez l’activité, détectez les écarts tôt et gagnez en sérénité opérationnelle sur tous vos canaux.',
+  },
+  {
+    icon: Network,
+    title: 'Ouverture & flexibilité',
+    text: 'Raccordez l’existant (ERP, e-commerce, partenaires) et faites évoluer vos intégrations sans rupture.',
   },
 ] as const;
 
-const CONNECTOR_BRICKS = [
-  { label: 'Connecteur ERP', href: '/marketplace', icon: Building2, desc: 'Flux bidirectionnels entre ERP et vos applications métier. Compatible Sage, CEGID, Dolibarr.' },
-  { label: 'Connecteur E-commerce', href: '/marketplace', icon: ShoppingCart, desc: 'Synchronisez Shopify, WooCommerce et PrestaShop avec votre ERP en temps réel.' },
-  { label: 'Connecteur CRM', href: '/marketplace', icon: BarChart3, desc: 'Tiers, devis et commandes synchronisés entre ERP et CRM (Salesforce, HubSpot).' },
-  { label: 'Connecteur GED', href: '/marketplace', icon: FileText, desc: 'Documents électroniques et factures PDF vers votre ERP automatiquement.' },
-  { label: 'Base Financière', href: '/marketplace', icon: Database, desc: 'Connectez ERP et bases financières pour un reporting centralisé.' },
-  { label: 'Logiciels métier', href: '/marketplace', icon: Wrench, desc: 'Intégrez tout logiciel spécifique à votre secteur avec votre ERP.' },
-  { label: 'Connecteur WMS', href: '/marketplace', icon: Package, desc: 'Stocks, entrées et sorties synchronisés entre WMS et ERP.' },
-  { label: 'Sur mesure', href: '/marketplace', icon: Box, desc: 'Fonctionnalité manquante ? Nos équipes développent votre connecteur.' },
+const USE_CASES = [
+  {
+    title: 'Intégration ERP',
+    items: [
+      'Synchronisez commandes, stocks, prix et clients entre vos systèmes',
+      'Réduisez les opérations manuelles côté finance et logistique',
+      'Fiabilisez le passage à l’échelle (nouveaux canaux, nouvelles agences)',
+    ],
+  },
+  {
+    title: 'EDI & partenaires',
+    items: [
+      'Échangez avec vos partenaires de façon structurée, supervisée, traçable',
+      'Déclenchez les traitements côté ERP dès réception, sans reprise à la main',
+      'Gagnez en clarté sur l’avancement de vos messages et exceptions',
+    ],
+  },
+  {
+    title: 'E-commerce',
+    items: [
+      'Alignez catalogue, stocks et commandes entre boutique et back-office',
+      'Accélérez les délais d’exécution en limitant les erreurs',
+      'Facilitez l’onboarding d’un nouveau canal de vente',
+    ],
+  },
+  {
+    title: 'CRM & données clients',
+    items: [
+      'Unifiez l’information client : historique, segments, suivi com',
+      'Évitez les incohérences entre commerciaux, service et comptabilité',
+      'Améliorez le pilotage par la qualité de données unifiée',
+    ],
+  },
 ] as const;
 
-const ETL_STEPS = [
-  { step: 1, title: 'Extraction', description: 'Récupérez les données depuis vos sources : API REST, fichiers plats (CSV, XML, EDIFACT), bases de données.', icon: Database },
-  { step: 2, title: 'Transformation', description: 'Nettoyez, mappez et normalisez vos données vers le format cible (JSON, XML, IDOC, ORDERS...).', icon: RefreshCw },
-  { step: 3, title: 'Chargement', description: 'Poussez les données transformées vers l\u2019application cible avec gestion des erreurs et relance automatique.', icon: Upload },
-] as const;
-
-const TRUST_BADGES = [
-  { text: '100 % configurable', icon: CheckCircle2 },
-  { text: 'Hébergement France', icon: Globe },
-  { text: 'Supervision temps réel', icon: TrendingUp },
-  { text: 'Déploiement rapide', icon: Clock },
+const FEATURED_CONNECTORS = [
+  { name: 'Sage', to: '/marketplace' },
+  { name: 'Cegid', to: '/marketplace' },
+  { name: 'Shopify', to: '/marketplace' },
+  { name: 'WooCommerce', to: '/marketplace' },
+  { name: 'Salesforce', to: '/marketplace' },
+  { name: 'HubSpot', to: '/marketplace' },
 ] as const;
 
 const STATS = [
-  { value: '50+', label: 'Connecteurs disponibles' },
-  { value: '<48h', label: 'Mise en production' },
-  { value: '99.9%', label: 'Disponibilité SLA' },
-  { value: '100%', label: 'Hébergé en France' },
+  { value: '+10M', label: 'Messages / jour' },
+  { value: '99,95 %', label: 'Disponibilité' },
+  { value: '50+', label: 'Connecteurs' },
+  { value: '< 2 min', label: 'Détection d’erreur' },
 ] as const;
 
-/** Visuel hero — animation CSS pure (pas d'image externe). */
+const TRUST_NAMES = [
+  { abbr: 'A', name: 'Industrie' },
+  { abbr: 'B', name: 'Distribution' },
+  { abbr: 'C', name: 'Agro' },
+  { abbr: 'D', name: 'Équipement' },
+  { abbr: 'E', name: 'Services' },
+] as const;
+
+const TESTIMONIALS = [
+  {
+    name: 'Claire Durand',
+    role: 'DSI — groupe industriel (500 pers.)',
+    quote:
+      'Nous avons gagné en visibilité sur les flux EDI : moins d’arbitrages à chaud, plus de maîtrise. La prise en main a été claire côté métier.',
+  },
+  {
+    name: 'Yannick Peltier',
+    role: 'Responsable intégration — PME e-commerce + retail',
+    quote:
+      'Le gros bénéfice, c’est d’en finir avec les ressaisies. Les équipes suivront enfin la même information à la même heure, sans "aller chercher" ailleurs.',
+  },
+  {
+    name: 'Hélène Morvan',
+    role: 'Directrice des opérations — ETI multi-sites',
+    quote:
+      'Nous voulions une approche rassurante, durable : une plateforme, des habitudes communes, et moins d’improvisation sur les intégrations sensibles.',
+  },
+] as const;
+
+const PRICING = [
+  {
+    name: 'Essentiel',
+    price: '490',
+    desc: 'Pour lancer l’intégration cœur de métier avec un accompagnement structuré.',
+    features: [
+      'Volume standard',
+      'Supervision de base',
+      'Support e-mail (heures ouvrées)',
+    ],
+    cta: 'Parler à un expert',
+    highlight: false,
+  },
+  {
+    name: 'Professionnel',
+    price: '1 490',
+    desc: 'Pour accélérer, fiabiliser et donner de la marge d’industrialisation sur plusieurs flux.',
+    features: [
+      'Volumes étendus',
+      'Règles d’automatisation avancées',
+      'Supervision & alertes renforcées',
+      'SLA de support',
+    ],
+    cta: 'En savoir plus',
+    highlight: true,
+  },
+  {
+    name: 'Entreprise',
+    price: null,
+    priceLabel: 'Sur devis',
+    desc: 'Pour les hauts volumes, les exigences fortes d’accompagnement et les architectures spécifiques.',
+    features: [
+      'Accompagnement dédié',
+      'Roadmap cadrée avec votre DSI / MOA',
+      'Gouvernance, sécurité et continuité adaptées',
+    ],
+    cta: 'Nous contacter',
+    highlight: false,
+  },
+] as const;
+
+const FAQ = [
+  {
+    q: 'Où sont hébergées les données et quelles sont les pratiques de sécurité ?',
+    a: 'L’hébergement s’inscrit dans une exigence de contrôle, traçabilité et séparation des contextes. Les échanges sont tracés, l’accès est borné, et l’accompagnement s’adapte à vos règles (réseau, gouvernance, procédures).',
+  },
+  {
+    q: 'En combien de temps peut-on être opérationnel ?',
+    a: 'Le délai dépend de votre périmètre (nombre de canaux, qualité de données, parties prenantes). Dès le démarrage, on fixe un plan de mise en service réaliste et on sépare les "quick wins" des chantiers d’enrichissement.',
+  },
+  {
+    q: 'Puis-je brancher "ce que j’ai déjà" (Sage, Cegid, Shopify, etc.) ?',
+    a: 'Oui : l’idée est de bâtir autour de votre réalité. Nous cadrons les connecteurs, les règles, puis nous faisons valider côté métier avant d’industrialiser.',
+  },
+  {
+    q: 'Le support s’adresse-t-il plutôt aux IT ou au métier ?',
+    a: 'Aux deux : l’IT garde le pilotage, le métier comprend ce qu’il supervise. Le vocabulaire reste orienté usage (fiabiliser, automatiser, superviser), pas jargon interne.',
+  },
+] as const;
+
 function HeroVisual() {
-  const nodes = [
-    { label: 'ERP', sublabel: 'Sage / CEGID', color: '#0ea5e9', x: 50, y: 50, icon: Building2 },
-    { label: 'E-commerce', sublabel: 'Shopify', color: '#8b5cf6', x: 82, y: 22, icon: ShoppingCart },
-    { label: 'CRM', sublabel: 'Salesforce', color: '#10b981', x: 82, y: 78, icon: BarChart3 },
-    { label: 'EDI', sublabel: 'EDIFACT / AS2', color: '#f59e0b', x: 18, y: 22, icon: FileText },
-    { label: 'WMS', sublabel: 'Stocks', color: '#ef4444', x: 18, y: 78, icon: Package },
+  const nodes: { label: string; sub: string; x: number; y: number; Icon: typeof Building2 }[] = [
+    { label: 'ERP', sub: 'Cœur de données', x: 20, y: 22, Icon: Building2 },
+    { label: 'EDI', sub: 'Partenaires', x: 20, y: 78, Icon: FileText },
+    { label: 'E-commerce', sub: 'Canal client', x: 82, y: 22, Icon: ShoppingCart },
+    { label: 'CRM', sub: 'Clients & com', x: 82, y: 78, Icon: BarChart3 },
   ];
-
-  const lines = [
-    { x1: 50, y1: 50, x2: 82, y2: 22 },
-    { x1: 50, y1: 50, x2: 82, y2: 78 },
-    { x1: 50, y1: 50, x2: 18, y2: 22 },
-    { x1: 50, y1: 50, x2: 18, y2: 78 },
-  ];
-
   return (
-    <div className="relative w-full max-w-lg mx-auto select-none" aria-hidden="true">
+    <div className="w-full max-w-lg mx-auto" aria-hidden>
       <div
-        className="relative rounded-3xl overflow-hidden border border-slate-200/60 shadow-2xl shadow-sky-500/10"
-        style={{
-          background: 'linear-gradient(145deg, #f8fafc 0%, #f0f9ff 50%, #ede9fe 100%)',
-          aspectRatio: '4/3',
-        }}
+        className="relative rounded-[16px] border border-[#E5E7EB] bg-surface [box-shadow:var(--shadow-md)]"
+        style={{ aspectRatio: '4/3' }}
       >
-        {/* Animated background grid */}
-        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
-              <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#0ea5e9" strokeWidth="0.5" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-
-        {/* SVG lines connecting nodes */}
-        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 75">
-          {lines.map((line, i) => (
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {nodes.map((n) => (
             <line
-              key={i}
-              x1={`${line.x1}%`} y1={`${line.y1}%`}
-              x2={`${line.x2}%`} y2={`${line.y2}%`}
-              stroke="#cbd5e1"
+              key={`${n.x}-${n.y}`}
+              x1="50"
+              y1="40"
+              x2={n.x}
+              y2={n.y * 0.75}
+              stroke="#E5E7EB"
               strokeWidth="0.4"
-              strokeDasharray="2 1.5"
             />
           ))}
-          {/* Animated pulse dots on lines */}
-          {lines.map((line, i) => (
-            <circle key={`pulse-${i}`} r="0.8" fill="#0ea5e9" opacity="0.7">
-              <animateMotion
-                dur={`${1.8 + i * 0.6}s`}
-                repeatCount="indefinite"
-                path={`M${line.x1},${line.y1 * 0.75} L${line.x2},${line.y2 * 0.75}`}
-              />
-            </circle>
-          ))}
         </svg>
-
-        {/* Nodes */}
-        {nodes.map((node, i) => {
-          const Icon = node.icon;
-          const isCenter = i === 0;
+        <div className="absolute left-1/2 top-[40%] -translate-x-1/2 -translate-y-1/2 w-20 h-20 sm:w-24 sm:h-24 rounded-[12px] bg-brand-800 flex items-center justify-center [box-shadow:var(--shadow-sm)]">
+          <Cloud className="w-9 h-9 sm:w-11 sm:h-11 text-white" strokeWidth={1.4} />
+        </div>
+        {nodes.map((n) => {
+          const Icon = n.Icon;
           return (
             <div
-              key={node.label}
-              className="absolute flex flex-col items-center gap-1"
+              key={n.label}
+              className="absolute flex flex-col items-center"
               style={{
-                left: `${node.x}%`,
-                top: `${node.y}%`,
+                left: `${n.x}%`,
+                top: `${n.y * 0.75}%`,
                 transform: 'translate(-50%, -50%)',
               }}
             >
-              <div
-                className={`flex items-center justify-center rounded-xl shadow-lg border-2 border-white/80 ${isCenter ? 'w-14 h-14' : 'w-11 h-11'}`}
-                style={{ background: `linear-gradient(135deg, ${node.color}20, ${node.color}40)`, borderColor: `${node.color}30` }}
-              >
-                {isCenter ? (
-                  <div className="relative">
-                    <div
-                      className="absolute inset-0 rounded-xl animate-ping opacity-30"
-                      style={{ background: node.color }}
-                    />
-                    <Zap className="w-7 h-7 relative" style={{ color: node.color }} />
-                  </div>
-                ) : (
-                  <Icon className="w-5 h-5" style={{ color: node.color }} />
-                )}
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[10px] border border-[#E5E7EB] bg-surface flex items-center justify-center [box-shadow:var(--shadow-sm)]">
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-brand-800" strokeWidth={1.4} />
               </div>
-              <span className="text-[9px] font-bold text-slate-700 text-center leading-tight whitespace-nowrap">{node.label}</span>
-              <span className="text-[7px] text-slate-400 text-center leading-tight whitespace-nowrap">{node.sublabel}</span>
+              <span className="mt-1.5 text-[9px] sm:text-[10px] font-semibold text-[#1F2937]">{n.label}</span>
+              <span className="text-[8px] text-text-soft hidden sm:block">{n.sub}</span>
             </div>
           );
         })}
-
-        {/* Badge overlay */}
-        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1.5 shadow-sm border border-slate-100">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-semibold text-slate-700">Flux actifs</span>
-          </div>
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1.5 shadow-sm border border-slate-100">
-            <span className="text-[10px] font-semibold text-sky-600">209 messages / 24h</span>
-          </div>
+        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 rounded-[10px] border border-[#E5E7EB] bg-surface/95 px-2.5 py-2 text-[10px] sm:text-xs text-text-soft">
+          <span className="inline-flex items-center gap-1.5 min-w-0">
+            <span className="h-2 w-2 rounded-full bg-success shrink-0" />
+            <span className="font-medium text-[#1F2937]">Supervision active</span>
+          </span>
+          <span className="shrink-0 text-brand-800 font-medium">Flux stables</span>
         </div>
       </div>
     </div>
   );
 }
 
-function HomeMarketplaceLogos() {
-  const { data: connectors, isLoading } = useQuery({
-    queryKey: ['marketplace', 'home-showcase'],
-    queryFn: () => marketplaceApi.getAll(),
-    staleTime: 60_000,
-  });
-
-  const sorted = connectors ? [...connectors].sort((a, b) => a.name.localeCompare(b.name, 'fr')) : [];
-
+function FaqItem({
+  open,
+  onToggle,
+  question,
+  answer,
+  id,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  question: string;
+  answer: string;
+  id: string;
+}) {
   return (
-    <section
-      className="py-12 sm:py-16 border-t border-slate-200/60 bg-slate-50/80"
-      aria-labelledby="ecosystem-heading"
-    >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p className="text-sky-600 text-sm font-semibold uppercase tracking-wider text-center">Écosystème</p>
-        <h2 id="ecosystem-heading" className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 text-center">
-          Connecteurs ERP, e-commerce, CRM et EDI
-        </h2>
-        <p className="mt-3 text-slate-600 text-center max-w-2xl mx-auto text-sm sm:text-base">
-          Sage, CEGID, Shopify, WooCommerce, Salesforce, QuickBooks et bien d'autres — tous disponibles dans le
-          marketplace Ultimate Edicloud.
-        </p>
-        {isLoading ? (
-          <p className="mt-8 text-center text-sm text-slate-500">Chargement des connecteurs...</p>
-        ) : (
-          <div className="mt-10 flex flex-wrap justify-center gap-3 sm:gap-4">
-            {sorted.map((c) => {
-              const src = resolveMarketplaceLogoUrl(c.id, c.icon, c.libraryLogoId);
-              return (
-                <Link
-                  key={c.id}
-                  to={`/marketplace/${c.id}`}
-                  className="group flex flex-col items-center gap-2 w-[4.5rem] sm:w-[5.25rem]"
-                  title={`Connecteur ${c.name} — Ultimate Edicloud`}
-                >
-                  <SoftwareLogoImg
-                    src={src}
-                    alt={`Logo ${c.name}`}
-                    size="lg"
-                    rounded="xl"
-                    className="group-hover:border-sky-300"
-                  />
-                  <span className="text-[10px] sm:text-xs text-center text-slate-500 line-clamp-2 leading-tight group-hover:text-sky-700 transition-colors">
-                    {c.name}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-        <p className="mt-8 text-center">
-          <Link to="/marketplace" className="text-sm font-semibold text-sky-700 hover:underline">
-            Voir tout le catalogue de connecteurs →
-          </Link>
-        </p>
-      </div>
-    </section>
+    <div className="border-b border-[#E5E7EB] last:border-b-0">
+      <h3>
+        <button
+          type="button"
+          id={id}
+          className="flex w-full items-center justify-between gap-3 py-4 text-left text-sm sm:text-base font-medium text-[#1F2937] hover:text-brand-900"
+          onClick={onToggle}
+          aria-expanded={open}
+          aria-controls={`${id}-panel`}
+        >
+          {question}
+          <ChevronDown
+            className={clsx('w-4 h-4 text-text-soft shrink-0 transition-transform', open && 'rotate-180')}
+            aria-hidden
+          />
+        </button>
+      </h3>
+      {open && (
+        <div id={`${id}-panel`} role="region" className="pb-4 pr-2 text-sm text-text-soft leading-relaxed">
+          {answer}
+        </div>
+      )}
+    </div>
   );
 }
 
 export function HomePage() {
-  return (
-    <div className="relative overflow-hidden">
-      {/* Background gradient */}
-      <div
-        className="pointer-events-none absolute inset-0 -z-10"
-        aria-hidden
-        style={{
-          background:
-            'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14, 165, 233, 0.15), transparent), radial-gradient(ellipse 60% 40% at 100% 0%, rgba(139, 92, 246, 0.10), transparent)',
-        }}
-      />
+  const [openFaq, setOpenFaq] = useState(0);
 
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="relative py-14 sm:py-20 lg:py-28" aria-labelledby="hero-heading">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+  return (
+    <div className="font-sans">
+      {/* Hero */}
+      <section className="pt-10 pb-12 sm:pt-14 sm:pb-20 lg:pt-16" aria-labelledby="hero-heading">
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
             <div>
-              <p className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-sky-700 shadow-sm">
-                <Zap className="w-3.5 h-3.5 text-sky-500" />
-                Ultimate · le connecteur iPaaS
+              <p className="text-xs sm:text-sm font-semibold tracking-[0.12em] uppercase text-accent-500">
+                Plateforme iPaaS & intégration métier
               </p>
               <h1
                 id="hero-heading"
-                className="mt-5 text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold tracking-tight leading-[1.1]"
+                className="mt-3 font-display text-3xl sm:text-4xl lg:text-[2.4rem] font-semibold text-brand-900 tracking-tight leading-tight"
               >
-                <span className="bg-gradient-to-r from-slate-900 via-sky-800 to-violet-700 bg-clip-text text-transparent">
-                  Connectez vos ERP,
-                </span>
-                <br />
-                <span className="text-slate-800">EDI et e-commerce.</span>
+                Connectez ERP, EDI et e-commerce sur une seule plateforme
               </h1>
-              <p className="mt-5 text-lg text-slate-600 max-w-xl leading-relaxed">
-                Ultimate Edicloud est la plateforme iPaaS française pour automatiser vos échanges de données. Connectez
-                Sage, CEGID, Shopify et vos flux EDI avec un marketplace de connecteurs prêts à l'emploi.
+              <p className="mt-4 text-base sm:text-lg text-text-soft max-w-xl leading-relaxed">
+                Automatisez vos échanges de données, supervisez vos flux en temps réel et réduisez vos opérations
+                manuelles.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link to="/marketplace">
-                  <Button size="lg" className="gap-2 shadow-lg shadow-sky-500/20">
-                    Explorer le marketplace
-                    <ArrowRight className="w-5 h-5" />
-                  </Button>
+                <Link
+                  to="/reserver-demo"
+                  className="inline-flex items-center justify-center rounded-[12px] bg-brand-900 px-5 py-3 text-sm sm:text-base font-semibold text-white [box-shadow:var(--shadow-sm)] hover:bg-brand-800"
+                >
+                  Réserver une démo
                 </Link>
-                <Link to="/tarifs#estimateur-devis">
-                  <Button variant="outline" size="lg">
-                    Tarifs & simulateur
-                  </Button>
-                </Link>
-                <Link to="/reserver-demo">
-                  <Button variant="ghost" size="lg" className="text-slate-600">
-                    Réserver une démo
-                  </Button>
+                <Link
+                  to="/marketplace"
+                  className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#B8E3F0] bg-surface px-5 py-3 text-sm sm:text-base font-semibold text-brand-900 hover:border-accent-500/60 [box-shadow:var(--shadow-sm)]"
+                >
+                  Voir les connecteurs
+                  <ArrowRight className="w-4 h-4" strokeWidth={2} />
                 </Link>
               </div>
-              <ul className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-slate-600">
-                {VALUE_PROPS.map(({ icon: Icon, title }) => (
-                  <li key={title} className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-sky-500" />
-                    <span>{title}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
             <HeroVisual />
           </div>
         </div>
       </section>
 
-      {/* ── Stats band ────────────────────────────────────────────────── */}
-      <section className="border-y border-slate-200/60 bg-white/60 backdrop-blur-sm py-8 sm:py-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-            {STATS.map(({ value, label }) => (
-              <div key={label}>
-                <dt className="text-3xl sm:text-4xl font-extrabold text-sky-600">{value}</dt>
-                <dd className="mt-1 text-sm text-slate-500">{label}</dd>
+      {/* Trust bar */}
+      <section className="py-8 sm:py-10 border-y border-[#E5E7EB] bg-surface" aria-labelledby="trust-line">
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p id="trust-line" className="text-sm sm:text-base font-medium text-[#1F2937]">
+            Plus de 250 entreprises nous font confiance
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-8">
+            {TRUST_NAMES.map((c) => (
+              <div
+                key={c.name}
+                className="h-9 sm:h-10 min-w-[5.5rem] px-3 flex items-center justify-center rounded-[10px] border border-[#E5E7EB] text-[10px] sm:text-xs font-semibold tracking-wide text-text-soft/90 uppercase bg-page-bg/60"
+                title={c.name}
+              >
+                {c.abbr}
+                <span className="ml-1.5 normal-case text-[9px] text-text-soft hidden sm:inline">· {c.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4 bénéfices */}
+      <section className="py-14 sm:py-20 bg-page-bg" aria-labelledby="benefits-heading">
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl">
+            <h2 id="benefits-heading" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900">
+              Bénéfices concrets, sans complexité
+            </h2>
+            <p className="mt-2 text-text-soft">Fiabiliser, automatiser, superviser, accélérer — le tout avec une exigence de clarté.</p>
+          </div>
+          <ul className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 list-none p-0 m-0">
+            {BENEFITS.map(({ icon: Icon, title, text }) => (
+              <li
+                key={title}
+                className="flex flex-col rounded-[12px] border border-[#E5E7EB] bg-surface p-6 [box-shadow:var(--shadow-sm)]"
+              >
+                <div className="w-10 h-10 rounded-[10px] border border-[#E5E7EB] flex items-center justify-center">
+                  <Icon className="w-5 h-5 text-brand-800" strokeWidth={1.4} />
+                </div>
+                <h3 className="mt-4 font-semibold text-[#1F2937]">{title}</h3>
+                <p className="mt-2 text-sm text-text-soft leading-relaxed">{text}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Cas d'usage */}
+      <section className="py-14 sm:py-20 bg-surface" aria-labelledby="usecases-heading">
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 id="usecases-heading" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900 text-center">
+            Cas d’usage
+          </h2>
+          <p className="mt-2 text-center text-text-soft max-w-2xl mx-auto">
+            Des intégrations business, racontées côté impact, pas côté jargon.
+          </p>
+          <div className="mt-10 grid sm:grid-cols-2 gap-4 sm:gap-5">
+            {USE_CASES.map((u) => (
+              <div
+                key={u.title}
+                className="flex flex-col rounded-[12px] border border-[#E5E7EB] p-6 sm:p-7 [box-shadow:var(--shadow-sm)]"
+              >
+                <h3 className="font-semibold text-lg text-[#1F2937]">{u.title}</h3>
+                <ul className="mt-4 space-y-2 text-sm text-text-soft">
+                  {u.items.map((it) => (
+                    <li key={it} className="flex gap-2">
+                      <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
+                      <span>{it}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to="/reserver-demo"
+                  className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-800 hover:underline w-fit"
+                >
+                  En savoir plus
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="py-10 sm:py-12 bg-brand-900 text-white" aria-label="Indicateurs de confiance">
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
+          <dl className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 text-center">
+            {STATS.map((s) => (
+              <div key={s.label}>
+                <dt className="text-2xl sm:text-3xl font-semibold text-accent-500 font-display tabular-nums">
+                  {s.value}
+                </dt>
+                <dd className="mt-1 text-sm text-white/75">{s.label}</dd>
               </div>
             ))}
           </dl>
         </div>
       </section>
 
-      <QuoteEstimatorSection layout="hero" />
-
-      <HomeMarketplaceLogos />
-
-      {/* ── Connecteurs ───────────────────────────────────────────────── */}
-      <section
-        className="py-16 sm:py-20 border-t border-slate-200/60 bg-white/40 backdrop-blur-sm"
-        aria-labelledby="connectors-heading"
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-sky-600 text-sm font-semibold uppercase tracking-wider text-center">Intégration SI</p>
-          <h2 id="connectors-heading" className="mt-2 text-3xl sm:text-4xl font-bold text-slate-900 text-center">
-            Connectez toutes vos applications métier
-          </h2>
-          <p className="mt-4 text-slate-600 text-center max-w-2xl mx-auto">
-            ERP, e-commerce, CRM, GED, WMS et logiciels métier — Ultimate Edicloud synchronise vos données en temps
-            réel pour éliminer les ressaisies et les erreurs.
-          </p>
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {CONNECTOR_BRICKS.map(({ label, href, icon: Icon, desc }) => (
-              <Link
-                key={label}
-                to={href}
-                className="group flex flex-col p-6 rounded-2xl bg-white/90 border border-slate-200/90 hover:border-sky-300/80 hover:shadow-lg transition-all duration-300"
-                title={`${label} — Intégration ERP avec Ultimate Edicloud`}
-              >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-100 to-violet-100 flex items-center justify-center text-sky-600 border border-sky-200/50">
-                  <Icon className="w-6 h-6" />
-                </div>
-                <h3 className="mt-4 font-semibold text-slate-900 group-hover:text-sky-700 transition-colors">
-                  {label}
-                </h3>
-                <p className="mt-1 text-sm text-slate-600 line-clamp-3 leading-relaxed">{desc}</p>
-                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-sky-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                  En savoir plus
-                  <ArrowRight className="w-4 h-4" />
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Pipeline ETL ──────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 border-t border-slate-200/60" aria-labelledby="etl-heading">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-sky-600 text-sm font-semibold uppercase tracking-wider text-center">Pipeline de données</p>
-          <h2 id="etl-heading" className="mt-2 text-3xl sm:text-4xl font-bold text-slate-900 text-center">
-            ETL sur mesure — Extraction, Transformation, Chargement
-          </h2>
-          <p className="mt-4 text-slate-600 text-center max-w-2xl mx-auto">
-            Des flux de données entièrement configurables pour vos intégrations ERP, EDI et e-commerce —
-            orchestrés et supervisés dans Ultimate Edicloud.
-          </p>
-          <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {ETL_STEPS.map(({ step, title, description, icon: Icon }) => (
-              <div
-                key={step}
-                className="relative flex flex-col items-center text-center p-8 rounded-2xl bg-slate-900 text-slate-100 border border-slate-700/80 shadow-xl"
-              >
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold border border-sky-500/40">
-                  ÉTAPE {step}
-                </span>
-                <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-sky-400 border border-slate-600 mt-2">
-                  <Icon className="w-7 h-7" />
-                </div>
-                <h3 className="mt-4 text-xl font-semibold">{title}</h3>
-                <p className="mt-2 text-sm text-slate-400 leading-relaxed">{description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Cloud + Sécurité ──────────────────────────────────────────── */}
-      <section
-        className="py-16 sm:py-20 border-t border-slate-200/60 bg-white/40 backdrop-blur-sm"
-        aria-labelledby="cloud-security-heading"
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 id="cloud-security-heading" className="sr-only">Cloud hébergé en France et sécurité des données</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="p-8 rounded-2xl bg-gradient-to-br from-white to-sky-50/60 border border-slate-200/90 shadow-sm">
-              <div className="flex items-center gap-3">
-                <Layers className="w-8 h-8 text-sky-600 shrink-0" />
-                <h3 className="text-xl font-semibold text-slate-900">SaaS hébergé en France</h3>
-              </div>
-              <p className="mt-3 text-slate-600 leading-relaxed">
-                Plateforme 100 % web, hébergée sur infrastructure française. Pas de déploiement lourd — vos équipes
-                accèdent au portail depuis leur navigateur, vos données restent souveraines.
+      {/* Supervision */}
+      <section className="py-14 sm:py-20 bg-page-bg" aria-labelledby="sup-heading">
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-10 items-start">
+            <div>
+              <h2 id="sup-heading" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900">
+                Supervision : une vision fiable, au bon moment
+              </h2>
+              <p className="mt-3 text-text-soft max-w-prose">
+                Moins de "je ne savais pas" : suivez l’état de vos intégrations, priorisez les correctifs, et gagnez du
+                temps côté équipe terrain comme côté direction.
               </p>
-              <ul className="mt-5 space-y-2 text-sm text-slate-500">
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />Full web, sans installation</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />Hébergement sécurisé — datacenter France</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />API REST documentée Swagger</li>
+              <ul className="mt-6 space-y-3 text-sm sm:text-base text-[#1F2937]">
+                <li className="flex gap-2">
+                  <Sparkles className="w-4 h-4 text-accent-500 shrink-0 mt-1" />
+                  Tableaux conçus pour décider, pas seulement pour "voir des logs"
+                </li>
+                <li className="flex gap-2">
+                  <BarChart3 className="w-4 h-4 text-accent-500 shrink-0 mt-1" />
+                  Indicateurs de fluidité, délais, volumes — sans surcharge visuelle
+                </li>
+                <li className="flex gap-2">
+                  <Users className="w-4 h-4 text-accent-500 shrink-0 mt-1" />
+                  Un partage d’info plus simple entre IT, finance et opérations
+                </li>
               </ul>
             </div>
-            <div className="p-8 rounded-2xl bg-gradient-to-br from-white to-violet-50/60 border border-slate-200/90 shadow-sm">
-              <div className="flex items-center gap-3">
-                <Shield className="w-8 h-8 text-violet-600 shrink-0" />
-                <h3 className="text-xl font-semibold text-slate-900">Sécurité & traçabilité</h3>
+            <div className="rounded-[12px] border border-[#E5E7EB] bg-surface p-6 sm:p-8 [box-shadow:var(--shadow-sm)]">
+              <p className="text-sm font-medium text-text-soft">Exemple d’intention d’écran (schéma)</p>
+              <div className="mt-4 space-y-3">
+                {['Derniers messages', 'Erreurs à traiter', 'Débit sur 24 h', 'Dépendances clés'].map((row, i) => (
+                  <div
+                    key={row}
+                    className="flex items-center justify-between rounded-[10px] border border-[#E5E7EB] bg-page-bg/70 px-3 py-2.5 text-sm"
+                  >
+                    <span className="text-[#1F2937]">{row}</span>
+                    <span className="text-text-soft">OK{ i === 1 ? ' (2)' : ''}</span>
+                  </div>
+                ))}
               </div>
-              <p className="mt-3 text-slate-600 leading-relaxed">
-                Isolation multi-tenant par base de données dédiée, chiffrement des tokens en transit, audit log complet
-                et supervision des flux EDI en temps réel.
-              </p>
-              <ul className="mt-5 space-y-2 text-sm text-slate-500">
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500 shrink-0" />Base de données isolée par client</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500 shrink-0" />Tokens chiffrés (AES-256)</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500 shrink-0" />Journal d'audit horodaté</li>
-              </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Trust & CTA ───────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 border-t border-slate-200/60" aria-labelledby="trust-heading">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-sky-600 text-sm font-semibold uppercase tracking-wider">Confiance</p>
-          <h2 id="trust-heading" className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900">
-            Pensé pour les équipes IT et les intégrateurs ERP
+      {/* Connecteurs vedettes */}
+      <section className="py-14 sm:py-20 bg-surface" aria-labelledby="connectors-heading">
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 id="connectors-heading" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900">
+            Des connecteurs prêts à l’emploi
           </h2>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
-            {TRUST_BADGES.map(({ text, icon: Icon }) => (
-              <span
-                key={text}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 text-sm font-medium shadow-sm"
-              >
-                <Icon className="w-4 h-4 text-sky-500" />
-                {text}
-              </span>
-            ))}
-          </div>
-          <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Link to="/avis" className="text-sm font-medium text-sky-700 hover:underline">
-              Lire les avis clients
-            </Link>
-            <span className="text-slate-300">·</span>
-            <Link to="/signup-trial" className="text-sm font-medium text-sky-700 hover:underline">
-              Créer un compte gratuit
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA final ─────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 border-t border-slate-200/60 bg-gradient-to-br from-slate-900 via-slate-900 to-sky-950 text-white">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold">
-            Prêt à automatiser vos intégrations ?
-          </h2>
-          <p className="mt-4 text-slate-300 text-lg leading-relaxed">
-            Découvrez le catalogue Ultimate Edicloud et lancez vos premières intégrations ERP, EDI et e-commerce en
-            quelques jours.
+          <p className="mt-2 text-text-soft max-w-2xl mx-auto">
+            Raccordez d’abord l’utile : ERP, e-commerce, CRM, solutions métier. Puis industrialisez.
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <ul className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 list-none p-0 m-0">
+            {FEATURED_CONNECTORS.map((c) => (
+              <li key={c.name}>
+                <Link
+                  to={c.to}
+                  className="flex h-20 items-center justify-center rounded-[12px] border border-[#E5E7EB] text-sm font-semibold text-[#1F2937] hover:border-brand-800/30 hover:[box-shadow:var(--shadow-sm)] transition-shadow"
+                >
+                  {c.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-8">
             <Link
               to="/marketplace"
-              className="inline-flex items-center justify-center font-semibold rounded-xl px-6 py-3 text-base bg-sky-500 text-white hover:bg-sky-400 shadow-lg transition-all"
+              className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#B8E3F0] bg-surface px-5 py-2.5 text-sm font-semibold text-brand-900"
             >
-              Explorer le marketplace
-              <ArrowRight className="w-5 h-5 ml-2" />
+              Voir les connecteurs
+              <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link
-              to="/signup-trial"
-              className="inline-flex items-center justify-center font-semibold rounded-xl px-6 py-3 text-base bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-all"
-            >
-              Essai gratuit
-            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Témoignages */}
+      <section className="py-14 sm:py-20 border-t border-[#E5E7EB] bg-page-bg" aria-labelledby="t-testimonials">
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 id="t-testimonials" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900 text-center">
+            Ils accélèrent, sans s’y perdre
+          </h2>
+          <p className="mt-2 text-center text-text-soft">Des contextes PME, ETI et groupes, avec le même fil conducteur : la clarté.</p>
+          <ul className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 list-none p-0 m-0">
+            {TESTIMONIALS.map((t) => (
+              <li
+                key={t.name}
+                className="relative flex flex-col rounded-[12px] border border-[#E5E7EB] bg-surface p-6 [box-shadow:var(--shadow-sm)]"
+              >
+                <Quote className="w-6 h-6 text-brand-800/25" aria-hidden />
+                <p className="mt-3 text-sm sm:text-base text-[#1F2937] leading-relaxed">« {t.quote} »</p>
+                <p className="mt-4 text-sm font-semibold text-[#1F2937]">{t.name}</p>
+                <p className="text-sm text-text-soft">{t.role}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Tarifs */}
+      <section className="py-14 sm:py-20 bg-surface" id="tarifs" aria-labelledby="pricing-heading">
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 id="pricing-heading" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900 text-center">
+            Tarification simple, lisible, pilotable
+          </h2>
+          <p className="mt-2 text-center text-text-soft">Une offre centrale, souvent retenue pour cadrer un passage à l’échelle proprement.</p>
+          <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {PRICING.map((p) => (
+              <div
+                key={p.name}
+                className={clsx(
+                  'relative flex flex-col rounded-[12px] border p-6 sm:p-7 [box-shadow:var(--shadow-sm)]',
+                  p.highlight ? 'border-brand-800 bg-page-bg' : 'border-[#E5E7EB] bg-surface',
+                )}
+              >
+                {p.highlight && (
+                  <p className="absolute -top-2.5 left-3 inline-flex items-center rounded-full border border-[#E5E7EB] bg-surface px-2 py-0.5 text-xs font-semibold text-brand-900 [box-shadow:var(--shadow-sm)]">
+                    Le plus choisi
+                  </p>
+                )}
+                <h3 className="text-base font-semibold text-[#1F2937]">{p.name}</h3>
+                <p className="mt-1 text-3xl font-display font-semibold text-brand-900">
+                  {p.price != null && (
+                    <>
+                      {p.price} €<span className="text-sm font-sans font-medium text-text-soft"> / mois</span>
+                    </>
+                  )}
+                  {p.price == null && <span className="text-2xl">{p.priceLabel}</span>}
+                </p>
+                <p className="mt-2 text-sm text-text-soft min-h-12">{p.desc}</p>
+                <ul className="mt-4 space-y-2 text-sm text-[#1F2937] flex-1">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex gap-2">
+                      <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                {p.name === 'Entreprise' ? (
+                  <Link
+                    to="/reserver-demo"
+                    className="mt-6 inline-flex justify-center items-center rounded-[12px] bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white w-full"
+                  >
+                    {p.cta}
+                  </Link>
+                ) : (
+                  <Link
+                    to="/tarifs"
+                    className="mt-6 inline-flex justify-center items-center rounded-[12px] border border-[#E5E7EB] bg-surface px-4 py-2.5 text-sm font-semibold text-brand-900 w-full hover:border-brand-800/30"
+                  >
+                    {p.cta}
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-14 sm:py-20 border-t border-[#E5E7EB] bg-page-bg" aria-labelledby="faq-heading">
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 id="faq-heading" className="font-display text-2xl sm:text-3xl font-semibold text-brand-900 text-center">
+            Questions fréquentes
+          </h2>
+          <div className="mt-8 max-w-3xl mx-auto rounded-[12px] border border-[#E5E7EB] bg-surface px-4 sm:px-6 [box-shadow:var(--shadow-sm)]">
+            {FAQ.map((f, i) => (
+              <FaqItem
+                key={f.q}
+                id={`faq-${i}`}
+                question={f.q}
+                answer={f.a}
+                open={openFaq === i}
+                onToggle={() => setOpenFaq((x) => (x === i ? -1 : i))}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA final */}
+      <section className="py-12 sm:py-16 bg-brand-900" aria-labelledby="final-cta">
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 id="final-cta" className="font-display text-2xl sm:text-3xl font-semibold text-white">
+            Prêt à accélérer vos flux métiers ?
+          </h2>
+          <p className="mt-2 text-sm sm:text-base text-white/75 max-w-2xl mx-auto">
+            Échangez avec nous sur votre contexte, vos canaux, vos délais. Nous cadrerons un plan réaliste et
+            pédagogique, sans en faire trop.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/reserver-demo"
-              className="inline-flex items-center justify-center font-semibold rounded-xl px-6 py-3 text-base border border-slate-500 text-slate-300 hover:bg-white/10 transition-all"
+              className="inline-flex items-center justify-center rounded-[12px] bg-accent-500 text-brand-900 px-5 py-3 text-sm sm:text-base font-semibold [box-shadow:var(--shadow-sm)] hover:brightness-95"
             >
               Réserver une démo
+            </Link>
+            <Link
+              to="/marketplace"
+              className="inline-flex items-center justify-center rounded-[12px] border border-white/25 text-white px-5 py-3 text-sm sm:text-base font-semibold hover:bg-white/5"
+            >
+              Voir les connecteurs
             </Link>
           </div>
         </div>

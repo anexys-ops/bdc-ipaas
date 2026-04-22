@@ -144,8 +144,8 @@ describe("Liens — page d'accueil", () => {
         </MemoryRouter>
       </TestWrapper>,
     );
-    const marketplaceLinks = screen.getAllByRole('link', { name: /marketplace/i });
-    expect(marketplaceLinks.some((l) => l.getAttribute('href') === '/marketplace')).toBe(true);
+    const toMarketplace = screen.getAllByRole('link').filter((l) => l.getAttribute('href') === '/marketplace');
+    expect(toMarketplace.length).toBeGreaterThan(0);
     const loginLinks = screen.getAllByRole('link', { name: /connexion/i });
     const loginLink = loginLinks.find((l) => l.getAttribute('href') === '/login');
     expect(loginLink).toBeDefined();

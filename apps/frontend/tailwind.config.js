@@ -6,7 +6,27 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        display: ['Fraunces', 'Georgia', 'ui-serif', 'serif'],
+        sans: ['Inter', 'system-ui', 'ui-sans-serif', 'sans-serif'],
+      },
+      maxWidth: {
+        container: '1200px',
+      },
       colors: {
+        brand: {
+          900: '#0B1D3A',
+          800: '#133A6B',
+          700: '#0052CC',
+        },
+        accent: {
+          500: '#00B5E2',
+        },
+        success: '#2DBE60',
+        surface: '#FFFFFF',
+        'page-bg': '#F4F6F8',
+        'border-ui': '#E5E7EB',
+        'text-soft': '#64748B',
         primary: {
           50: '#f0f9ff',
           100: '#e0f2fe',
