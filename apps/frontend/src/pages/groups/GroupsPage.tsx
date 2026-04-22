@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '../../components/ui';
 import { groupsApi } from '../../api/groups.api';
-import type { Group, CreateGroupDto } from '../../api/groups.api';
-import { Users, Loader2, Plus, Shield, Trash2 } from 'lucide-react';
+import type { Group, CreateGroupDto, UpdateGroupDto } from '../../api/groups.api';
+import { Users, Loader2, Plus, Shield, Trash2, Pencil, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function GroupsPage() {
@@ -28,6 +28,17 @@ export function GroupsPage() {
     },
     onError: (err: Error) => {
       toast.error(err.message || 'Erreur lors de la création');
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateGroupDto }) => groupsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+      toast.success('Groupe mis à jour');
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Erreur lors de la mise à jour');
     },
   });
 
@@ -128,6 +139,8 @@ export function GroupsPage() {
             <GroupCard
               key={group.id}
               group={group}
+              onUpdate={(data) => updateMutation.mutateAsync({ id: group.id, data })}
+              isUpdating={updateMutation.isPending}
               onDelete={() => deleteMutation.mutate(group.id)}
               isDeleting={deleteMutation.isPending}
             />
@@ -140,13 +153,92 @@ export function GroupsPage() {
 
 function GroupCard({
   group,
+  onUpdate,
+  isUpdating,
   onDelete,
   isDeleting,
 }: {
   group: Group;
+  onUpdate: (data: UpdateGroupDto) => Promise<unknown>;
+  isUpdating: boolean;
   onDelete: () => void;
   isDeleting: boolean;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(group.name);
+  const [description, setDescription] = useState(group.description ?? '');
+
+  if (editing) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-slate-800 text-sm">Modifier le groupe</CardTitle>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="shrink-0"
+              onClick={() => {
+                setEditing(false);
+                setName(group.name);
+                setDescription(group.description ?? '');
+              }}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Input
+            label="Nom"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <Input
+            label="Description (optionnel)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              loading={isUpdating}
+              disabled={isUpdating || !name.trim()}
+              onClick={async () => {
+                try {
+                  await onUpdate({
+                    name: name.trim(),
+                    description: description.trim() || undefined,
+                  });
+                  setEditing(false);
+                } catch {
+                  /* toast géré par la mutation / client API */
+                }
+              }}
+            >
+              Enregistrer
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEditing(false);
+                setName(group.name);
+                setDescription(group.description ?? '');
+              }}
+            >
+              Annuler
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -155,16 +247,32 @@ function GroupCard({
             <Shield className="w-5 h-5 text-primary-500 shrink-0" />
             <CardTitle className="text-slate-800 truncate">{group.name}</CardTitle>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-slate-400 hover:text-red-600 shrink-0"
-            onClick={onDelete}
-            disabled={isDeleting}
-            title="Supprimer le groupe"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-0.5 shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-400 hover:text-primary-600"
+              onClick={() => {
+                setName(group.name);
+                setDescription(group.description ?? '');
+                setEditing(true);
+              }}
+              disabled={isUpdating || isDeleting}
+              title="Modifier"
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-400 hover:text-red-600"
+              onClick={onDelete}
+              disabled={isDeleting}
+              title="Supprimer le groupe"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
         {group.description && (
           <p className="text-sm text-slate-500 mt-1">{group.description}</p>
