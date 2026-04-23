@@ -234,15 +234,16 @@ export class AuthService {
     };
   }
 
-  private async verifyKeycloakAccessToken(token: string, issuer: string): Promise<string> {
-    const wellKnownUrl = `${issuer}/.well-known/openid-configuration`;
-    let discovery: { jwks_uri?: string };
+  private async verifyKeycloakAccessToken(token: string, configuredIssuer: string): Promise<string> {
+    const issuerBase = configuredIssuer.replace(/\/$/, '');
+    const wellKnownUrl = `${issuerBase}/.well-known/openid-configuration`;
+    let discovery: { jwks_uri?: string; issuer?: string };
     try {
       const res = await fetch(wellKnownUrl);
       if (!res.ok) {
         throw new UnauthorizedException('Impossible de joindre la configuration OpenID de Keycloak');
       }
-      discovery = (await res.json()) as { jwks_uri?: string };
+      discovery = (await res.json()) as { jwks_uri?: string; issuer?: string };
     } catch (e) {
       this.logger.warn(`Keycloak discovery failed: ${String((e as Error)?.message ?? e)}`);
       throw new UnauthorizedException('Configuration Keycloak inaccessible');
@@ -252,18 +253,37 @@ export class AuthService {
       throw new UnauthorizedException('Réponse Keycloak invalide (jwks_uri manquant)');
     }
 
+    /**
+     * L’ISS du token doit coller exactement à l’`issuer` renvoyé par la discovery
+     * (souvent différent d’une config manuelle tronquée / alias d’hôte).
+     */
+    const verifyIssuer = (discovery.issuer ?? issuerBase).replace(/\/$/, '');
+
     const JWKS = jose.createRemoteJWKSet(new URL(discovery.jwks_uri));
     const clientId = this.configService.get<string>('KEYCLOAK_CLIENT_ID')?.trim();
 
     let payload: jose.JWTPayload;
-    try {
-      const { payload: p } = await jose.jwtVerify(token, JWKS, {
-        issuer,
+    const verifyWithIssuer = (iss: string) =>
+      jose.jwtVerify(token, JWKS, {
+        issuer: iss,
+        /** Décalage horloge Keycloak / conteneur */
+        clockTolerance: 30,
       });
+    try {
+      const { payload: p } = await verifyWithIssuer(verifyIssuer);
       payload = p;
-    } catch (e) {
-      this.logger.warn(`Keycloak JWT verify failed: ${String((e as Error)?.message ?? e)}`);
-      throw new UnauthorizedException('Jeton Keycloak invalide ou expiré');
+    } catch (e1) {
+      if (verifyIssuer === issuerBase) {
+        this.logger.warn(`Keycloak JWT verify failed: ${String((e1 as Error)?.message ?? e1)}`);
+        throw new UnauthorizedException('Jeton Keycloak invalide ou expiré');
+      }
+      try {
+        const { payload: p2 } = await verifyWithIssuer(issuerBase);
+        payload = p2;
+      } catch (e2) {
+        this.logger.warn(`Keycloak JWT verify failed: ${String((e2 as Error)?.message ?? e2)}`);
+        throw new UnauthorizedException('Jeton Keycloak invalide ou expiré');
+      }
     }
 
     if (clientId) {
@@ -276,17 +296,21 @@ export class AuthService {
       }
     }
 
+    const withAt = (s: string) => s.includes('@');
     const emailRaw =
       typeof payload.email === 'string'
         ? payload.email
-        : typeof payload.preferred_username === 'string'
+        : typeof payload.preferred_username === 'string' && withAt(payload.preferred_username)
           ? payload.preferred_username
-          : null;
+          : typeof (payload as { upn?: unknown }).upn === 'string' &&
+              withAt((payload as { upn: string }).upn)
+            ? (payload as { upn: string }).upn
+            : null;
 
     const emailNormalized = emailRaw?.trim().toLowerCase();
-    if (!emailNormalized || !emailNormalized.includes('@')) {
+    if (!emailNormalized || !withAt(emailNormalized)) {
       throw new UnauthorizedException(
-        'Le jeton Keycloak ne contient pas d\'email (claim email ou preferred_username)',
+        'Le jeton Keycloak ne contient pas d\'email (email, preferred_username si format mail, ou upn)',
       );
     }
 

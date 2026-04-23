@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Response, Request } from 'express';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -49,6 +50,10 @@ describe('AuthController', () => {
     createUser: jest.fn(),
   };
 
+  const mockConfigService = {
+    get: jest.fn().mockReturnValue(undefined),
+  };
+
   const mockResponse = {
     cookie: jest.fn(),
     clearCookie: jest.fn(),
@@ -71,6 +76,7 @@ describe('AuthController', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: AuditService, useValue: mockAuditService },
         { provide: TenantsService, useValue: mockTenantsService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 

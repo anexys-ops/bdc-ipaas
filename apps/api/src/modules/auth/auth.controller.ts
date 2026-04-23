@@ -16,6 +16,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { TenantsService } from '../tenants/tenants.service';
@@ -37,6 +38,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly tenantsService: TenantsService,
     private readonly auditService: AuditService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Post('signup-trial')
@@ -198,11 +200,30 @@ export class AuthController {
   /**
    * Définit le refresh token dans un cookie httpOnly sécurisé.
    */
+  private getRefreshTokenSameSite(): 'strict' | 'lax' | 'none' {
+    const raw = this.configService.get<string>('REFRESH_TOKEN_SAMESITE')?.trim().toLowerCase();
+    if (raw === 'strict' || raw === 'lax' || raw === 'none') {
+      return raw;
+    }
+    /**
+     * Lax (défaut) : le refresh part du front (souvent autre sous-domaine que l’API) ;
+     * en Strict, le cookie n’était pas toujours envoyé sur le POST /auth/keycloak ou /auth/refresh.
+     */
+    return 'lax';
+  }
+
+  private isRefreshTokenSecure(): boolean {
+    if (this.getRefreshTokenSameSite() === 'none') {
+      return true;
+    }
+    return process.env.NODE_ENV === 'production';
+  }
+
   private setRefreshTokenCookie(response: Response, token: string): void {
     response.cookie(this.REFRESH_TOKEN_COOKIE, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: this.isRefreshTokenSecure(),
+      sameSite: this.getRefreshTokenSameSite(),
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/api/v1/auth',
     });
@@ -214,6 +235,8 @@ export class AuthController {
   private clearRefreshTokenCookie(response: Response): void {
     response.clearCookie(this.REFRESH_TOKEN_COOKIE, {
       path: '/api/v1/auth',
+      sameSite: this.getRefreshTokenSameSite(),
+      secure: this.isRefreshTokenSecure(),
     });
   }
 

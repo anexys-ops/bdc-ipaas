@@ -1,8 +1,20 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AppLoggerService } from './common/logger';
+
+function readApiVersion(): string {
+  try {
+    const pkgPath = join(process.cwd(), 'package.json');
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { version?: string };
+    return pkg.version?.trim() || '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -26,10 +38,11 @@ async function bootstrap(): Promise<void> {
     credentials: true,
   });
 
+  const apiVersion = readApiVersion();
   const config = new DocumentBuilder()
     .setTitle('ANEXYS iPaaS API')
     .setDescription('API de la plateforme iPaaS multi-tenant ANEXYS')
-    .setVersion('1.0')
+    .setVersion(apiVersion)
     .addBearerAuth()
     .build();
 
@@ -40,7 +53,10 @@ async function bootstrap(): Promise<void> {
   await app.listen(port);
 
   const logger = app.get(AppLoggerService);
-  logger.log(`Application ANEXYS iPaaS démarrée sur le port ${port}`, 'Bootstrap');
+  logger.log(
+    `Application ANEXYS iPaaS v${apiVersion} démarrée sur le port ${port}`,
+    'Bootstrap',
+  );
   logger.log(`Documentation Swagger disponible sur /api/docs`, 'Bootstrap');
 }
 
