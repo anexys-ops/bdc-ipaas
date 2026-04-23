@@ -12,33 +12,49 @@ const MESSAGE_TYPES: { value: EdifactMessageType; label: string }[] = [
   { value: 'ORDERS', label: 'ORDERS' },
   { value: 'INVOIC', label: 'INVOIC' },
   { value: 'DESADV', label: 'DESADV' },
-  { value: 'ORDRSP', label: 'ORDRSP' },
 ];
+
+const DEFAULT_ORDERS_JSON = `{
+  "orderNumber": "PO001",
+  "orderDate": "20240305",
+  "buyerCode": "BUYER",
+  "sellerCode": "SELLER",
+  "lines": [
+    { "lineNumber": "1", "productCode": "SKU1", "quantity": 10, "unit": "PCE", "unitPrice": 5.5 }
+  ]
+}`;
 
 export function EdifactSendPage() {
   const navigate = useNavigate();
   const [type, setType] = useState<EdifactMessageType>('ORDERS');
   const [reference, setReference] = useState('');
-  const [partnerId, setPartnerId] = useState('');
-  const [payloadJson, setPayloadJson] = useState('{}');
+  const [sender, setSender] = useState('SENDER_GLN');
+  const [receiver, setReceiver] = useState('RECEIVER_GLN');
+  const [payloadJson, setPayloadJson] = useState(DEFAULT_ORDERS_JSON);
 
   const sendMutation = useMutation({
     mutationFn: () => {
-      let payload: Record<string, unknown>;
+      let data: Record<string, unknown>;
       try {
-        payload = JSON.parse(payloadJson || '{}');
+        data = JSON.parse(payloadJson || '{}');
       } catch {
         throw new Error('JSON invalide');
       }
-      return edifactApi.send({
+      if (!sender.trim() || !receiver.trim()) {
+        throw new Error('Expéditeur et destinataire (UNB) sont requis');
+      }
+      if (reference.trim() && type === 'ORDERS' && data && typeof data === 'object') {
+        (data as { orderNumber?: string }).orderNumber = reference.trim();
+      }
+      return edifactApi.generate({
         type,
-        payload,
-        reference: reference || undefined,
-        partnerId: partnerId || undefined,
+        sender: sender.trim(),
+        receiver: receiver.trim(),
+        data,
       });
     },
     onSuccess: () => {
-      toast.success('Message EDIFACT envoyé');
+      toast.success('Message EDIFACT généré et enregistré (OUTBOUND)');
       navigate('/edifact');
     },
     onError: (err: Error) => {
@@ -71,7 +87,7 @@ export function EdifactSendPage() {
           <CardHeader>
             <CardTitle className="text-slate-800">Nouveau message</CardTitle>
             <p className="text-sm text-slate-500 mt-1">
-              Renseignez le type et le contenu (JSON) du message.
+              Appelle <code className="text-xs bg-slate-100 px-1 rounded">POST /api/v1/edifact/generate</code> : en-tête UNB + données métier en JSON.
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -92,18 +108,28 @@ export function EdifactSendPage() {
                 </select>
               </div>
               <Input
-                label="Référence"
+                label="Réf. commande / doc. (ORDERS)"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
-                placeholder="Ex: REF-2024-001"
+                placeholder="Ex: PO-2024-001 (remplace orderNumber si rempli)"
               />
             </div>
-            <Input
-              label="ID partenaire (optionnel)"
-              value={partnerId}
-              onChange={(e) => setPartnerId(e.target.value)}
-              placeholder="Identifiant partenaire"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Expéditeur (UNB — sender)"
+                value={sender}
+                onChange={(e) => setSender(e.target.value)}
+                placeholder="Ex: GLN / code"
+                required
+              />
+              <Input
+                label="Destinataire (UNB — receiver)"
+                value={receiver}
+                onChange={(e) => setReceiver(e.target.value)}
+                placeholder="Ex: GLN / code"
+                required
+              />
+            </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Payload (JSON)

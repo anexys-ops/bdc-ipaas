@@ -167,13 +167,23 @@ model AgentToken {
 
 model EdifactMessage {
   id           String    @id @default(uuid())
-  type         String // ORDERS, INVOIC, DESADV, etc.
+  type         String // ORDERS, INVOIC, DESADV, etc. (type UNH)
   direction    String // INBOUND / OUTBOUND
   sender       String
   receiver     String
   rawContent   String
   parsedData   Json?
   reference    String?
+  /// Code document BGM (ex. 220, 380, 351) — suivi & filtrage
+  bgmCode      String?
+  /// Date du document (DTM 137, etc.) extraite du message
+  documentDate DateTime?
+  /// Montant principal (MOA 86, 77…)
+  totalAmount  Decimal?  @db.Decimal(18, 2)
+  currency     String?   @db.VarChar(8)
+  /// Facturé côté plateforme (périmètre support / billing)
+  billed       Boolean   @default(false)
+  billedAt     DateTime?
   receivedAt   DateTime  @default(now())
   processedAt  DateTime?
   status       String    @default("RECEIVED") // RECEIVED, PROCESSED, ERROR

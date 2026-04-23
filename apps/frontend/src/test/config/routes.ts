@@ -24,6 +24,7 @@ export const PRIVATE_ROUTES = [
   { path: '/connectors', name: 'Connecteurs' },
   { path: '/connectors/new', name: 'Nouveau connecteur' },
   { path: '/edifact', name: 'EDIFACT' },
+  { path: '/edifact/messages/:id', name: 'Détail EDIFACT' },
   { path: '/edifact/send', name: 'Envoi EDIFACT' },
   { path: '/monitoring', name: 'Monitoring' },
   { path: '/hub/pipeline', name: 'Hub pipeline' },

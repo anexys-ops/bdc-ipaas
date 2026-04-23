@@ -10,15 +10,32 @@ const mockTenant = {
   dbConnectionHash: 'hash',
 };
 
+const mockEdifactMessageRaw =
+  "UNA:+.? '\n" +
+  "UNB+UNOC:3+SENDER01:14+RECEIVER01:14+240305:1200+1'\n" +
+  "UNH+1+ORDERS:D:96A:UN'\n" +
+  "BGM+220+PO123+9'\n" +
+  "DTM+137:20240305:102'\n" +
+  "NAD+BY+BUYER::9'\n" +
+  "NAD+SU+SELLER::9'\n" +
+  "UNT+7+1'\n" +
+  "UNZ+1+1'";
+
 const mockEdifactMessage = {
   id: 'msg-uuid',
   type: 'ORDERS',
   direction: 'INBOUND',
   sender: 'SENDER01',
   receiver: 'RECEIVER01',
-  rawContent: "UNB+UNOC:3+SENDER01:14+RECEIVER01:14+240305:1200+1'\nUNH+1+ORDERS:D:96A:UN'",
+  rawContent: mockEdifactMessageRaw,
   parsedData: { type: 'ORDERS', reference: '1', segments: [] },
-  reference: '1',
+  reference: 'PO123',
+  bgmCode: '220',
+  documentDate: new Date('2024-03-05T00:00:00.000Z'),
+  totalAmount: null,
+  currency: null,
+  billed: false,
+  billedAt: null,
   receivedAt: new Date(),
   processedAt: null,
   status: 'RECEIVED',
@@ -36,6 +53,10 @@ describe('EdifactService', () => {
         findMany: jest.fn().mockResolvedValue([mockEdifactMessage]),
         findFirst: jest.fn().mockResolvedValue(mockEdifactMessage),
         count: jest.fn().mockResolvedValue(1),
+        update: jest.fn().mockImplementation((args: { data: { billed?: boolean } }) => ({
+          ...mockEdifactMessage,
+          ...args.data,
+        })),
       },
     }),
   };

@@ -1,6 +1,7 @@
 import { EdifactParser, parseEdifact } from './parser';
 import { EdifactGenerator, createEdifactGenerator } from './generator';
 import { EdifactValidator, validateEdifact } from './validator';
+import { enrichEdifactContent, BGM_DOCUMENT_NAME_LABELS } from './enrichment';
 
 describe('EdifactParser', () => {
   const sampleOrder = `UNA:+.? '
@@ -97,6 +98,19 @@ describe('EdifactGenerator', () => {
 
     expect(edifact).toContain('DESADV:D:96A:UN');
     expect(edifact).toContain('BGM+351+DES001');
+  });
+});
+
+describe('enrichEdifactContent', () => {
+  it('extrait BGM, NAD et date document', () => {
+    const inv = `UNA:+.? '\nUNB+UNOC:3+SENDER:14+RECEIVER:14+20240115:1000+REF1'\nUNH+1+INVOIC:D:96A:UN'\nBGM+380+INV001+9'\nDTM+137:20240120:102'\nNAD+BY+BUY1::9'\nNAD+SE+SELL1::9'\nMOA+86:1000.50:EUR'\nUNT+6+1'\nUNZ+1+REF1'`;
+    const r = enrichEdifactContent(inv.replace(/\n/g, ''));
+    expect(r.ok).toBe(true);
+    expect(r.enriched?.bgm.documentNameCode).toBe('380');
+    expect(r.enriched?.bgm.documentNameLabel).toBe(BGM_DOCUMENT_NAME_LABELS['380']);
+    const roles = (r.enriched?.nads ?? []).map((n) => n.role);
+    expect(roles).toContain('BY');
+    expect(r.enriched?.documentDate).toBeTruthy();
   });
 });
 

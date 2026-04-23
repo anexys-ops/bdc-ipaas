@@ -88,13 +88,13 @@ export class EdifactParser {
     const unbSeg = segments.find(s => s.tag === 'UNB');
     const messages: EdifactMessage[] = [];
     let currentMessage: EdifactSegment[] = [];
-    let messageType: EdifactMessageType | null = null;
+    let messageType: string | null = null;
     let messageRef = '';
 
     for (const seg of segments) {
       if (seg.tag === 'UNH') {
         currentMessage = [seg];
-        messageType = (seg.elements[1]?.[0] as EdifactMessageType) || null;
+        messageType = seg.elements[1]?.[0] || null;
         messageRef = seg.elements[0]?.[0] || '';
       } else if (seg.tag === 'UNT') {
         if (messageType && currentMessage.length > 0) {

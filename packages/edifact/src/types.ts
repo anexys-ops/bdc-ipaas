@@ -15,7 +15,8 @@ export interface EdifactInterchange {
 }
 
 export interface EdifactMessage {
-  type: EdifactMessageType;
+  /** Type issu du UNH (ex. ORDERS, INVOIC, HANMOV). */
+  type: string;
   reference: string;
   segments: EdifactSegment[];
   data?: Record<string, unknown>;

@@ -1,10 +1,45 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class EdifactEnrichmentViewDto {
+  @ApiProperty()
+  unhType!: string;
+
+  @ApiProperty()
+  bgm!: { documentNameCode: string; documentNameLabel: string; messageNumber: string };
+
+  @ApiProperty()
+  interchange!: { sender: string; receiver: string; unbReference: string };
+
+  @ApiProperty({ type: [Object] })
+  dtm!: Array<{ qualifier: string; value: string; format?: string; dateIso: string }>;
+
+  @ApiPropertyOptional()
+  documentDate?: string | null;
+
+  @ApiProperty({ type: [Object] })
+  nads!: Array<{ role: string; roleLabel: string; partyId: string; name?: string }>;
+
+  @ApiProperty({ type: [Object] })
+  rff!: Array<{ qualifier: string; reference: string }>;
+
+  @ApiProperty({ type: [Object] })
+  moa!: Array<{ qualifier: string; amount: number; currency?: string }>;
+
+  @ApiPropertyOptional()
+  totalAmount?: number | null;
+
+  @ApiPropertyOptional()
+  currency?: string | null;
+
+  @ApiProperty({ type: [Object] })
+  segmentLines!: Array<{ position: number; tag: string; line: string }>;
+}
 
 export class EdifactMessageResponseDto {
   @ApiProperty()
   id!: string;
 
-  @ApiProperty({ description: 'Type de message (ORDERS, INVOIC, DESADV, etc.)' })
+  @ApiProperty({ description: 'Type de message UNH (ORDERS, INVOIC, DESADV, HANMOV, etc.)' })
   type!: string;
 
   @ApiProperty({ description: 'INBOUND ou OUTBOUND' })
@@ -16,26 +51,50 @@ export class EdifactMessageResponseDto {
   @ApiProperty()
   receiver!: string;
 
-  @ApiProperty({ description: 'Contenu brut du message' })
-  rawContent!: string;
+  @ApiProperty({ description: 'Contenu brut (omis en liste si includeRaw=false)', required: false })
+  rawContent?: string;
 
-  @ApiProperty({ description: 'Données parsées (JSON)', required: false })
+  @ApiProperty({ description: 'Métadonnées JSON (enregistrement réception)', required: false })
   parsedData?: unknown;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   reference?: string | null;
+
+  @ApiPropertyOptional({ description: 'Code BGM 1001 (ex. 220, 380)' })
+  bgmCode?: string | null;
+
+  @ApiPropertyOptional()
+  documentDate?: string | null;
+
+  @ApiPropertyOptional()
+  totalAmount?: number | null;
+
+  @ApiPropertyOptional()
+  currency?: string | null;
+
+  @ApiProperty()
+  billed!: boolean;
+
+  @ApiPropertyOptional()
+  billedAt?: string | null;
 
   @ApiProperty()
   receivedAt!: Date;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   processedAt?: Date | null;
 
   @ApiProperty({ description: 'RECEIVED, PROCESSED, ERROR' })
   status!: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   errorMessage?: string | null;
+
+  @ApiPropertyOptional({ description: 'Aperçu structuré (NAD, BGM, segments) — surtout sur le détail' })
+  enrichment?: EdifactEnrichmentViewDto;
+
+  @ApiPropertyOptional()
+  enrichError?: string;
 }
 
 export class EdifactReceiveResultDto {
@@ -66,6 +125,9 @@ export class EdifactValidateResultDto {
 export class EdifactMessagesListDto {
   @ApiProperty({ type: [EdifactMessageResponseDto] })
   items!: EdifactMessageResponseDto[];
+
+  @ApiProperty({ description: 'Alias pour intégrations front (même contenu que items)' })
+  messages?: EdifactMessageResponseDto[];
 
   @ApiProperty()
   total!: number;

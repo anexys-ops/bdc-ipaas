@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '../../components/ui';
 import { edifactApi } from '../../api/edifact.api';
@@ -29,6 +29,7 @@ function formatDate(dateStr: string) {
 }
 
 export function EdifactPage() {
+  const navigate = useNavigate();
   const [type, setType] = useState<EdifactMessageType | ''>('');
   const [direction, setDirection] = useState<EdifactDirection | ''>('');
   const [from, setFrom] = useState('');
@@ -157,20 +158,39 @@ export function EdifactPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50/80">
-                    <th className="text-left p-3 font-medium text-slate-700">Date</th>
-                    <th className="text-left p-3 font-medium text-slate-700">Type</th>
+                    <th className="text-left p-3 font-medium text-slate-700">Reçu</th>
+                    <th className="text-left p-3 font-medium text-slate-700">Type (UNH)</th>
+                    <th className="text-left p-3 font-medium text-slate-700">BGM</th>
                     <th className="text-left p-3 font-medium text-slate-700">Direction</th>
+                    <th className="text-left p-3 font-medium text-slate-700">Date doc.</th>
+                    <th className="text-left p-3 font-medium text-slate-700">Montant</th>
                     <th className="text-left p-3 font-medium text-slate-700">Référence</th>
                     <th className="text-left p-3 font-medium text-slate-700">Statut</th>
+                    <th className="text-left p-3 font-medium text-slate-700">Fact.</th>
                   </tr>
                 </thead>
                 <tbody>
                   {messages.map((msg: EdifactMessage) => (
-                    <tr key={msg.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                    <tr
+                      key={msg.id}
+                      className="border-b border-slate-100 hover:bg-slate-50/50 cursor-pointer"
+                      onClick={() => navigate(`/edifact/messages/${msg.id}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          navigate(`/edifact/messages/${msg.id}`);
+                        }
+                      }}
+                      role="link"
+                      tabIndex={0}
+                    >
                       <td className="p-3 text-slate-600 whitespace-nowrap">
-                        {formatDate((msg as { receivedAt?: string; createdAt?: string }).receivedAt ?? (msg as { createdAt?: string }).createdAt ?? '')}
+                        {formatDate(msg.receivedAt ?? '')}
                       </td>
                       <td className="p-3 font-medium text-slate-800">{msg.type}</td>
+                      <td className="p-3 text-slate-600 text-xs font-mono" title="Code document BGM 1001">
+                        {msg.bgmCode ?? '—'}
+                      </td>
                       <td className="p-3">
                         {msg.direction === 'INBOUND' ? (
                           <span className="inline-flex items-center gap-1 text-emerald-600">
@@ -184,7 +204,20 @@ export function EdifactPage() {
                           </span>
                         )}
                       </td>
-                      <td className="p-3 text-slate-600 font-mono text-xs">
+                      <td className="p-3 text-slate-600 text-xs whitespace-nowrap">
+                        {msg.documentDate
+                          ? new Date(msg.documentDate).toLocaleDateString('fr-FR')
+                          : '—'}
+                      </td>
+                      <td className="p-3 text-slate-700 text-xs">
+                        {msg.totalAmount != null
+                          ? `${msg.totalAmount.toLocaleString('fr-FR', {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 2,
+                            })} ${msg.currency ?? ''}`.trim()
+                          : '—'}
+                      </td>
+                      <td className="p-3 text-slate-600 font-mono text-xs max-w-[140px] truncate">
                         {msg.reference ?? '—'}
                       </td>
                       <td className="p-3">
@@ -197,6 +230,13 @@ export function EdifactPage() {
                         >
                           {msg.status}
                         </span>
+                      </td>
+                      <td className="p-3 text-xs">
+                        {msg.billed ? (
+                          <span className="text-emerald-600 font-medium">Oui</span>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
                       </td>
                     </tr>
                   ))}

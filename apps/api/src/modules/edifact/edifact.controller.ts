@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Param,
   Query,
@@ -21,7 +22,7 @@ import {
   ApiHeader,
 } from '@nestjs/swagger';
 import { Request } from 'express';
-import { EdifactService } from './edifact.service';
+import { EdifactService, type EdifactMessageResponse } from './edifact.service';
 import {
   ReceiveEdifactDto,
   ReceiveSftpEdifactDto,
@@ -30,6 +31,7 @@ import {
   EdifactReceiveResultDto,
   EdifactValidateResultDto,
   EdifactMessagesListDto,
+  PatchEdifactBillingDto,
 } from './dto';
 import { JwtAuthGuard, RolesGuard } from '../../common/guards';
 import { CurrentTenant, Public } from '../../common/decorators';
@@ -102,13 +104,13 @@ export class EdifactController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Génère un message EDIFACT à partir d\'un objet JSON' })
-  @ApiResponse({ status: 200, description: 'Message généré', schema: { type: 'object', properties: { raw: { type: 'string' } } } })
+  @ApiOperation({ summary: 'Génère un message EDIFACT, enregistre en sortie (OUTBOUND) et retourne le brut + fiche' })
+  @ApiResponse({ status: 200, description: 'Message généré et enregistré' })
   @ApiResponse({ status: 400, description: 'Données invalides ou type non supporté' })
   async generate(
     @CurrentTenant() tenant: { id: string },
     @Body() dto: GenerateEdifactDto,
-  ): Promise<{ raw: string }> {
+  ): Promise<{ raw: string; message: EdifactMessageResponse }> {
     return this.edifactService.generate(tenant.id, dto);
   }
 
@@ -130,8 +132,15 @@ export class EdifactController {
   @Get('messages')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Liste des messages EDIFACT reçus (paginé, filtrable)' })
-  @ApiQuery({ name: 'type', required: false, description: 'Filtrer par type (ORDERS, INVOIC, etc.)' })
+  @ApiOperation({ summary: 'Liste des messages EDIFACT (paginé, filtres direction, type, dates, facturé)' })
+  @ApiQuery({ name: 'type', required: false, description: 'Type UNH (ORDERS, INVOIC, …)' })
+  @ApiQuery({ name: 'direction', required: false, enum: ['INBOUND', 'OUTBOUND'] })
+  @ApiQuery({ name: 'billed', required: false, description: 'true | false' })
+  @ApiQuery({ name: 'from', required: false, description: 'Date min réception (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'to', required: false, description: 'Date max réception' })
+  @ApiQuery({ name: 'documentFrom', required: false, description: 'Filtre date document' })
+  @ApiQuery({ name: 'documentTo', required: false })
+  @ApiQuery({ name: 'includeRaw', required: false, description: 'Inclure le fichier brut (défaut: false)' })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'pageSize', required: false })
   @ApiQuery({ name: 'limit', required: false })
@@ -140,6 +149,13 @@ export class EdifactController {
   async getMessages(
     @CurrentTenant() tenant: { id: string },
     @Query('type') type?: string,
+    @Query('direction') direction?: string,
+    @Query('billed') billed?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('documentFrom') documentFrom?: string,
+    @Query('documentTo') documentTo?: string,
+    @Query('includeRaw') includeRaw?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
     @Query('limit') limit?: string,
@@ -150,8 +166,17 @@ export class EdifactController {
     const pageFromOffset = limitNum != null && limitNum > 0 && offsetNum != null
       ? Math.floor(offsetNum / limitNum) + 1
       : undefined;
+    const billedBool =
+      billed === 'true' ? true : billed === 'false' ? false : undefined;
     return this.edifactService.findMessages(tenant.id, {
       type: type || undefined,
+      direction: direction || undefined,
+      billed: billedBool,
+      from: from || undefined,
+      to: to || undefined,
+      documentFrom: documentFrom || undefined,
+      documentTo: documentTo || undefined,
+      includeRaw: includeRaw === 'true' || includeRaw === '1',
       page: page ? parseInt(page, 10) : pageFromOffset,
       pageSize: pageSize ? parseInt(pageSize, 10) : limitNum,
     });
@@ -160,14 +185,28 @@ export class EdifactController {
   @Get('messages/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Détail d\'un message EDIFACT' })
+  @ApiOperation({ summary: 'Détail d\'un message EDIFACT (fichier brut, NAD, BGM, segments, MOA…)' })
   @ApiResponse({ status: 200, description: 'Message', type: EdifactMessageResponseDto })
   @ApiResponse({ status: 404, description: 'Message introuvable' })
   async getMessage(
     @CurrentTenant() tenant: { id: string },
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<EdifactMessageResponseDto> {
-    return this.edifactService.findOne(tenant.id, id);
+    return this.edifactService.findOne(tenant.id, id) as Promise<EdifactMessageResponseDto>;
+  }
+
+  @Patch('messages/:id/billing')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Marque un message pour la facturation support (ou retirer le marquage)' })
+  @ApiResponse({ status: 200, type: EdifactMessageResponseDto })
+  async setMessageBilling(
+    @CurrentTenant() tenant: { id: string },
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: PatchEdifactBillingDto,
+  ): Promise<EdifactMessageResponseDto> {
+    return this.edifactService.setBilled(tenant.id, id, dto.billed) as Promise<EdifactMessageResponseDto>;
   }
 
   /**

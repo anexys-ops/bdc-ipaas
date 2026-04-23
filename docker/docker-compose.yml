@@ -161,7 +161,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Keycloak (BDC-99) — https://auth.edicloud.app — realm `anexys` (import JSON)
+  # Keycloak (BDC-99) — https://auth.bigdataconsulting.fr — realm `anexys` (import JSON)
   keycloak:
     image: docker.io/keycloak/keycloak:26.0
     container_name: anexys-keycloak
@@ -171,7 +171,7 @@ services:
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
       KC_DB_USERNAME: anexys
       KC_DB_PASSWORD: ${DB_PASSWORD}
-      KC_HOSTNAME: https://auth.edicloud.app
+      KC_HOSTNAME: https://auth.bigdataconsulting.fr
       KC_HOSTNAME_STRICT: "true"
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_ENABLED: "true"

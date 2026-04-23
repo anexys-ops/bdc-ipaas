@@ -39,10 +39,11 @@ export class EdifactValidator {
     return { valid: errors.length === 0, errors, warnings };
   }
 
-  validateMessage(messageType: EdifactMessageType, segments: EdifactSegment[]): ValidationError[] {
+  validateMessage(messageType: string, segments: EdifactSegment[]): ValidationError[] {
     const errors: ValidationError[] = [];
     const segmentTags = segments.map(s => s.tag);
-    const mandatory = MANDATORY_SEGMENTS[messageType] || [];
+    const key = messageType in MANDATORY_SEGMENTS ? (messageType as EdifactMessageType) : null;
+    const mandatory = key ? (MANDATORY_SEGMENTS[key] ?? []) : [];
 
     for (const mandatorySeg of mandatory) {
       if (!segmentTags.includes(mandatorySeg)) {

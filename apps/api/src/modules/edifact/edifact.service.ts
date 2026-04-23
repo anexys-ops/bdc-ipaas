@@ -4,29 +4,17 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaClient, Prisma } from '../../generated/tenant';
+import { Prisma, PrismaClient } from '../../generated/tenant';
 import { readFile } from 'fs/promises';
+import { enrichEdifactContent, type EdifactEnrichedMessage } from '@anexys/edi-core';
 import { TenantDatabaseService } from '../tenants/tenant-database.service';
 import { TenantsService } from '../tenants/tenants.service';
 import type { GenerateEdifactDto, EdifactMessageTypeDto } from './dto';
 
 const DIRECTION_INBOUND = 'INBOUND';
+const DIRECTION_OUTBOUND = 'OUTBOUND';
 const STATUS_RECEIVED = 'RECEIVED';
 const STATUS_ERROR = 'ERROR';
-
-type EdifactMessageType = 'ORDERS' | 'INVOIC' | 'DESADV' | 'PRICAT' | 'RECADV' | 'UNKNOWN';
-
-interface EdifactParsedMessage {
-  type: EdifactMessageType;
-  reference: string;
-  data?: Record<string, unknown>;
-}
-
-interface EdifactInterchange {
-  sender: string;
-  receiver: string;
-  messages: EdifactParsedMessage[];
-}
 
 interface ParsedOrder {
   orderNumber: string;
@@ -53,25 +41,31 @@ interface ValidationResult {
   warnings: Array<{ segment: string; position: number; message: string; severity: string }>;
 }
 
-function parseEdifact(content: string): EdifactInterchange {
-  if (!content.includes('UNH+')) {
-    throw new Error('Message EDIFACT invalide: segment UNH manquant');
+function fallbackUnbAndBgm(content: string): {
+  type: string;
+  reference: string;
+  sender: string;
+  receiver: string;
+} {
+  const messageTypeMatch = content.match(/UNH\+[^+']*\+([A-Z0-9]+)/);
+  const referenceMatch = content.match(/BGM\+[^+']*\+([^+']+)/);
+  const m = content.match(
+    /UNB\+[^+]+\+([^+']+)(?:\+[^+]*)*\+([^+']+)(?:\+[^+']*\+[^+']*)*'/,
+  );
+  let sender = m?.[1] ?? '';
+  let receiver = m?.[2] ?? '';
+  if (!sender) {
+    const a = content.match(/UNB\+UNOC:3\+([^+']+)\+([^+']+)/);
+    if (a) {
+      sender = a[1] ?? '';
+      receiver = a[2] ?? '';
+    }
   }
-  const senderMatch = content.match(/UNB\+[^+]*\+([^+']+)/);
-  const receiverMatch = content.match(/UNB\+[^+]*\+[^+']+\+([^+']+)/);
-  const messageTypeMatch = content.match(/UNH\+[^+]*\+([A-Z0-9]+)/);
-  const referenceMatch = content.match(/BGM\+[^+]*\+([^+']+)/);
-  const type = (messageTypeMatch?.[1] ?? 'UNKNOWN') as EdifactMessageType;
   return {
-    sender: senderMatch?.[1] ?? '',
-    receiver: receiverMatch?.[1] ?? '',
-    messages: [
-      {
-        type,
-        reference: referenceMatch?.[1] ?? '',
-        data: {},
-      },
-    ],
+    type: messageTypeMatch?.[1] ?? 'UNKNOWN',
+    reference: referenceMatch?.[1] ?? '',
+    sender,
+    receiver,
   };
 }
 
@@ -174,61 +168,71 @@ export class EdifactService {
       throw new BadRequestException('Contenu EDIFACT vide');
     }
 
-    let interchange: EdifactInterchange;
-    try {
-      interchange = parseEdifact(content);
-    } catch (err) {
-      this.logger.warn(`Parse EDIFACT failed: ${(err as Error).message}`);
-      const prisma = await this.getTenantClient(tenantId);
+    const prisma = await this.getTenantClient(tenantId);
+    const enrich = enrichEdifactContent(content);
+
+    if (enrich.ok && enrich.enriched) {
+      const e = enrich.enriched;
+      let documentDate: Date | null = null;
+      if (e.documentDate) {
+        const dt = new Date(e.documentDate);
+        if (!Number.isNaN(dt.getTime())) documentDate = dt;
+      }
+      const totalAmount =
+        e.totalAmount != null ? new Prisma.Decimal(e.totalAmount) : null;
       const created = await prisma.edifactMessage.create({
         data: {
-          type: 'UNKNOWN',
+          type: e.unhType || 'UNKNOWN',
           direction: DIRECTION_INBOUND,
-          sender: '',
-          receiver: '',
+          sender: e.interchange.sender,
+          receiver: e.interchange.receiver,
           rawContent: content,
-          status: STATUS_ERROR,
-          errorMessage: (err as Error).message,
+          parsedData: e as unknown as Prisma.InputJsonValue,
+          reference: e.bgm.messageNumber || null,
+          bgmCode: e.bgm.documentNameCode || null,
+          documentDate,
+          totalAmount,
+          currency: e.currency,
+          status: STATUS_RECEIVED,
         },
       });
       return {
-        message: this.toResponse(created),
+        message: this.toResponse(created, { includeEnrichment: true }),
         parsed: {
-          sender: '',
-          receiver: '',
-          type: 'UNKNOWN',
-          reference: '',
+          sender: e.interchange.sender,
+          receiver: e.interchange.receiver,
+          type: e.unhType,
+          reference: e.bgm.messageNumber,
+          data: e,
         },
       };
     }
 
-    if (interchange.messages.length === 0) {
-      throw new BadRequestException('Aucun message trouvé dans l\'interchange');
-    }
-
-    const msg = interchange.messages[0];
-    const prisma = await this.getTenantClient(tenantId);
+    this.logger.warn(
+      `Enrich EDIFACT partiel: ${enrich.errorMessage ?? 'inconnu'}`,
+    );
+    const fallback = fallbackUnbAndBgm(content);
     const created = await prisma.edifactMessage.create({
       data: {
-        type: msg.type,
+        type: fallback.type || 'UNKNOWN',
         direction: DIRECTION_INBOUND,
-        sender: interchange.sender,
-        receiver: interchange.receiver,
+        sender: fallback.sender,
+        receiver: fallback.receiver,
         rawContent: content,
-        parsedData: msg as unknown as Prisma.InputJsonValue,
-        reference: msg.reference ?? null,
-        status: STATUS_RECEIVED,
+        parsedData: { enrichError: enrich.errorMessage, fallback } as unknown as Prisma.InputJsonValue,
+        reference: fallback.reference || null,
+        status: /UNH\+/i.test(content) ? STATUS_RECEIVED : STATUS_ERROR,
+        errorMessage: enrich.errorMessage,
       },
     });
-
     return {
-      message: this.toResponse(created),
+      message: this.toResponse(created, { includeEnrichment: true }),
       parsed: {
-        sender: interchange.sender,
-        receiver: interchange.receiver,
-        type: msg.type,
-        reference: msg.reference,
-        data: msg as unknown as Record<string, unknown>,
+        sender: fallback.sender,
+        receiver: fallback.receiver,
+        type: fallback.type,
+        reference: fallback.reference,
+        data: { enrichError: enrich.errorMessage, fallback },
       },
     };
   }
@@ -252,38 +256,45 @@ export class EdifactService {
     filePath: string,
     _senderCode: string,
   ): Promise<{ message: EdifactMessageResponse; parsed: ParsedReceiveResult }> {
-    let content: string;
+    let fileContent: string;
     try {
-      content = await readFile(filePath, 'utf-8');
+      fileContent = await readFile(filePath, 'utf-8');
     } catch (err) {
       throw new BadRequestException(
         `Impossible de lire le fichier: ${(err as Error).message}`,
       );
     }
-    return this.receive(tenantId, content);
+    return this.receive(tenantId, fileContent);
   }
 
   /**
    * Génère un message EDIFACT à partir d'un objet JSON.
    */
   async generate(
-    _tenantId: string,
+    tenantId: string,
     dto: GenerateEdifactDto,
-  ): Promise<{ raw: string }> {
+  ): Promise<{ raw: string; message: EdifactMessageResponse }> {
     const generator = createEdifactGenerator(dto.sender, dto.receiver);
     const type = dto.type as EdifactMessageTypeDto;
     const data = dto.data as Record<string, unknown> | undefined;
 
+    let raw: string;
     switch (type) {
       case 'ORDERS': {
         const order = data as unknown as ParsedOrder;
-        if (!order?.orderNumber || !order?.orderDate || !order?.buyerCode || !order?.sellerCode || !order?.lines) {
+        if (
+          !order?.orderNumber ||
+          !order?.orderDate ||
+          !order?.buyerCode ||
+          !order?.sellerCode ||
+          !order?.lines
+        ) {
           throw new BadRequestException(
             'Pour ORDERS, data doit contenir orderNumber, orderDate, buyerCode, sellerCode, lines',
           );
         }
-        const raw = generator.generateOrder(order);
-        return { raw };
+        raw = generator.generateOrder(order);
+        break;
       }
       case 'INVOIC': {
         const invoice = data as unknown as ParsedInvoice;
@@ -301,8 +312,8 @@ export class EdifactService {
             'Pour INVOIC, data doit contenir invoiceNumber, invoiceDate, buyerCode, sellerCode, lines, subtotal, vatAmount, totalAmount',
           );
         }
-        const raw = generator.generateInvoice(invoice);
-        return { raw };
+        raw = generator.generateInvoice(invoice);
+        break;
       }
       case 'DESADV': {
         const desadv = data as {
@@ -321,13 +332,13 @@ export class EdifactService {
             'Pour DESADV, data doit contenir despatchNumber, orderNumber, shipDate, items',
           );
         }
-        const raw = generator.generateDesadv({
+        raw = generator.generateDesadv({
           despatchNumber: desadv.despatchNumber,
           orderNumber: desadv.orderNumber,
           shipDate: desadv.shipDate,
           items: desadv.items,
         });
-        return { raw };
+        break;
       }
       case 'PRICAT':
       case 'RECADV':
@@ -339,6 +350,46 @@ export class EdifactService {
         throw new BadRequestException(`Type de message inconnu: ${String(exhaustive)}`);
       }
     }
+
+    const enrich = enrichEdifactContent(raw);
+    const prisma = await this.getTenantClient(tenantId);
+    if (!enrich.ok || !enrich.enriched) {
+      const created = await prisma.edifactMessage.create({
+        data: {
+          type: dto.type,
+          direction: DIRECTION_OUTBOUND,
+          sender: dto.sender,
+          receiver: dto.receiver,
+          rawContent: raw,
+          status: STATUS_RECEIVED,
+        },
+      });
+      return { raw, message: this.toResponse(created, { includeEnrichment: true }) };
+    }
+    const e = enrich.enriched;
+    let documentDate: Date | null = null;
+    if (e.documentDate) {
+      const dt = new Date(e.documentDate);
+      if (!Number.isNaN(dt.getTime())) documentDate = dt;
+    }
+    const totalAmount = e.totalAmount != null ? new Prisma.Decimal(e.totalAmount) : null;
+    const created = await prisma.edifactMessage.create({
+      data: {
+        type: e.unhType,
+        direction: DIRECTION_OUTBOUND,
+        sender: e.interchange.sender,
+        receiver: e.interchange.receiver,
+        rawContent: raw,
+        parsedData: e as unknown as Prisma.InputJsonValue,
+        reference: e.bgm.messageNumber || null,
+        bgmCode: e.bgm.documentNameCode || null,
+        documentDate,
+        totalAmount,
+        currency: e.currency,
+        status: STATUS_RECEIVED,
+      },
+    });
+    return { raw, message: this.toResponse(created, { includeEnrichment: true }) };
   }
 
   /**
@@ -353,19 +404,64 @@ export class EdifactService {
   }
 
   /**
-   * Liste des messages reçus (paginé, filtrable par type).
+   * Liste des messages (paginé, filtres direction, type, période réception, facturation).
    */
   async findMessages(
     tenantId: string,
-    options: { type?: string; page?: number; pageSize?: number } = {},
-  ): Promise<{ items: EdifactMessageResponse[]; total: number; page: number; pageSize: number }> {
+    options: {
+      type?: string;
+      direction?: string;
+      billed?: boolean;
+      page?: number;
+      pageSize?: number;
+      /** Période sur receivedAt (alias: from, to) */
+      receivedFrom?: string;
+      receivedTo?: string;
+      from?: string;
+      to?: string;
+      documentFrom?: string;
+      documentTo?: string;
+      includeRaw?: boolean;
+    } = {},
+  ): Promise<{ items: EdifactMessageResponse[]; total: number; page: number; pageSize: number; messages: EdifactMessageResponse[] }> {
     const prisma = await this.getTenantClient(tenantId);
     const page = Math.max(1, options.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 20));
     const skip = (page - 1) * pageSize;
-    const where = options.type ? { type: options.type } : {};
+    const where: Prisma.EdifactMessageWhereInput = {};
+    if (options.type) {
+      where.type = options.type;
+    }
+    if (options.direction) {
+      where.direction = options.direction;
+    }
+    if (options.billed !== undefined) {
+      where.billed = options.billed;
+    }
+    const rFrom = options.receivedFrom ?? options.from;
+    const rTo = options.receivedTo ?? options.to;
+    if (rFrom || rTo) {
+      const ra: { gte?: Date; lte?: Date } = {};
+      if (rFrom) ra.gte = new Date(rFrom);
+      if (rTo) {
+        const t = new Date(rTo);
+        t.setUTCHours(23, 59, 59, 999);
+        ra.lte = t;
+      }
+      where.receivedAt = ra;
+    }
+    if (options.documentFrom || options.documentTo) {
+      const dd: { gte?: Date; lte?: Date } = {};
+      if (options.documentFrom) dd.gte = new Date(options.documentFrom);
+      if (options.documentTo) {
+        const t = new Date(options.documentTo);
+        t.setUTCHours(23, 59, 59, 999);
+        dd.lte = t;
+      }
+      where.documentDate = dd;
+    }
 
-    const [items, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       prisma.edifactMessage.findMany({
         where,
         orderBy: { receivedAt: 'desc' },
@@ -375,16 +471,13 @@ export class EdifactService {
       prisma.edifactMessage.count({ where }),
     ]);
 
-    return {
-      items: items.map((m) => this.toResponse(m)),
-      total,
-      page,
-      pageSize,
-    };
+    const includeRaw = options.includeRaw === true;
+    const items = rows.map((m) => this.toResponse(m, { includeRaw, includeEnrichment: false }));
+    return { items, total, page, pageSize, messages: items };
   }
 
   /**
-   * Détail d'un message par ID.
+   * Détail d'un message par ID (aperçu structuré + brut).
    */
   async findOne(tenantId: string, id: string): Promise<EdifactMessageResponse> {
     const prisma = await this.getTenantClient(tenantId);
@@ -394,26 +487,69 @@ export class EdifactService {
     if (!message) {
       throw new NotFoundException(`Message EDIFACT ${id} introuvable`);
     }
-    return this.toResponse(message);
+    return this.toResponse(message, { includeRaw: true, includeEnrichment: true });
+  }
+
+  /**
+   * Marque un message pour la facturation support.
+   */
+  async setBilled(
+    tenantId: string,
+    id: string,
+    billed: boolean,
+  ): Promise<EdifactMessageResponse> {
+    const prisma = await this.getTenantClient(tenantId);
+    try {
+      const updated = await prisma.edifactMessage.update({
+        where: { id },
+        data: {
+          billed,
+          billedAt: billed ? new Date() : null,
+        },
+      });
+      return this.toResponse(updated, { includeRaw: true, includeEnrichment: true });
+    } catch {
+      throw new NotFoundException(`Message EDIFACT ${id} introuvable`);
+    }
   }
 
   private toResponse(
     m: Awaited<ReturnType<PrismaClient['edifactMessage']['create']>>,
+    options: { includeRaw?: boolean; includeEnrichment?: boolean } = {},
   ): EdifactMessageResponse {
-    return {
+    const includeRaw = options.includeRaw !== false;
+    const includeEnrichment = options.includeEnrichment === true;
+    const res: EdifactMessageResponse = {
       id: m.id,
       type: m.type,
       direction: m.direction,
       sender: m.sender,
       receiver: m.receiver,
-      rawContent: m.rawContent,
-      parsedData: m.parsedData as unknown,
       reference: m.reference,
+      bgmCode: m.bgmCode,
+      documentDate: m.documentDate ? m.documentDate.toISOString() : null,
+      totalAmount: m.totalAmount != null ? Number(m.totalAmount) : null,
+      currency: m.currency,
+      billed: m.billed ?? false,
+      billedAt: m.billedAt ? m.billedAt.toISOString() : null,
       receivedAt: m.receivedAt,
       processedAt: m.processedAt,
       status: m.status,
       errorMessage: m.errorMessage,
+      parsedData: m.parsedData as unknown,
     };
+    if (includeRaw) {
+      res.rawContent = m.rawContent;
+    }
+    if (includeEnrichment) {
+      const e = enrichEdifactContent(m.rawContent);
+      if (e.ok && e.enriched) {
+        res.enrichment = e.enriched;
+      } else {
+        res.enrichError = e.errorMessage;
+      }
+    }
+    return res;
   }
 }
 
@@ -423,13 +559,21 @@ export interface EdifactMessageResponse {
   direction: string;
   sender: string;
   receiver: string;
-  rawContent: string;
+  rawContent?: string;
   parsedData?: unknown;
   reference?: string | null;
+  bgmCode?: string | null;
+  documentDate?: string | null;
+  totalAmount?: number | null;
+  currency?: string | null;
+  billed: boolean;
+  billedAt?: string | null;
   receivedAt: Date;
   processedAt?: Date | null;
   status: string;
   errorMessage?: string | null;
+  enrichment?: EdifactEnrichedMessage;
+  enrichError?: string;
 }
 
 export interface ParsedReceiveResult {

@@ -4,7 +4,7 @@ import { PrivateLayout, PublicLayout, BackofficeLayout } from './components/layo
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupTrialPage } from './pages/auth/SignupTrialPage';
 import { ReserverDemoPage } from './pages/demo/ReserverDemoPage';
-import { HomePage } from './pages/home/HomePage';
+import HomePage from './pages/home/HomePage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { AuditPage } from './pages/audit/AuditPage';
 import { MarketplacePage } from './pages/marketplace/MarketplacePage';
@@ -34,6 +34,7 @@ import { PlanifierNewPage } from './pages/planifier/PlanifierNewPage';
 import { PlanifierEditPage } from './pages/planifier/PlanifierEditPage';
 import { EdifactPage } from './pages/edifact/EdifactPage';
 import { EdifactSendPage } from './pages/edifact/EdifactSendPage';
+import { EdifactMessageDetailPage } from './pages/edifact/EdifactMessageDetailPage';
 import { UsersPage } from './pages/users/UsersPage';
 import { GroupsPage } from './pages/groups/GroupsPage';
 import { MonitoringPage } from './pages/monitoring/MonitoringPage';
@@ -111,6 +112,7 @@ function App() {
         <Route path="/planifier/new" element={<PlanifierNewPage />} />
         <Route path="/planifier/:id/edit" element={<PlanifierEditPage />} />
         <Route path="/edifact" element={<EdifactPage />} />
+        <Route path="/edifact/messages/:id" element={<EdifactMessageDetailPage />} />
         <Route path="/edifact/send" element={<EdifactSendPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/groups" element={<GroupsPage />} />
@@ -156,6 +158,7 @@ function App() {
           <Route path="planifier/new" element={<PlanifierNewPage />} />
           <Route path="planifier/:id/edit" element={<PlanifierEditPage />} />
           <Route path="edifact" element={<EdifactPage />} />
+          <Route path="edifact/messages/:id" element={<EdifactMessageDetailPage />} />
           <Route path="edifact/send" element={<EdifactSendPage />} />
         </Route>
       </Route>
