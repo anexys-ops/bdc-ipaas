@@ -18,6 +18,10 @@ COPY connectors connectors
 WORKDIR /app/apps/api
 RUN npx prisma generate --schema=./src/prisma/schema.prisma
 RUN npx prisma generate --schema=./src/prisma/tenant.prisma
+# Monorepo : @anexys/edi-core (pas de dist dans le contexte Docker — exclu par .dockerignore)
+WORKDIR /app
+RUN pnpm --filter @anexys/edi-core run build
+WORKDIR /app/apps/api
 RUN pnpm build
 
 # Stage pour exécuter les migrations (même image que builder, autre commande)
