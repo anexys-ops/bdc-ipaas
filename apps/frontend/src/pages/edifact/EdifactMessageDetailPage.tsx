@@ -156,7 +156,7 @@ export function EdifactMessageDetailPage() {
               <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
-                  variant={msg.billed ? 'outline' : 'default'}
+                  variant={msg.billed ? 'outline' : 'primary'}
                   disabled={billingMutation.isPending}
                   onClick={() => billingMutation.mutate(!msg.billed)}
                 >
