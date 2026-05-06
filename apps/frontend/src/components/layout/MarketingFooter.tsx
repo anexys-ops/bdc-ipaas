@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Linkedin, Youtube } from 'lucide-react';
 import { clsx } from 'clsx';
 import { APP_VERSION } from '../../appVersion';
+import { RESERVER_DEMO_LINK_TO } from '../../lib/marketing-links';
 
 const footerColumns: { title: string; links: { href: string; label: string; external?: boolean }[] }[] = [
   {
@@ -9,7 +10,7 @@ const footerColumns: { title: string; links: { href: string; label: string; exte
     links: [
       { href: '/marketplace', label: 'Connecteurs' },
       { href: '/tarifs', label: 'Tarifs' },
-      { href: '/reserver-demo', label: 'Démonstration' },
+      { href: RESERVER_DEMO_LINK_TO, label: 'Démonstration' },
     ],
   },
   {
@@ -97,7 +98,7 @@ export function MarketingFooter({ className }: { className?: string }) {
               </a>
             </div>
             <Link
-              to="/reserver-demo"
+              to={RESERVER_DEMO_LINK_TO}
               className="inline-flex items-center justify-center rounded-[var(--radius-md)] bg-white px-4 py-2.5 text-sm font-semibold text-brand-900 shadow-sm hover:bg-white/95 transition-colors"
             >
               Réserver une démo

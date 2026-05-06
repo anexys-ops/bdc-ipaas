@@ -8,6 +8,7 @@ import { AppMainNav, NavMenuGroup, publicSiteNavGroup } from './AppMainNav';
 import { AppFooter } from './AppFooter';
 import { AppHeaderBrand } from './AppHeaderBrand';
 import { AppPageBackground } from './AppPageBackground';
+import { RESERVER_DEMO_LINK_TO } from '../../lib/marketing-links';
 
 interface PrivateLayoutProps {
   children?: React.ReactNode;
@@ -61,6 +62,12 @@ export function PrivateLayout({ children }: PrivateLayoutProps) {
             </div>
 
             <div className="flex items-center gap-2 shrink-0 pl-2 sm:pl-3 border-l border-slate-200/80">
+              <Link
+                to={RESERVER_DEMO_LINK_TO}
+                className="inline-flex items-center justify-center rounded-[12px] bg-brand-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-700 focus-visible:ring-offset-2 shrink-0"
+              >
+                Réserver une démo
+              </Link>
               <span className="text-xs sm:text-sm text-slate-600 hidden md:inline font-medium max-w-[8rem] lg:max-w-[12rem] xl:max-w-[14rem] truncate" title={user?.email}>
                 {user?.firstName} {user?.lastName}
               </span>

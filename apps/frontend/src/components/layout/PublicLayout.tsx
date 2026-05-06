@@ -1,4 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
+import { RESERVER_DEMO_LINK_TO } from '../../lib/marketing-links';
 import { AppHeaderBrand } from './AppHeaderBrand';
 import { MarketingFooter } from './MarketingFooter';
 import { NavMenuGroup, publicSiteNavGroup } from './AppMainNav';
@@ -53,7 +54,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
                 </Link>
               </nav>
               <Link
-                to="/reserver-demo"
+                to={RESERVER_DEMO_LINK_TO}
                 className="inline-flex items-center justify-center rounded-[12px] bg-brand-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-700 focus-visible:ring-offset-2 shrink-0"
               >
                 Réserver une démo

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { RESERVER_DEMO_LINK_TO } from '../../lib/marketing-links';
 import {
   ArrowRight,
   BarChart3,
@@ -311,14 +312,14 @@ export default function HomePage() {
       <section className="relative bg-brand-900 overflow-hidden">
         {/* Subtle grid overlay */}
         <div
-          className="absolute inset-0 opacity-5"
+          className="absolute inset-0 opacity-5 pointer-events-none"
           style={{
             backgroundImage:
               'linear-gradient(rgba(0,181,226,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(0,181,226,.4) 1px, transparent 1px)',
             backgroundSize: '60px 60px',
           }}
         />
-        <div className="relative max-w-container mx-auto px-6 py-24 lg:py-32 grid lg:grid-cols-2 gap-12 items-center">
+        <div className="relative z-10 max-w-container mx-auto px-6 py-24 lg:py-32 grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <div className="inline-flex items-center gap-2 bg-white/10 text-accent-500 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 border border-accent-500/30">
               <span className="w-2 h-2 rounded-full bg-accent-500 animate-pulse" />
@@ -335,7 +336,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
-                to="/contact"
+                to={RESERVER_DEMO_LINK_TO}
                 className="inline-flex items-center gap-2 bg-accent-500 hover:bg-sky-400 text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-lg shadow-accent-500/30"
               >
                 Réserver une démo <ArrowRight className="w-4 h-4" />
@@ -630,13 +631,13 @@ export default function HomePage() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link
-              to="/contact"
+              to={RESERVER_DEMO_LINK_TO}
               className="inline-flex items-center gap-2 bg-accent-500 hover:bg-sky-400 text-white font-semibold px-8 py-3.5 rounded-xl transition-colors shadow-lg shadow-accent-500/30"
             >
               Réserver une démo <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              to="/register"
+              to="/signup-trial"
               className="inline-flex items-center gap-2 border border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-3.5 rounded-xl transition-colors"
             >
               Essai gratuit 14 jours

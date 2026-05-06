@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Check, Sparkles, Building2 } from 'lucide-react';
 import { billingApi, type BillingPlan } from '../../api/billing';
+import { RESERVER_DEMO_LINK_TO } from '../../lib/marketing-links';
 import { QuoteEstimatorSection } from '../../components/tarifs/QuoteEstimatorSection';
 
 const PLAN_LABEL: Record<BillingPlan, string> = {
@@ -124,7 +125,7 @@ export function TarifsPage() {
       <QuoteEstimatorSection layout="full" />
 
       <div className="mt-10 flex flex-wrap justify-center gap-3">
-        <Link to="/reserver-demo" className="btn-outline inline-flex items-center gap-2 text-sm no-underline">
+        <Link to={RESERVER_DEMO_LINK_TO} className="btn-outline inline-flex items-center gap-2 text-sm no-underline">
           Réserver une démo
           <ArrowRight className="w-4 h-4" />
         </Link>
