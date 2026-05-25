@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="hero">
+    <h1>Dashboard EBP</h1>
+    <p>Le centre de pilotage des tokens EBP. Tu vois tout de suite l’état du parc, les derniers runs et les clients à surveiller.</p>
+    <div class="hero-meta">
+      <div class="time-card">
+        <strong>Heure France</strong>
+        <span class="time-main" id="live-clock">--:--:--</span>
+        <span class="time-sub" id="live-clock-date">--</span>
+      </div>
+      <div class="hero-stat-card">
+        <strong>Dernier run Windmill</strong>
+        <span class="stat-main">
+          {% if scheduler_runs.windmill %}{{ scheduler_runs.windmill.created_at|paris_dt }}{% else %}Aucun run{% endif %}
+        </span>
+        <span class="stat-sub">
+          {% if scheduler_runs.windmill %}{{ scheduler_runs.windmill.summary }}{% else %}Aucune exécution Windmill enregistrée pour le moment.{% endif %}
+        </span>
+      </div>
+      <div class="hero-stat-card">
+        <strong>Dernier run local</strong>
+        <span class="stat-main">
+          {% if scheduler_runs.auto %}{{ scheduler_runs.auto.created_at|paris_dt }}{% else %}Aucun run{% endif %}
+        </span>
+        <span class="stat-sub">
+          {% if scheduler_runs.auto %}{{ scheduler_runs.auto.summary }}{% else %}Aucune exécution locale enregistrée pour le moment.{% endif %}
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="dashboard-shell">
+    <section class="panel">
+      <div class="toolbar">
+        <div>
+          <h2 style="margin-bottom: 4px;">Statut rapide des clients</h2>
+          <p>Tu cliques sur une ligne et tu entres directement dans la fiche du client.</p>
+        </div>
+        <a class="secondary link-btn" href="/clients">Voir la liste complete</a>
+      </div>
+      <div class="client-status-list">
+        {% for client in client_cards %}
+          <article class="client-status-row clickable-card" data-href="/clients/{{ client.id }}">
+            <div class="client-status-main">
+              <strong>{{ client.name }}</strong>
+              <span class="client-status-meta">Slug : {{ client.slug }}{% if client.folder_id %} · Dossier : {{ client.folder_id }}{% endif %}</span>
+            </div>
+            <div class="client-status-col">
+              <strong>Statut</strong>
+              <span><span class="status {{ client.status_class }}">{{ client.status_label }}</span></span>
+            </div>
+            <div class="client-status-col">
+              <strong>Expiration</strong>
+              <span>{% if client.token.expires_at %}{{ client.token.expires_at|paris_dt }}{% else %}inconnue{% endif %}</span>
+            </div>
+            <div class="client-status-col">
+              <strong>Dernier refresh</strong>
+              <span>
+                {% if client.token.last_success_at %}
+                  {{ client.token.last_success_at|paris_dt }}
+                {% elif client.token.last_refresh_at %}
+                  {{ client.token.last_refresh_at|paris_dt }}
+                {% else %}
+                  jamais
+                {% endif %}
+              </span>
+            </div>
+            <div class="client-status-col">
+              <strong>Acces</strong>
+              <span><a class="section-link" href="/clients/{{ client.id }}">Ouvrir</a></span>
+            </div>
+          </article>
+        {% else %}
+          <div class="empty">Aucun client pour le moment.</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <div class="dashboard-top">
+      <section class="panel">
+        <div class="toolbar">
+          <div>
+            <h2 style="margin-bottom: 4px;">Vision globale</h2>
+            <p>Un résumé compact pour lire l’état du parc en quelques secondes.</p>
+          </div>
+          <div class="action-row" style="margin-top:0;">
+            <a class="action-btn edit-action" href="/clients">Voir les clients</a>
+            <a class="action-btn oauth-action" href="/config">Config SMTP</a>
+          </div>
+        </div>
+        <div class="compact-stats">
+          <article class="compact-stat accent">
+            <div class="compact-stat-label">
+              <strong>Slugs actifs</strong>
+              <span>Base suivie par l’application</span>
+            </div>
+            <div class="compact-stat-value">{{ metrics.total }}</div>
+          </article>
+          <article class="compact-stat">
+            <div class="compact-stat-label">
+              <strong>OK</strong>
+              <span>Tokens exploitables</span>
+            </div>
+            <div class="compact-stat-value">{{ metrics.ok }}</div>
+          </article>
+          <article class="compact-stat {% if metrics.error > 0 %}alert{% endif %}">
+            <div class="compact-stat-label">
+              <strong>En erreur</strong>
+              <span>Clients à contrôler</span>
+            </div>
+            <div class="compact-stat-value">{{ metrics.error }}</div>
+          </article>
+          <article class="compact-stat">
+            <div class="compact-stat-label">
+              <strong>A initialiser</strong>
+              <span>Première auth à faire</span>
+            </div>
+            <div class="compact-stat-value">{{ metrics.pending }}</div>
+          </article>
+          <article class="compact-stat">
+            <div class="compact-stat-label">
+              <strong>Tokens demandés</strong>
+              <span>Refresh déjà présent</span>
+            </div>
+            <div class="compact-stat-value">{{ metrics.requested }}</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel activity-card">
+        <div class="activity-header">
+          <div>
+            <h2 style="margin-bottom: 4px;">Activite recente</h2>
+            <p style="margin: 0; color: #677489;">Le plus important pour vérifier que l’automate tourne.</p>
+          </div>
+          <span class="status {% if scheduler_runs.windmill %}ok{% else %}warn{% endif %}">
+            {% if scheduler_runs.windmill %}Windmill OK{% else %}A verifier{% endif %}
+          </span>
+        </div>
+        <div class="activity-list">
+          <div class="activity-item">
+            <strong>Dernier run Windmill</strong>
+            <div class="activity-main">
+              {% if scheduler_runs.windmill %}
+                {{ scheduler_runs.windmill.created_at|paris_dt }}
+              {% else %}
+                Aucun run Windmill enregistre
+              {% endif %}
+            </div>
+            {% if scheduler_runs.windmill %}
+              <div class="slug">{{ scheduler_runs.windmill.summary }}</div>
+            {% endif %}
+          </div>
+          <div class="activity-item">
+            <strong>Dernier run automatique local</strong>
+            <div class="activity-main">
+              {% if scheduler_runs.auto %}
+                {{ scheduler_runs.auto.created_at|paris_dt }}
+              {% else %}
+                Aucun run local enregistre
+              {% endif %}
+            </div>
+            {% if scheduler_runs.auto %}
+              <div class="slug">{{ scheduler_runs.auto.summary }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel">
+    <div class="section-tabs">
+      <button class="primary tab-btn" type="button" data-tab="overview-tab">Vue d’ensemble</button>
+      <button class="ghost tab-btn" type="button" data-tab="runs-tab">Runs</button>
+      <button class="ghost tab-btn" type="button" data-tab="tokens-tab">Tokens</button>
+    </div>
+
+    <div class="tab-panel" id="overview-tab">
+      <div class="toolbar">
+        <p>La liste rapide en haut est faite pour la navigation directe. Ici tu gardes une vue plus détaillée si tu veux comparer les clients.</p>
+        <a class="secondary link-btn" href="/clients">Gerer les clients</a>
+      </div>
+      <div class="dashboard-overview">
+        {% for client in client_cards %}
+          <article class="client-card featured clickable-card" data-href="/clients/{{ client.id }}">
+            <div class="client-head">
+              <div>
+                <h3 style="margin: 0 0 4px 0;">{{ client.name }}</h3>
+                <div class="slug">Slug : {{ client.slug }}</div>
+                <div class="slug">ID dossier : {{ client.folder_id or "-" }}</div>
+              </div>
+              <span class="status {{ client.status_class }}">{{ client.status_label }}</span>
+            </div>
+            <div class="meta compact">
+              <div>
+                <strong>Dernier succes</strong>
+                <span>{% if client.token.last_success_at %}{{ client.token.last_success_at|paris_dt }}{% else %}jamais{% endif %}</span>
+              </div>
+              <div>
+                <strong>Expiration</strong>
+                <span>{% if client.token.expires_at %}{{ client.token.expires_at|paris_dt }}{% else %}inconnue{% endif %}</span>
+              </div>
+              <div>
+                <strong>Contact EBP</strong>
+                <span>{{ client.contact_name or "-" }}</span>
+              </div>
+              <div>
+                <strong>Email</strong>
+                <span>{{ client.contact_email or "-" }}</span>
+              </div>
+            </div>
+            <div class="btns">
+              <a class="primary link-btn" href="/clients/{{ client.id }}">Ouvrir la fiche</a>
+              <a class="secondary link-btn" href="/clients/{{ client.id }}/connect-ebp">Connexion EBP</a>
+            </div>
+          </article>
+        {% else %}
+          <div class="empty">Aucun client pour le moment. Va dans l’onglet Clients pour en creer un.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="tab-panel" id="runs-tab" style="display:none;">
+      <div class="dashboard-overview">
+        <section class="panel activity-card">
+          <h3>Windmill</h3>
+          {% if scheduler_runs.windmill %}
+            <div class="meta">
+              <div>
+                <strong>Date</strong>
+                <span>{{ scheduler_runs.windmill.created_at|paris_dt }}</span>
+              </div>
+              <div>
+                <strong>Resume</strong>
+                <span>{{ scheduler_runs.windmill.summary }}</span>
+              </div>
+            </div>
+          {% else %}
+            <div class="empty">Aucun run Windmill enregistre.</div>
+          {% endif %}
+        </section>
+        <section class="panel activity-card">
+          <h3>Automatique local</h3>
+          {% if scheduler_runs.auto %}
+            <div class="meta">
+              <div>
+                <strong>Date</strong>
+                <span>{{ scheduler_runs.auto.created_at|paris_dt }}</span>
+              </div>
+              <div>
+                <strong>Resume</strong>
+                <span>{{ scheduler_runs.auto.summary }}</span>
+              </div>
+            </div>
+          {% else %}
+            <div class="empty">Aucun run local enregistre.</div>
+          {% endif %}
+        </section>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tokens-tab" style="display:none;">
+      <div class="token-grid">
+        {% for client in client_cards %}
+          <article
+            class="token-tile clickable-card{% if client.status_class == 'warn' %} is-warning{% elif client.status_class == 'bad' %} is-danger{% endif %}"
+            data-href="/clients/{{ client.id }}"
+          >
+            <div class="token-head">
+              <div>
+                <h3>{{ client.name }}</h3>
+                <div class="slug">Slug : {{ client.slug }}</div>
+              </div>
+              <span class="status {{ client.status_class }}">{{ client.status_label }}</span>
+            </div>
+            <div
+              class="countdown-box"
+              data-countdown
+              {% if client.token.expires_at %}
+                data-expiry="{{ client.token.expires_at.isoformat() }}"
+              {% endif %}
+            >
+              <strong>Expiration token</strong>
+              <span class="countdown-main">--:--:--</span>
+              <span class="countdown-sub">
+                {% if client.token.expires_at %}Expire le {{ client.token.expires_at|paris_dt }}{% else %}Aucune date d'expiration connue{% endif %}
+              </span>
+            </div>
+            <div class="token-meta">
+              <div>
+                <strong>Dernier refresh</strong>
+                <span>
+                  {% if client.token.last_success_at %}
+                    {{ client.token.last_success_at|paris_dt }}
+                  {% elif client.token.last_refresh_at %}
+                    {{ client.token.last_refresh_at|paris_dt }}
+                  {% else %}
+                    jamais
+                  {% endif %}
+                </span>
+              </div>
+              <div>
+                <strong>ID dossier</strong>
+                <span>{{ client.folder_id or "-" }}</span>
+              </div>
+              <div>
+                <strong>Refresh token</strong>
+                <span>{% if client.token.refresh_token %}Present{% else %}Absent{% endif %}</span>
+              </div>
+              <div>
+                <strong>Acces</strong>
+                <span><a class="section-link" href="/clients/{{ client.id }}">Voir la fiche</a></span>
+              </div>
+            </div>
+          </article>
+        {% else %}
+          <div class="empty">Aucun token disponible.</div>
+        {% endfor %}
+      </div>
+    </div>
+    </section>
+  </section>
+
+  <script>
+    const clock = document.getElementById("live-clock");
+    const clockDate = document.getElementById("live-clock-date");
+    const refreshClock = () => {
+      const now = new Date();
+      clock.textContent = new Intl.DateTimeFormat("fr-FR", {
+        timeZone: "Europe/Paris",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }).format(now);
+      clockDate.textContent = new Intl.DateTimeFormat("fr-FR", {
+        timeZone: "Europe/Paris",
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        timeZoneName: "short",
+      }).format(now);
+    };
+    refreshClock();
+    setInterval(refreshClock, 1000);
+
+    const formatDuration = (msRemaining) => {
+      const totalSeconds = Math.max(0, Math.floor(msRemaining / 1000));
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      if (days > 0) {
+        return `${days}j ${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m`;
+      }
+      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    };
+
+    const refreshCountdowns = () => {
+      const now = new Date();
+      document.querySelectorAll("[data-countdown]").forEach((box) => {
+        const main = box.querySelector(".countdown-main");
+        const expiryRaw = box.dataset.expiry;
+        box.classList.remove("warning", "danger");
+        if (!expiryRaw) {
+          main.textContent = "A planifier";
+          return;
+        }
+        const expiry = new Date(`${expiryRaw}Z`);
+        const remaining = expiry.getTime() - now.getTime();
+        if (Number.isNaN(expiry.getTime())) {
+          main.textContent = "Invalide";
+          return;
+        }
+        if (remaining <= 0) {
+          main.textContent = "Expire";
+          box.classList.add("danger");
+          return;
+        }
+        if (remaining <= 15 * 60 * 1000) {
+          box.classList.add("danger");
+        } else if (remaining <= 60 * 60 * 1000) {
+          box.classList.add("warning");
+        }
+        main.textContent = formatDuration(remaining);
+      });
+    };
+    refreshCountdowns();
+    setInterval(refreshCountdowns, 1000);
+
+    const buttons = document.querySelectorAll(".tab-btn");
+    const panels = document.querySelectorAll(".tab-panel");
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = button.dataset.tab;
+        panels.forEach((panel) => {
+          panel.style.display = panel.id === target ? "" : "none";
+        });
+        buttons.forEach((btn) => {
+          btn.classList.remove("primary");
+          btn.classList.add("ghost");
+        });
+        button.classList.remove("ghost");
+        button.classList.add("primary");
+      });
+    });
+
+    document.querySelectorAll(".clickable-card").forEach((card) => {
+      card.addEventListener("click", (event) => {
+        if (event.target.closest("a, button, form, input, textarea, select")) {
+          return;
+        }
+        window.location.href = card.dataset.href;
+      });
+    });
+  </script>
+{% endblock %}

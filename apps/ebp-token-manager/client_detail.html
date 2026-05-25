@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="hero">
+    <h1>{{ summary.name }}</h1>
+    <p>Fiche client avec toutes les actions utiles au meme endroit, sans surcharger l’ecran.</p>
+    <div class="hero-meta">
+      <span class="hero-chip">Slug : {{ summary.slug }}</span>
+      <span class="hero-chip">ID dossier : {{ summary.folder_id or "-" }}</span>
+      <span class="hero-chip">Statut : {{ summary.status_label }}</span>
+      <span class="hero-chip">Expire le : {% if summary.token.expires_at %}{{ summary.token.expires_at|paris_dt }}{% else %}inconnue{% endif %}</span>
+    </div>
+  </section>
+
+  <section class="detail-shell">
+    <div class="detail-layout">
+      <aside class="panel aside-card">
+        <h2>Resume</h2>
+        <div class="meta" style="grid-template-columns: 1fr;">
+          <div>
+            <strong>Statut</strong>
+            <span class="status {{ summary.status_class }}">{{ summary.status_label }}</span>
+          </div>
+          <div>
+            <strong>Dernier succes</strong>
+            <span>{% if summary.token.last_success_at %}{{ summary.token.last_success_at|paris_dt }}{% else %}jamais{% endif %}</span>
+          </div>
+          <div>
+            <strong>Derniere erreur</strong>
+            <span>{{ summary.token.last_error_at or "aucune" }}</span>
+          </div>
+          <div>
+            <strong>HTTP</strong>
+            <span>{{ summary.token.last_http_status or "-" }}</span>
+          </div>
+          <div>
+            <strong>Code tiers</strong>
+            <span>{{ summary.ebp_code_tiers or "-" }}</span>
+          </div>
+          <div>
+            <strong>Contact EBP</strong>
+            <span>{{ summary.contact_name or "-" }}</span>
+          </div>
+        </div>
+        <div class="action-row">
+          <a class="action-btn edit-action" href="/clients">Retour liste</a>
+          <a class="action-btn oauth-action" href="/clients/{{ client.id }}/connect-ebp">Connexion EBP</a>
+        </div>
+        <form method="post" action="/clients/{{ client.id }}/refresh">
+          <div class="action-row">
+            <button class="action-btn primary-action" type="submit">Refresh OAuth2</button>
+          </div>
+        </form>
+      </aside>
+
+      <main class="panel detail-main">
+        <div class="section-tabs">
+          <button class="primary tab-btn" type="button" data-tab="fiche-tab">Fiche client</button>
+          <button class="ghost tab-btn" type="button" data-tab="tokens-tab">Tokens</button>
+          <button class="ghost tab-btn" type="button" data-tab="history-tab">Historique</button>
+        </div>
+
+        <section class="tab-panel" id="fiche-tab">
+          <div class="toolbar">
+            <div>
+              <h2 style="margin-bottom: 4px;">Informations client</h2>
+              <p>Les infos EBP remplies automatiquement restent modifiables ici si tu veux les corriger.</p>
+            </div>
+          </div>
+
+          <form method="post" action="/clients/{{ client.id }}/update" class="detail-form">
+            <section class="form-section">
+              <h3>Identite client</h3>
+              <p>Les informations principales qui servent a reperer vite le client dans l’outil.</p>
+              <div class="row">
+                <div>
+                  <label>Nom du client</label>
+                  <input name="name" value="{{ client.name }}" required>
+                </div>
+                <div>
+                  <label>ID dossier</label>
+                  <input name="folder_id" value="{{ client.folder_id or '' }}" placeholder="65376">
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <label>Statut</label>
+                  <select name="enabled">
+                    <option value="true" {% if client.enabled %}selected{% endif %}>Actif</option>
+                    <option value="false" {% if not client.enabled %}selected{% endif %}>Desactive</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Code tiers EBP</label>
+                  <input name="ebp_code_tiers" value="{{ client.ebp_code_tiers or '' }}">
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section">
+              <h3>Contact EBP</h3>
+              <p>Ces champs peuvent se remplir automatiquement après une connexion EBP, puis rester modifiables.</p>
+              <div class="row">
+                <div>
+                  <label>Contact principal</label>
+                  <input name="contact_name" value="{{ client.contact_name or '' }}" placeholder="Nom contact EBP">
+                </div>
+                <div>
+                  <label>Email</label>
+                  <input name="contact_email" value="{{ client.contact_email or '' }}" placeholder="contact@client.fr">
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <label>Prenom</label>
+                  <input name="contact_first_name" value="{{ client.contact_first_name or '' }}">
+                </div>
+                <div>
+                  <label>Nom</label>
+                  <input name="contact_last_name" value="{{ client.contact_last_name or '' }}">
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <label>Contact ID EBP</label>
+                  <input name="ebp_contact_id" value="{{ client.ebp_contact_id or '' }}">
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section">
+              <h3>Refresh token</h3>
+              <p>Colle un nouveau refresh token ici, puis relance tout de suite avec le bouton juste en dessous.</p>
+              <label>Remplacer le refresh token</label>
+              <textarea name="refresh_token" placeholder="Colle un refresh token ici pour l’enregistrer puis relancer le process"></textarea>
+              <div class="field-note">Le bouton jaune sauvegarde le nouveau refresh token et déclenche immédiatement un refresh EBP.</div>
+              <div class="action-row">
+                <button class="action-btn oauth-action" type="submit" formaction="/clients/{{ client.id }}/set-refresh-token">Enregistrer et relancer</button>
+                <button class="action-btn edit-action" type="submit" formaction="/clients/{{ client.id }}/refresh">Relancer avec le token actuel</button>
+              </div>
+            </section>
+
+            <section class="form-section">
+              <h3>Liens et options avancees</h3>
+              <p>Utilise cette zone si tu veux relayer les tokens ou garder des notes d’exploitation.</p>
+              <div class="row">
+                <div>
+                  <label>Webhook fichier JSON</label>
+                  <input name="webhook_file_url" value="{{ client.webhook_file_url or '' }}">
+                </div>
+                <div>
+                  <label>Webhook texte brut</label>
+                  <input name="webhook_raw_url" value="{{ client.webhook_raw_url or '' }}">
+                </div>
+              </div>
+              <label>Notes</label>
+              <textarea name="notes">{{ client.notes or '' }}</textarea>
+              <div class="action-row">
+                <button class="action-btn edit-action" type="submit">Enregistrer les liens</button>
+                <button class="action-btn edit-action" type="submit">Modifier les liens</button>
+              </div>
+            </section>
+
+            <div class="action-row">
+              <button class="action-btn primary-action" type="submit">Enregistrer la fiche</button>
+              <button class="action-btn edit-action" type="submit">Modifier le client</button>
+            </div>
+          </form>
+
+          <form method="post" action="/clients/{{ client.id }}/delete" style="margin-top: 10px;">
+            <div class="action-row">
+              <button class="action-btn danger-action" type="submit" onclick="return confirm('Supprimer ce client ?');">Supprimer le client</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="tab-panel" id="tokens-tab" style="display:none;">
+          <div class="toolbar">
+            <div>
+              <h2 style="margin-bottom: 4px;">Tokens</h2>
+              <p>Vue detaillee pour verifier le contenu courant, la date d’expiration et le retour exact d’EBP.</p>
+            </div>
+          </div>
+
+          <div class="meta">
+            <div>
+              <strong>Expire le</strong>
+              <span>{% if summary.token.expires_at %}{{ summary.token.expires_at|paris_dt }}{% else %}inconnue{% endif %}</span>
+            </div>
+            <div>
+              <strong>Dernier refresh</strong>
+              <span>{% if summary.token.last_refresh_at %}{{ summary.token.last_refresh_at|paris_dt }}{% else %}jamais{% endif %}</span>
+            </div>
+            <div>
+              <strong>Derniere alerte mail</strong>
+              <span>{{ summary.token.last_alert_at or "-" }}</span>
+            </div>
+            <div>
+              <strong>Refresh present</strong>
+              <span>{{ "Oui" if summary.token.refresh_token else "Non" }}</span>
+            </div>
+          </div>
+
+          {% if summary.token.access_token %}
+            <label>Access token</label>
+            <pre>{{ summary.token.access_token }}</pre>
+          {% endif %}
+
+          {% if summary.token.refresh_token %}
+            <label>Refresh token</label>
+            <pre>{{ summary.token.refresh_token }}</pre>
+          {% endif %}
+
+          {% if summary.token.last_error %}
+            <label>Erreur courante</label>
+            <pre>{{ summary.token.last_error }}</pre>
+          {% endif %}
+
+          {% if summary.token.last_response_json %}
+            <label>Derniere reponse EBP</label>
+            <pre>{{ summary.token.last_response_json }}</pre>
+          {% endif %}
+        </section>
+
+        <section class="tab-panel" id="history-tab" style="display:none;">
+          <div class="toolbar">
+            <div>
+              <h2 style="margin-bottom: 4px;">Historique des declenchements</h2>
+              <p>Tu vois ici tous les retours utiles pour comprendre si le client a ete traite par Windmill, en auto ou manuellement.</p>
+            </div>
+          </div>
+          {% if client.history %}
+            <div class="history">
+              <pre>{% for row in client.history %}[{{ row.created_at|paris_dt }}] [{{ row.source or "n/a" }}] {{ "OK" if row.success else "KO" }} - {{ row.message }}{% if row.http_status %} (HTTP {{ row.http_status }}){% endif %}
+{% endfor %}</pre>
+            </div>
+          {% else %}
+            <div class="empty">Aucun historique pour ce client pour le moment.</div>
+          {% endif %}
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <script>
+    const buttons = document.querySelectorAll(".tab-btn");
+    const panels = document.querySelectorAll(".tab-panel");
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = button.dataset.tab;
+        panels.forEach((panel) => {
+          panel.style.display = panel.id === target ? "" : "none";
+        });
+        buttons.forEach((btn) => {
+          btn.classList.remove("primary");
+          btn.classList.add("ghost");
+        });
+        button.classList.remove("ghost");
+        button.classList.add("primary");
+      });
+    });
+  </script>
+{% endblock %}

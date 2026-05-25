@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="hero">
+    <h1>Configuration</h1>
+    <p>Tu pilotes ici les alertes mail, l’envoi SMTP et tu retrouves les accès BDD utiles à l’exploitation.</p>
+    <div class="hero-meta">
+      <span class="hero-chip">SMTP : {{ runtime_config.smtp_host }}</span>
+      <span class="hero-chip">From : {{ runtime_config.smtp_from_email or "-" }}</span>
+      <span class="hero-chip">Politique d’alerte : {{ runtime_config.alert_policy }}</span>
+    </div>
+  </section>
+
+  <section class="detail-shell">
+    <div class="detail-layout">
+      <aside class="panel aside-card">
+        <h2>Acces rapides</h2>
+        <div class="action-row">
+          <a class="action-btn edit-action" href="/">Retour dashboard</a>
+          <a class="action-btn primary-action" href="/clients">Voir les clients</a>
+        </div>
+        <div class="meta" style="grid-template-columns: 1fr;">
+          <div>
+            <strong>SMTP courant</strong>
+            <span>{{ runtime_config.smtp_host }}:{{ runtime_config.smtp_port }}</span>
+          </div>
+          <div>
+            <strong>Destinataire alertes</strong>
+            <span>{{ runtime_config.alert_to_email or "-" }}</span>
+          </div>
+          <div>
+            <strong>Politique</strong>
+            <span>{{ runtime_config.alert_policy }}</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="panel detail-main">
+        <form method="post" action="/config" class="detail-form">
+          <section class="form-section">
+            <h3>SMTP et envoi</h3>
+            <p>Ces paramètres servent à envoyer les alertes lorsqu’un token tombe en erreur.</p>
+            <div class="row">
+              <div>
+                <label>Serveur SMTP</label>
+                <input name="smtp_host" value="{{ runtime_config.smtp_host }}" required>
+              </div>
+              <div>
+                <label>Port SMTP</label>
+                <input name="smtp_port" value="{{ runtime_config.smtp_port }}" required>
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Utilisateur SMTP</label>
+                <input name="smtp_username" value="{{ runtime_config.smtp_username }}">
+              </div>
+              <div>
+                <label>Mot de passe SMTP</label>
+                <input name="smtp_password" value="{{ runtime_config.smtp_password }}" type="password">
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Adresse mail d’envoi</label>
+                <input name="smtp_from_email" value="{{ runtime_config.smtp_from_email }}">
+              </div>
+              <div>
+                <label>Adresse mail de reception</label>
+                <input name="alert_to_email" value="{{ runtime_config.alert_to_email }}">
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <h3>Type d’erreur a notifier</h3>
+            <p>Tu choisis ici quand l’application doit envoyer un mail.</p>
+            <label>Politique d’alerte</label>
+            <select name="alert_policy">
+              <option value="new_only" {% if runtime_config.alert_policy == "new_only" %}selected{% endif %}>Seulement les nouvelles erreurs</option>
+              <option value="all_errors" {% if runtime_config.alert_policy == "all_errors" %}selected{% endif %}>Chaque erreur</option>
+              <option value="disabled" {% if runtime_config.alert_policy == "disabled" %}selected{% endif %}>Desactive</option>
+            </select>
+          </section>
+
+          <section class="form-section">
+            <h3>Acces BDD</h3>
+            <p>Bloc pratique pour retrouver rapidement les accès live en lecture.</p>
+            <div class="tile-grid">
+              <article class="tile">
+                <strong>Host</strong>
+                <span>{{ db_access.host }}</span>
+              </article>
+              <article class="tile">
+                <strong>Port</strong>
+                <span>{{ db_access.port }}</span>
+              </article>
+              <article class="tile">
+                <strong>Base</strong>
+                <span>{{ db_access.database }}</span>
+              </article>
+              <article class="tile">
+                <strong>Utilisateur</strong>
+                <span>{{ db_access.user }}</span>
+              </article>
+            </div>
+            <label>Mot de passe BDD</label>
+            <input value="{{ db_access.password }}" readonly>
+          </section>
+
+          <div class="action-row">
+            <button class="action-btn primary-action" type="submit">Enregistrer la configuration</button>
+          </div>
+        </form>
+      </main>
+    </div>
+  </section>
+{% endblock %}

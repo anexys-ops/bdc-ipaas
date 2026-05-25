@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="hero">
+    <h1>Clients</h1>
+    <p>Tu as la creation a gauche, puis la liste des clients en cartes. Ensuite tu rentres dans chaque fiche pour gerer les tokens, l’historique et les webhooks.</p>
+    <div class="hero-meta">
+      <span class="hero-chip">{{ metrics.total }} clients</span>
+      <span class="hero-chip">{{ metrics.ok }} OK</span>
+      <span class="hero-chip">{{ metrics.error }} en erreur</span>
+      <span class="hero-chip">{{ metrics.pending }} a initialiser</span>
+    </div>
+  </section>
+
+  <section class="grid">
+    <aside class="panel">
+      <h2>Creer un dossier</h2>
+      <p style="color: #677489; margin-top: -4px;">
+        Tu ajoutes le slug, l’ID dossier si tu l’as, puis soit tu colles le premier refresh token, soit tu cliques ensuite sur Connexion EBP depuis la fiche.
+      </p>
+      <form method="post" action="/clients">
+        <label for="slug">Dossier / slug</label>
+        <input id="slug" name="slug" placeholder="bmbu" required>
+
+        <label for="name">Nom affiche</label>
+        <input id="name" name="name" placeholder="BM BUREAU" required>
+
+        <label for="folder_id">ID dossier</label>
+        <input id="folder_id" name="folder_id" placeholder="65376">
+
+        <label for="refresh_token">Premier refresh token EBP</label>
+        <textarea id="refresh_token" name="refresh_token" placeholder="Optionnel si tu prefères passer par Connexion EBP"></textarea>
+
+        <details style="margin-top: 12px;">
+          <summary style="cursor: pointer; font-weight: 700;">Options avancees</summary>
+
+          <label for="webhook_file_url">Webhook fichier JSON</label>
+          <input id="webhook_file_url" name="webhook_file_url" placeholder="http://...">
+
+          <label for="webhook_raw_url">Webhook texte brut</label>
+          <input id="webhook_raw_url" name="webhook_raw_url" placeholder="https://...">
+
+          <label for="notes">Notes</label>
+          <textarea id="notes" name="notes" placeholder="Infos metier, message id, remarques..."></textarea>
+
+          <label for="enabled">Statut</label>
+          <select id="enabled" name="enabled">
+            <option value="true" selected>Actif</option>
+            <option value="false">Desactive</option>
+          </select>
+        </details>
+
+        <div class="btns">
+          <button class="primary" type="submit">Enregistrer le client</button>
+        </div>
+      </form>
+    </aside>
+
+    <main class="stack">
+      <section class="panel">
+        <div class="toolbar">
+          <div>
+            <h2 style="margin-bottom: 4px;">Liste des clients</h2>
+            <p>Tu peux chercher par slug, nom, email ou ID dossier, puis cliquer sur une carte pour ouvrir la fiche complete.</p>
+          </div>
+          <a class="secondary link-btn" href="/">Retour dashboard</a>
+        </div>
+        <div class="row" style="margin-bottom: 14px;">
+          <div>
+            <label for="client-search">Recherche client</label>
+            <input id="client-search" placeholder="Chercher un slug, un nom, un email, un ID dossier...">
+          </div>
+          <div>
+            <label>Resultat</label>
+            <div class="empty" id="client-search-count" style="padding: 12px 14px;">{{ clients|length }} client(s) affiche(s)</div>
+          </div>
+        </div>
+        <div class="cards" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+          {% for client in clients %}
+            <article
+              class="client-card polished clickable-card searchable-client"
+              data-href="/clients/{{ client.id }}"
+              data-search="{{ (client.slug ~ ' ' ~ client.name ~ ' ' ~ (client.folder_id or '') ~ ' ' ~ (client.contact_email or '') ~ ' ' ~ (client.ebp_code_tiers or ''))|lower }}"
+            >
+              <div class="client-head">
+                <div>
+                  <h3 style="margin: 0 0 4px 0;">{{ client.name }}</h3>
+                  <div class="slug">Slug : {{ client.slug }}</div>
+                  <div class="slug">ID dossier : {{ client.folder_id or "-" }}</div>
+                </div>
+                <span class="status {{ client.status_class }}">{{ client.status_label }}</span>
+              </div>
+              <div class="meta">
+                <div>
+                  <strong>Dernier succes</strong>
+                  <span>{% if client.token.last_success_at %}{{ client.token.last_success_at|paris_dt }}{% else %}jamais{% endif %}</span>
+                </div>
+                <div>
+                  <strong>Expiration</strong>
+                  <span>{% if client.token.expires_at %}{{ client.token.expires_at|paris_dt }}{% else %}inconnue{% endif %}</span>
+                </div>
+                <div>
+                  <strong>Code tiers</strong>
+                  <span>{{ client.ebp_code_tiers or "-" }}</span>
+                </div>
+                <div>
+                  <strong>Email</strong>
+                  <span>{{ client.contact_email or "-" }}</span>
+                </div>
+              </div>
+              <div class="action-row">
+                <a class="action-btn primary-action" href="/clients/{{ client.id }}">Ouvrir</a>
+                <a class="action-btn edit-action" href="/clients/{{ client.id }}">Modifier</a>
+                <a class="action-btn oauth-action" href="/clients/{{ client.id }}/connect-ebp">Connexion EBP</a>
+              </div>
+              <form method="post" action="/clients/{{ client.id }}/delete" style="margin-top: 10px;">
+                <div class="btns">
+                  <button class="action-btn danger-action" type="submit" onclick="return confirm('Supprimer ce client ?');">Supprimer</button>
+                </div>
+              </form>
+            </article>
+          {% else %}
+            <div class="empty">Aucun client pour le moment.</div>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
+  </section>
+  <script>
+    const clientSearch = document.getElementById("client-search");
+    const clientCount = document.getElementById("client-search-count");
+    const clientCards = Array.from(document.querySelectorAll(".searchable-client"));
+
+    const refreshClientSearch = () => {
+      const term = (clientSearch.value || "").trim().toLowerCase();
+      let visible = 0;
+      clientCards.forEach((card) => {
+        const haystack = card.dataset.search || "";
+        const match = term === "" || haystack.includes(term);
+        card.style.display = match ? "" : "none";
+        if (match) visible += 1;
+      });
+      clientCount.textContent = `${visible} client(s) affiche(s)`;
+    };
+
+    if (clientSearch) {
+      clientSearch.addEventListener("input", refreshClientSearch);
+    }
+
+    document.querySelectorAll(".clickable-card").forEach((card) => {
+      card.addEventListener("click", (event) => {
+        if (event.target.closest("a, button, form, input, textarea, select")) {
+          return;
+        }
+        window.location.href = card.dataset.href;
+      });
+    });
+  </script>
+{% endblock %}

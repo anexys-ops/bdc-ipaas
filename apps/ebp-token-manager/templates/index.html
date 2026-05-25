@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="hero">
+    <h1>{{ app_title }}</h1>
+    <p>Usage simple: vous créez un dossier client, vous collez une seule fois le premier refresh token EBP, puis l'application se debrouille toute seule.</p>
+    <p style="margin-top: 10px; font-size: 14px;">
+      Heure actuelle : <strong id="live-clock">--:--:--</strong>
+    </p>
+  </section>
+
+  <section class="panel" style="margin-bottom: 18px;">
+    <h2 style="margin-bottom: 10px;">Dashboard</h2>
+    <div class="meta" style="grid-template-columns: repeat(5, 1fr);">
+      <div>
+        <strong>Slugs</strong>
+        <span>{{ metrics.total }}</span>
+      </div>
+      <div>
+        <strong>OK</strong>
+        <span>{{ metrics.ok }}</span>
+      </div>
+      <div>
+        <strong>En erreur</strong>
+        <span>{{ metrics.error }}</span>
+      </div>
+      <div>
+        <strong>A initialiser</strong>
+        <span>{{ metrics.pending }}</span>
+      </div>
+      <div>
+        <strong>Tokens demandes</strong>
+        <span>{{ metrics.requested }}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-bottom: 18px;">
+    <h2 style="margin-bottom: 10px;">Etat des executions</h2>
+    <div class="meta" style="grid-template-columns: repeat(2, 1fr);">
+      <div>
+        <strong>Derniere mise a jour Windmill</strong>
+        <span>
+          {% if scheduler_runs.windmill %}
+            {{ scheduler_runs.windmill.created_at }}<br>
+            {{ scheduler_runs.windmill.summary }}
+          {% else %}
+            Aucun run Windmill enregistre
+          {% endif %}
+        </span>
+      </div>
+      <div>
+        <strong>Derniere mise a jour auto locale</strong>
+        <span>
+          {% if scheduler_runs.auto %}
+            {{ scheduler_runs.auto.created_at }}<br>
+            {{ scheduler_runs.auto.summary }}
+          {% else %}
+            Aucun run auto enregistre
+          {% endif %}
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-bottom: 18px;">
+    <h2 style="margin-bottom: 10px;">Acces Base Live</h2>
+    <p style="color: #677489;">
+      Si vous voulez lire les tokens en direct, utilisez l'acces MariaDB en lecture seule.
+    </p>
+    <div class="meta" style="grid-template-columns: repeat(4, 1fr);">
+      <div>
+        <strong>Host</strong>
+        <span>86.104.252.66</span>
+      </div>
+      <div>
+        <strong>Port</strong>
+        <span>3307</span>
+      </div>
+      <div>
+        <strong>Base</strong>
+        <span>ebp_tokens</span>
+      </div>
+      <div>
+        <strong>Utilisateur</strong>
+        <span>ebp_read</span>
+      </div>
+    </div>
+    <p style="color: #677489; margin-bottom: 0;">
+      Cet utilisateur est prevu pour lire les tokens, pas pour modifier la base.
+    </p>
+  </section>
+
+  <section class="panel" style="margin-bottom: 18px;">
+    <h2 style="margin-bottom: 10px;">Process simple</h2>
+    <div class="meta" style="grid-template-columns: repeat(4, 1fr);">
+      <div>
+        <strong>1. Creer</strong>
+        <span>Vous creez un dossier client avec son slug.</span>
+      </div>
+      <div>
+        <strong>2. Coller</strong>
+        <span>Vous collez une seule fois le refresh token EBP.</span>
+      </div>
+      <div>
+        <strong>3. Lancer</strong>
+        <span>Vous enregistrez ou forcez un refresh pour tester.</span>
+      </div>
+      <div>
+        <strong>4. Automatique</strong>
+        <span>Le token est renouvelle avant expiration et stocke en base.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-bottom: 18px;">
+    <div class="btns" style="margin-top: 0;">
+      <button class="ghost tab-btn" type="button" data-tab="dashboard-tab">Dashboard</button>
+      <button class="primary tab-btn" type="button" data-tab="clients-tab">Clients</button>
+      <button class="ghost tab-btn" type="button" data-tab="tokens-tab">Tokens</button>
+    </div>
+  </section>
+
+  <section class="panel tab-panel" id="dashboard-tab" style="display: none;">
+    <h2>Etat des slugs</h2>
+    <p style="color: #677489;">Vue rapide des clients, du statut des tokens et de la derniere alerte envoyee.</p>
+    <div style="overflow:auto;">
+      <table style="width: 100%; border-collapse: collapse; margin-top: 12px;">
+        <thead>
+          <tr style="background: #eef4ff; text-align: left;">
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Slug</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">ID dossier</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Client</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Statut</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Token demande</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Expire le</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Derniere alerte mail</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in clients %}
+            {% set token = client.token %}
+            {% set status_class = "warn" %}
+            {% set status_label = "A rafraichir" %}
+            {% if token and token.last_error %}
+              {% set status_class = "bad" %}
+              {% set status_label = "Erreur" %}
+            {% elif token and token.access_token and token.expires_at %}
+              {% set status_class = "ok" %}
+              {% set status_label = "OK" %}
+            {% endif %}
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8;">{{ client.slug }}</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8;">{{ client.folder_id or "-" }}</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8;">{{ client.name }}</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8;"><span class="status {{ status_class }}">{{ status_label }}</span></td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8;">{{ "Oui" if token.refresh_token else "Non" }}</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8;">{{ token.expires_at or "inconnu" }}</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8;">{{ token.last_alert_at or "-" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="grid tab-panel" id="clients-tab">
+    <aside class="panel">
+      <h2>Nouveau dossier client</h2>
+      <p style="color: #677489; margin-top: -4px;">
+        Le plus simple: vous creez le dossier puis vous cliquez sur "Connexion EBP". L'application recupere ensuite automatiquement les tokens.
+      </p>
+      <form method="post" action="/clients">
+        <label for="slug">Dossier / slug</label>
+        <input id="slug" name="slug" placeholder="cano-concept" required>
+
+        <label for="name">Nom du client</label>
+        <input id="name" name="name" placeholder="CANO CONCEPT" required>
+
+        <label for="folder_id">ID dossier</label>
+        <input id="folder_id" name="folder_id" placeholder="65376">
+
+        <label for="refresh_token">Premier refresh token EBP</label>
+        <textarea id="refresh_token" name="refresh_token" placeholder="Collez ici le refresh token initial si vous l'avez deja"></textarea>
+
+        <details style="margin-top: 12px;">
+          <summary style="cursor: pointer; font-weight: 700;">Options avancees</summary>
+
+          <label for="webhook_file_url">Webhook fichier JSON</label>
+          <input id="webhook_file_url" name="webhook_file_url" placeholder="http://.../files.php?client=...">
+
+          <label for="webhook_raw_url">Webhook texte brut</label>
+          <input id="webhook_raw_url" name="webhook_raw_url" placeholder="https://.../token_ultimate/...">
+
+          <label for="notes">Notes</label>
+          <textarea id="notes" name="notes" placeholder="MessageId, dossier metier, remarques..."></textarea>
+
+          <label for="enabled">Statut</label>
+          <select id="enabled" name="enabled">
+            <option value="true" selected>Actif</option>
+            <option value="false">Desactive</option>
+          </select>
+        </details>
+
+        <div class="btns">
+          <button class="primary" type="submit">Creer le dossier</button>
+        </div>
+      </form>
+    </aside>
+
+    <main class="cards">
+      {% for client in clients %}
+        {% set token = client.token %}
+        {% set status_class = "warn" %}
+        {% set status_label = "A rafraichir" %}
+        {% if token and token.last_error %}
+          {% set status_class = "bad" %}
+          {% set status_label = "Erreur" %}
+        {% elif token and token.access_token and token.expires_at %}
+          {% set status_class = "ok" %}
+          {% set status_label = "Actif" %}
+        {% endif %}
+        <section class="panel client-card">
+          <div class="client-head">
+            <div>
+              <h3 style="margin: 0 0 4px 0;">{{ client.name }}</h3>
+              <div class="slug">Dossier: {{ client.slug }}</div>
+              <div class="slug">ID dossier: {{ client.folder_id or "-" }}</div>
+            </div>
+            <span class="status {{ status_class }}">{{ status_label }}</span>
+          </div>
+
+          <div class="meta">
+            <div>
+              <strong>Expiration token</strong>
+              <span>{{ token.expires_at or "inconnu" }}</span>
+            </div>
+            <div>
+              <strong>Dernier succès</strong>
+              <span>{{ token.last_success_at or "jamais" }}</span>
+            </div>
+            <div>
+              <strong>Dernière erreur</strong>
+              <span>{{ token.last_error_at or "aucune" }}</span>
+            </div>
+            <div>
+              <strong>Retour API</strong>
+              <span>{{ token.last_http_status or "-" }}</span>
+            </div>
+          </div>
+
+          <p style="color: #677489; margin: 0 0 12px 0;">
+            Action normale: coller une seule fois le refresh token, puis cliquer sur "Enregistrer".
+            Ensuite, le renouvellement est automatique.
+          </p>
+
+          <form method="post" action="/clients/{{ client.id }}/update">
+            <div class="row">
+              <div>
+                <label>Nom du client</label>
+                <input name="name" value="{{ client.name }}" required>
+              </div>
+              <div>
+                <label>ID dossier</label>
+                <input name="folder_id" value="{{ client.folder_id or '' }}" placeholder="65376">
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label>Statut</label>
+                <select name="enabled">
+                  <option value="true" {% if client.enabled %}selected{% endif %}>Actif</option>
+                  <option value="false" {% if not client.enabled %}selected{% endif %}>Desactive</option>
+                </select>
+              </div>
+            </div>
+
+            <label>Refresh token EBP</label>
+            <textarea name="refresh_token" placeholder="Collez un refresh token ici uniquement si vous voulez l'initialiser ou le remplacer"></textarea>
+
+            <div class="btns">
+              <button class="secondary" type="submit">Enregistrer le refresh token</button>
+              <a class="secondary" href="/clients/{{ client.id }}/connect-ebp" style="text-decoration:none; display:inline-flex; align-items:center;">Connexion EBP</a>
+              <button class="primary" type="submit" formaction="/clients/{{ client.id }}/refresh">Refresh OAuth2</button>
+              <button class="ghost" type="submit" formaction="/clients/{{ client.id }}/delete" onclick="return confirm('Supprimer ce client ?');">Supprimer</button>
+            </div>
+
+            <p style="color: #677489; margin: 10px 0 0 0;">
+              Si EBP autorise le callback web, le code sera lu automatiquement et les tokens seront enregistres sans copier-coller.
+            </p>
+
+            <details style="margin-top: 12px;">
+              <summary style="cursor: pointer; font-weight: 700;">Options avancees</summary>
+
+              <div class="row">
+                <div>
+                  <label>Webhook fichier JSON</label>
+                  <input name="webhook_file_url" value="{{ client.webhook_file_url or '' }}">
+                </div>
+                <div>
+                  <label>Webhook texte brut</label>
+                  <input name="webhook_raw_url" value="{{ client.webhook_raw_url or '' }}">
+                </div>
+              </div>
+
+              <label>Notes</label>
+              <textarea name="notes">{{ client.notes or '' }}</textarea>
+            </details>
+          </form>
+
+          {% if token.last_error %}
+            <label>Erreur courante</label>
+            <pre>{{ token.last_error }}</pre>
+          {% endif %}
+
+          {% if token.last_response_json %}
+            <label>Derniere reponse EBP</label>
+            <pre>{{ token.last_response_json }}</pre>
+          {% endif %}
+
+          {% if client.history %}
+            <label>Historique recent</label>
+            <div class="history">
+              <pre>{% for row in client.history[:8] %}[{{ row.created_at }}] [{{ row.source or "n/a" }}] {{ "OK" if row.success else "KO" }} - {{ row.message }}
+{% endfor %}</pre>
+            </div>
+          {% endif %}
+        </section>
+      {% else %}
+        <section class="panel">
+          <h3>Aucun dossier pour l'instant</h3>
+          <p>Creez un dossier a gauche ou ajoutez un dossier dans <code>clients/&lt;slug&gt;/client.json</code>.</p>
+        </section>
+      {% endfor %}
+    </main>
+  </section>
+
+  <section class="panel tab-panel" id="tokens-tab" style="display: none;">
+    <h2>Vue tokens</h2>
+    <p style="color: #677489;">Cette vue sert a verifier rapidement quels tokens existent, quand ils expirent, et si le refresh automatique fait bien son travail avant expiration.</p>
+
+    <div style="overflow:auto;">
+      <table style="width: 100%; border-collapse: collapse; margin-top: 12px;">
+        <thead>
+          <tr style="background: #eef4ff; text-align: left;">
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Client</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Dossier</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">ID dossier</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Statut</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Expire le</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Dernier refresh</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Access token</th>
+            <th style="padding: 12px; border-bottom: 1px solid #d7dfeb;">Refresh token</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in clients %}
+            {% set token = client.token %}
+            {% set status_class = "warn" %}
+            {% set status_label = "A rafraichir" %}
+            {% if token and token.last_error %}
+              {% set status_class = "bad" %}
+              {% set status_label = "Erreur" %}
+            {% elif token and token.access_token and token.expires_at %}
+              {% set status_class = "ok" %}
+              {% set status_label = "Actif" %}
+            {% endif %}
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8; vertical-align: top;">{{ client.name }}</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8; vertical-align: top;">{{ client.slug }}</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8; vertical-align: top;">{{ client.folder_id or "-" }}</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8; vertical-align: top;">
+                <span class="status {{ status_class }}">{{ status_label }}</span>
+              </td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8; vertical-align: top;">{{ token.expires_at or "inconnu" }}</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8; vertical-align: top;">{{ token.last_success_at or token.last_refresh_at or "jamais" }}</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8; vertical-align: top; min-width: 260px;">
+                {% if token and token.access_token %}
+                  <details>
+                    <summary style="cursor: pointer;">Voir le token</summary>
+                    <pre style="margin-top: 8px;">{{ token.access_token }}</pre>
+                  </details>
+                {% else %}
+                  <span style="color: #677489;">Aucun</span>
+                {% endif %}
+              </td>
+              <td style="padding: 12px; border-bottom: 1px solid #e7eef8; vertical-align: top; min-width: 260px;">
+                {% if token and token.refresh_token %}
+                  <details>
+                    <summary style="cursor: pointer;">Voir le token</summary>
+                    <pre style="margin-top: 8px;">{{ token.refresh_token }}</pre>
+                  </details>
+                {% else %}
+                  <span style="color: #677489;">Aucun</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="8" style="padding: 16px; color: #677489;">Aucun token pour l'instant.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <script>
+    const clock = document.getElementById("live-clock");
+    const refreshClock = () => {
+      const now = new Date();
+      clock.textContent = now.toLocaleString("fr-FR");
+    };
+    refreshClock();
+    setInterval(refreshClock, 1000);
+
+    const buttons = document.querySelectorAll(".tab-btn");
+    const panels = document.querySelectorAll(".tab-panel");
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = button.dataset.tab;
+
+        panels.forEach((panel) => {
+          panel.style.display = panel.id === target ? "" : "none";
+        });
+
+        buttons.forEach((btn) => {
+          btn.classList.remove("primary");
+          btn.classList.add("ghost");
+        });
+
+        button.classList.remove("ghost");
+        button.classList.add("primary");
+      });
+    });
+  </script>
+{% endblock %}
