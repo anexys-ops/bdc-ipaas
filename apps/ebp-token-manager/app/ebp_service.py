@@ -189,7 +189,22 @@ def should_refresh(token: TokenState) -> bool:
 
 
 def notify_webhooks(client: Client, response_json: dict[str, Any]) -> None:
-    raw_json = compact_json(response_json)
+    # Enrichir le payload avec userinfo + slug
+    payload = {
+        "slug": client.slug,
+        "userinfo": {
+            "name": client.name,
+            "slug": client.slug,
+            "folder_id": client.folder_id,
+            "ebp_user_sub": client.ebp_user_sub,
+            "ebp_code_tiers": client.ebp_code_tiers,
+            "ebp_contact_id": client.ebp_contact_id,
+            "contact_name": client.contact_name,
+            "contact_email": client.contact_email,
+        },
+        **response_json,
+    }
+    raw_json = compact_json(payload)
 
     if client.webhook_file_url:
         files = {
