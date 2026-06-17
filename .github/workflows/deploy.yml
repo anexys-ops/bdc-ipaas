@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
 
-# Un seul deploy à la fois — annule le précédent si en attente
 concurrency:
   group: production-deploy
   cancel-in-progress: true
@@ -24,16 +23,18 @@ jobs:
           script: |
             set -e
             cd /opt/bdc-ipaas
+
+            # Reset local modifications, then pull
+            git checkout -- .
             git pull origin main
 
-            # ── Debug HOST nginx config ────────────────────────────────────────
+            # ── Debug HOST nginx ───────────────────────────────────────────────
             echo "=== HOST nginx sites-enabled ==="
             ls /etc/nginx/sites-enabled/ 2>/dev/null || echo "(aucun)"
-            echo "=== Recherche config ultimate.edicloud.app ==="
-            grep -r "ultimate.edicloud.app\|root\|try_files\|proxy_pass" \
+            grep -r "ultimate.edicloud.app\|root \|try_files\|proxy_pass" \
               /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null | head -30 || true
 
-            # ── Rebuild images ─────────────────────────────────────────────────
+            # ── Rebuild ────────────────────────────────────────────────────────
             cd docker
             docker compose -f docker-compose.prod.yml build --no-cache frontend api
             echo "✅ Build terminé"
@@ -50,11 +51,5 @@ jobs:
 
             echo "=== docker ps ==="
             docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' | head -12
-
-            echo "=== Test llms.txt (local) ==="
-            curl -sI http://localhost:8080/llms.txt 2>/dev/null | head -5 || \
-            curl -sI http://localhost:80/llms.txt 2>/dev/null | head -5 || \
-            curl -sI http://localhost/llms.txt 2>/dev/null | head -5 || \
-            echo "(pas de port 80/8080 accessible)"
 
             echo "Deploy done: $(date)"
