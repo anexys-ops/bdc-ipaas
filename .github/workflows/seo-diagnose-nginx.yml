@@ -1,0 +1,37 @@
+name: SEO Diagnose Nginx Host
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Diagnose host nginx
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 60s
+          script: |
+            export PATH="$PATH:/usr/sbin:/usr/local/sbin:/sbin"
+            echo "=== nginx binary ==="
+            which nginx 2>/dev/null || find /usr /sbin -name nginx 2>/dev/null | head -3
+            echo "=== nginx version ==="
+            /usr/sbin/nginx -v 2>&1 || nginx -v 2>&1 || echo "not found at /usr/sbin"
+            echo "=== systemctl nginx ==="
+            systemctl status nginx 2>&1 | head -5 || true
+            echo "=== /etc/nginx/ ==="
+            ls /etc/nginx/ 2>/dev/null || echo "no /etc/nginx"
+            echo "=== /etc/nginx/conf.d ==="
+            ls /etc/nginx/conf.d/ 2>/dev/null || echo "no conf.d"
+            echo "=== /etc/nginx/sites-available ==="
+            ls /etc/nginx/sites-available/ 2>/dev/null || echo "no sites-available"
+            echo "=== nginx.conf includes ==="
+            grep include /etc/nginx/nginx.conf 2>/dev/null || true
+            echo "=== ports listening ==="
+            ss -tlnp | grep -E ':80|:443' || netstat -tlnp | grep -E ':80|:443' || true
+            echo "=== docker ps (all) ==="
+            docker ps -a --format "{{.Names}}\t{{.Status}}" | head -15
