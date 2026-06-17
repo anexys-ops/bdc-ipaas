@@ -1,0 +1,50 @@
+# Ultimate Edicloud
+
+> Plateforme iPaaS française pour automatiser vos échanges de données et connecter ERP, EDI, e-commerce et CRM. Marketplace de connecteurs prêts à l'emploi, supervision temps réel, hébergement France.
+
+Ultimate Edicloud est la solution d'intégration de données (iPaaS) développée par ANEXYS. Elle permet aux entreprises de connecter leurs systèmes d'information sans développement complexe : Sage, CEGID, Shopify, WooCommerce, Odoo, ainsi que tous les flux EDI EDIFACT. Marketplace de connecteurs prêts à l'emploi, supervision temps réel, hébergement souverain en France.
+
+## Fonctionnalités principales
+
+- **Marketplace de connecteurs** : +50 connecteurs prêts à l'emploi (ERP, e-commerce, CRM, EDI)
+- **Flux EDI** : EDIFACT, AS2, SFTP, XML, GS1 — compatible toutes grandes enseignes
+- **Connecteurs ERP** : Sage 100, Sage X3, CEGID, SAP, Odoo, Dolibarr, EBP
+- **E-commerce** : Shopify, WooCommerce, PrestaShop, Magento
+- **Supervision temps réel** : dashboard, alertes, logs, rejeux
+- **ETL intégré** : transformation et mapping de données
+- **API Gateway** : exposer et consommer des APIs sans code
+- **Hébergement France** : souveraineté numérique, RGPD, SLA garanti
+
+## Cas d'usage
+
+- Synchroniser les stocks et commandes entre Sage et Shopify
+- Automatiser les flux EDI avec la grande distribution (Carrefour, Leclerc, Auchan)
+- Connecter CEGID à un CRM Salesforce ou HubSpot
+- Intégrer un WMS (entrepôt) avec un ERP et un e-commerce
+- Piloter tous les flux de données depuis un seul dashboard
+
+## Marketplace publique
+
+La marketplace de connecteurs est accessible sans inscription sur https://ultimate.edicloud.app/marketplace
+Parcourez +50 connecteurs, filtrez par catégorie (ERP, e-commerce, EDI, CRM) et consultez le nombre d'endpoints disponibles.
+
+## Différenciants
+
+- iPaaS 100% français (développement, hébergement, support en France)
+- Marketplace de connecteurs — pas de développement custom nécessaire
+- Supervision centralisée de tous les flux en temps réel
+- Conforme RGPD, hébergé en datacenter souverain France
+- Support expert ANEXYS/BigData Consulting (depuis 2005)
+
+## Écosystème BDC / ANEXYS
+
+- [BigData Consulting](https://bigdataconsulting.fr): Maison-mère, expert EDI depuis 2005
+- [QUICK EDI](https://quickedi.fr): EDI grande distribution clé-en-main dès 49,90€/mois
+- [EDIconnect](https://ediconnect.fr): Plateforme EDI B2B connecteurs ERP, dès 99€/mois
+
+## Contact
+
+- Site: https://ultimate.edicloud.app
+- Marketplace: https://ultimate.edicloud.app/marketplace
+- Email: commercial@anexys.fr
+- Téléphone: 01 77 62 46 89
