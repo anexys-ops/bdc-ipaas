@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
 
+# Un seul deploy à la fois — annule le précédent si en attente
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,25 +22,39 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           command_timeout: 20m
           script: |
+            set -e
             cd /opt/bdc-ipaas
             git pull origin main
 
+            # ── Debug HOST nginx config ────────────────────────────────────────
+            echo "=== HOST nginx sites-enabled ==="
+            ls /etc/nginx/sites-enabled/ 2>/dev/null || echo "(aucun)"
+            echo "=== Recherche config ultimate.edicloud.app ==="
+            grep -r "ultimate.edicloud.app\|root\|try_files\|proxy_pass" \
+              /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null | head -30 || true
+
+            # ── Rebuild images ─────────────────────────────────────────────────
             cd docker
-
-            # ── Rebuild images ──────────────────────────────────────────────
             docker compose -f docker-compose.prod.yml build --no-cache frontend api
+            echo "✅ Build terminé"
 
-            # ── Supprimer les containers existants (ex-projet différent) ────
-            # docker rm -f ignore l'erreur si le container n'existe pas
+            # ── Supprimer containers (bypass conflit de projet) ────────────────
             docker rm -f anexys-nginx    2>/dev/null || true
             docker rm -f anexys-frontend 2>/dev/null || true
             docker rm -f anexys-api      2>/dev/null || true
             echo "🗑️  Containers supprimés"
 
-            # ── Recréer avec la nouvelle config/images ──────────────────────
-            docker compose -f docker-compose.prod.yml up -d --no-deps nginx
-            docker compose -f docker-compose.prod.yml up -d --no-deps frontend
-            docker compose -f docker-compose.prod.yml up -d --no-deps api
+            # ── Recréer ────────────────────────────────────────────────────────
+            docker compose -f docker-compose.prod.yml up -d --no-deps nginx frontend api
+            echo "✅ Containers relancés"
+
+            echo "=== docker ps ==="
+            docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' | head -12
+
+            echo "=== Test llms.txt (local) ==="
+            curl -sI http://localhost:8080/llms.txt 2>/dev/null | head -5 || \
+            curl -sI http://localhost:80/llms.txt 2>/dev/null | head -5 || \
+            curl -sI http://localhost/llms.txt 2>/dev/null | head -5 || \
+            echo "(pas de port 80/8080 accessible)"
 
             echo "Deploy done: $(date)"
-            docker ps --format 'table {{.Names}}\t{{.Status}}' | head -12
