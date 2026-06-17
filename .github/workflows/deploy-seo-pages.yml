@@ -1,21 +1,141 @@
-name: SEO Deploy Test
+name: Deploy SEO Pages
+
 on:
-  push:
-    paths: ['seo-pages/nginx/**']
   workflow_dispatch:
+
 jobs:
-  test:
+  deploy-seo:
     runs-on: ubuntu-latest
     steps:
-      - name: Test SSH connection
+      - name: Deploy 20 SEO landing pages via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 60s
+          command_timeout: 300s
           script: |
-            echo "SSH connected to $(hostname)"
-            echo "nginx version: $(nginx -v 2>&1)"
-            ls /opt/bdc-ipaas/ | head -5
+            export PATH="$PATH:/usr/sbin:/usr/local/sbin:/sbin"
+            set -e
+            echo "=== 1. Git pull ==="
+            cd /opt/bdc-ipaas && git pull origin main
+
+            echo "=== 2. Create web roots ==="
+            mkdir -p /var/www/connecteurs/ebp-dolibarr.ediconnect.fr
+            mkdir -p /var/www/connecteurs/sage-dolibarr.ediconnect.fr
+            mkdir -p /var/www/connecteurs/cegid-dolibarr.ediconnect.fr
+            mkdir -p /var/www/connecteurs/odoo-dolibarr.ediconnect.fr
+            mkdir -p /var/www/connecteurs/sap-dolibarr.ediconnect.fr
+            mkdir -p /var/www/connecteurs/quickbooks-dolibarr.ediconnect.fr
+            mkdir -p /var/www/connecteurs/ebp-odoo.ediconnect.fr
+            mkdir -p /var/www/connecteurs/sage-odoo.ediconnect.fr
+            mkdir -p /var/www/connecteurs/cegid-odoo.ediconnect.fr
+            mkdir -p /var/www/connecteurs/prestashop-dolibarr.shopconnect.fr
+            mkdir -p /var/www/connecteurs/woocommerce-dolibarr.shopconnect.fr
+            mkdir -p /var/www/connecteurs/shopify-dolibarr.shopconnect.fr
+            mkdir -p /var/www/connecteurs/magento-dolibarr.shopconnect.fr
+            mkdir -p /var/www/connecteurs/prestashop-odoo.shopconnect.fr
+            mkdir -p /var/www/connecteurs/woocommerce-odoo.shopconnect.fr
+            mkdir -p /var/www/connecteurs/shopify-odoo.shopconnect.fr
+            mkdir -p /var/www/connecteurs/dolibarr.taskit.fr
+            mkdir -p /var/www/connecteurs/odoo.taskit.fr
+            mkdir -p /var/www/connecteurs/ebp.taskit.fr
+            mkdir -p /var/www/connecteurs/sage.taskit.fr
+
+            echo "=== 3. Copy HTML files ==="
+            cp /opt/bdc-ipaas/seo-pages/connecteur-ebp-dolibarr.html /var/www/connecteurs/ebp-dolibarr.ediconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/connecteur-sage-dolibarr.html /var/www/connecteurs/sage-dolibarr.ediconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/connecteur-cegid-dolibarr.html /var/www/connecteurs/cegid-dolibarr.ediconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/connecteur-odoo-dolibarr.html /var/www/connecteurs/odoo-dolibarr.ediconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/connecteur-sap-dolibarr.html /var/www/connecteurs/sap-dolibarr.ediconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/connecteur-quickbooks-dolibarr.html /var/www/connecteurs/quickbooks-dolibarr.ediconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/connecteur-ebp-odoo.html /var/www/connecteurs/ebp-odoo.ediconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/connecteur-sage-odoo.html /var/www/connecteurs/sage-odoo.ediconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/connecteur-cegid-odoo.html /var/www/connecteurs/cegid-odoo.ediconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/shopconnect-prestashop-dolibarr.html /var/www/connecteurs/prestashop-dolibarr.shopconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/shopconnect-woocommerce-dolibarr.html /var/www/connecteurs/woocommerce-dolibarr.shopconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/shopconnect-shopify-dolibarr.html /var/www/connecteurs/shopify-dolibarr.shopconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/shopconnect-magento-dolibarr.html /var/www/connecteurs/magento-dolibarr.shopconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/shopconnect-prestashop-odoo.html /var/www/connecteurs/prestashop-odoo.shopconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/shopconnect-woocommerce-odoo.html /var/www/connecteurs/woocommerce-odoo.shopconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/shopconnect-shopify-odoo.html /var/www/connecteurs/shopify-odoo.shopconnect.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/taskit-dolibarr.html /var/www/connecteurs/dolibarr.taskit.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/taskit-odoo.html /var/www/connecteurs/odoo.taskit.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/taskit-ebp.html /var/www/connecteurs/ebp.taskit.fr/index.html
+            cp /opt/bdc-ipaas/seo-pages/taskit-sage.html /var/www/connecteurs/sage.taskit.fr/index.html
+
+            echo "=== 4. Install nginx vhosts ==="
+            cp /opt/bdc-ipaas/seo-pages/nginx/ebp-dolibarr.ediconnect.fr /etc/nginx/sites-available/ebp-dolibarr.ediconnect.fr
+            ln -sf /etc/nginx/sites-available/ebp-dolibarr.ediconnect.fr /etc/nginx/sites-enabled/ebp-dolibarr.ediconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/sage-dolibarr.ediconnect.fr /etc/nginx/sites-available/sage-dolibarr.ediconnect.fr
+            ln -sf /etc/nginx/sites-available/sage-dolibarr.ediconnect.fr /etc/nginx/sites-enabled/sage-dolibarr.ediconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/cegid-dolibarr.ediconnect.fr /etc/nginx/sites-available/cegid-dolibarr.ediconnect.fr
+            ln -sf /etc/nginx/sites-available/cegid-dolibarr.ediconnect.fr /etc/nginx/sites-enabled/cegid-dolibarr.ediconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/odoo-dolibarr.ediconnect.fr /etc/nginx/sites-available/odoo-dolibarr.ediconnect.fr
+            ln -sf /etc/nginx/sites-available/odoo-dolibarr.ediconnect.fr /etc/nginx/sites-enabled/odoo-dolibarr.ediconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/sap-dolibarr.ediconnect.fr /etc/nginx/sites-available/sap-dolibarr.ediconnect.fr
+            ln -sf /etc/nginx/sites-available/sap-dolibarr.ediconnect.fr /etc/nginx/sites-enabled/sap-dolibarr.ediconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/quickbooks-dolibarr.ediconnect.fr /etc/nginx/sites-available/quickbooks-dolibarr.ediconnect.fr
+            ln -sf /etc/nginx/sites-available/quickbooks-dolibarr.ediconnect.fr /etc/nginx/sites-enabled/quickbooks-dolibarr.ediconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/ebp-odoo.ediconnect.fr /etc/nginx/sites-available/ebp-odoo.ediconnect.fr
+            ln -sf /etc/nginx/sites-available/ebp-odoo.ediconnect.fr /etc/nginx/sites-enabled/ebp-odoo.ediconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/sage-odoo.ediconnect.fr /etc/nginx/sites-available/sage-odoo.ediconnect.fr
+            ln -sf /etc/nginx/sites-available/sage-odoo.ediconnect.fr /etc/nginx/sites-enabled/sage-odoo.ediconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/cegid-odoo.ediconnect.fr /etc/nginx/sites-available/cegid-odoo.ediconnect.fr
+            ln -sf /etc/nginx/sites-available/cegid-odoo.ediconnect.fr /etc/nginx/sites-enabled/cegid-odoo.ediconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/prestashop-dolibarr.shopconnect.fr /etc/nginx/sites-available/prestashop-dolibarr.shopconnect.fr
+            ln -sf /etc/nginx/sites-available/prestashop-dolibarr.shopconnect.fr /etc/nginx/sites-enabled/prestashop-dolibarr.shopconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/woocommerce-dolibarr.shopconnect.fr /etc/nginx/sites-available/woocommerce-dolibarr.shopconnect.fr
+            ln -sf /etc/nginx/sites-available/woocommerce-dolibarr.shopconnect.fr /etc/nginx/sites-enabled/woocommerce-dolibarr.shopconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/shopify-dolibarr.shopconnect.fr /etc/nginx/sites-available/shopify-dolibarr.shopconnect.fr
+            ln -sf /etc/nginx/sites-available/shopify-dolibarr.shopconnect.fr /etc/nginx/sites-enabled/shopify-dolibarr.shopconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/magento-dolibarr.shopconnect.fr /etc/nginx/sites-available/magento-dolibarr.shopconnect.fr
+            ln -sf /etc/nginx/sites-available/magento-dolibarr.shopconnect.fr /etc/nginx/sites-enabled/magento-dolibarr.shopconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/prestashop-odoo.shopconnect.fr /etc/nginx/sites-available/prestashop-odoo.shopconnect.fr
+            ln -sf /etc/nginx/sites-available/prestashop-odoo.shopconnect.fr /etc/nginx/sites-enabled/prestashop-odoo.shopconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/woocommerce-odoo.shopconnect.fr /etc/nginx/sites-available/woocommerce-odoo.shopconnect.fr
+            ln -sf /etc/nginx/sites-available/woocommerce-odoo.shopconnect.fr /etc/nginx/sites-enabled/woocommerce-odoo.shopconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/shopify-odoo.shopconnect.fr /etc/nginx/sites-available/shopify-odoo.shopconnect.fr
+            ln -sf /etc/nginx/sites-available/shopify-odoo.shopconnect.fr /etc/nginx/sites-enabled/shopify-odoo.shopconnect.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/dolibarr.taskit.fr /etc/nginx/sites-available/dolibarr.taskit.fr
+            ln -sf /etc/nginx/sites-available/dolibarr.taskit.fr /etc/nginx/sites-enabled/dolibarr.taskit.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/odoo.taskit.fr /etc/nginx/sites-available/odoo.taskit.fr
+            ln -sf /etc/nginx/sites-available/odoo.taskit.fr /etc/nginx/sites-enabled/odoo.taskit.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/ebp.taskit.fr /etc/nginx/sites-available/ebp.taskit.fr
+            ln -sf /etc/nginx/sites-available/ebp.taskit.fr /etc/nginx/sites-enabled/ebp.taskit.fr
+            cp /opt/bdc-ipaas/seo-pages/nginx/sage.taskit.fr /etc/nginx/sites-available/sage.taskit.fr
+            ln -sf /etc/nginx/sites-available/sage.taskit.fr /etc/nginx/sites-enabled/sage.taskit.fr
+
+            echo "=== 5. Test & reload nginx ==="
+            nginx -t && systemctl reload nginx || service nginx reload
+
+            echo "=== 6. Request SSL certificates ==="
+            certbot certonly --nginx --non-interactive --agree-tos \
+              -m commercial@anexys.fr \
+              -d ebp-dolibarr.ediconnect.fr \
+              -d sage-dolibarr.ediconnect.fr \
+              -d cegid-dolibarr.ediconnect.fr \
+              -d odoo-dolibarr.ediconnect.fr \
+              -d sap-dolibarr.ediconnect.fr \
+              -d quickbooks-dolibarr.ediconnect.fr \
+              -d ebp-odoo.ediconnect.fr \
+              -d sage-odoo.ediconnect.fr \
+              -d cegid-odoo.ediconnect.fr \
+              -d prestashop-dolibarr.shopconnect.fr \
+              -d woocommerce-dolibarr.shopconnect.fr \
+              -d shopify-dolibarr.shopconnect.fr \
+              -d magento-dolibarr.shopconnect.fr \
+              -d prestashop-odoo.shopconnect.fr \
+              -d woocommerce-odoo.shopconnect.fr \
+              -d shopify-odoo.shopconnect.fr \
+              -d dolibarr.taskit.fr \
+              -d odoo.taskit.fr \
+              -d ebp.taskit.fr \
+              -d sage.taskit.fr \
+              2>&1 | tail -5 || echo "certbot: will retry on next run"
+
+            echo "=== 7. Reload nginx with SSL ==="
+            nginx -t && systemctl reload nginx || true
+
+            echo "=== DONE ===" && date
