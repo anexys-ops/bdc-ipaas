@@ -22,15 +22,20 @@ jobs:
 
             cd docker
 
-            # Rebuild uniquement le frontend (inclut llms.txt depuis public/)
-            docker compose -f docker-compose.prod.yml build --no-cache frontend
+            # ── Rebuild images ──────────────────────────────────────────────
+            docker compose -f docker-compose.prod.yml build --no-cache frontend api
 
-            # Recréer uniquement le frontend sans toucher aux autres services
-            docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps frontend
+            # ── Supprimer les containers existants (ex-projet différent) ────
+            # docker rm -f ignore l'erreur si le container n'existe pas
+            docker rm -f anexys-nginx    2>/dev/null || true
+            docker rm -f anexys-frontend 2>/dev/null || true
+            docker rm -f anexys-api      2>/dev/null || true
+            echo "🗑️  Containers supprimés"
 
-            # Rebuild et recréer l'api si nécessaire
-            docker compose -f docker-compose.prod.yml build --no-cache api
-            docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps api
+            # ── Recréer avec la nouvelle config/images ──────────────────────
+            docker compose -f docker-compose.prod.yml up -d --no-deps nginx
+            docker compose -f docker-compose.prod.yml up -d --no-deps frontend
+            docker compose -f docker-compose.prod.yml up -d --no-deps api
 
             echo "Deploy done: $(date)"
-            docker ps --format 'table {{.Names}}\t{{.Status}}' | head -10
+            docker ps --format 'table {{.Names}}\t{{.Status}}' | head -12
