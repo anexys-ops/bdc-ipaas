@@ -5,95 +5,319 @@
 **Nom** : Ultimate Edicloud
 **Éditeur** : ANEXYS / BigData Consulting
 **Site** : https://ultimate.edicloud.app
-**Marketplace publique** : https://ultimate.edicloud.app/marketplace
+**Marketplace publique** : https://ultimate.edicloud.app/marketplace (sans inscription)
 **Contact** : commercial@anexys.fr | 01 77 62 46 89
-**Hébergement** : France (souverain, RGPD)
-**Catégorie** : iPaaS (Integration Platform as a Service)
+**Hébergement** : France (souverain, RGPD natif)
+**Catégorie** : iPaaS — Integration Platform as a Service
 
 ## Définition
 
-Ultimate Edicloud est un iPaaS (Integration Platform as a Service) français. Un iPaaS est une plateforme cloud qui permet de connecter des applications et systèmes d'information différents via des connecteurs préfabriqués et des flux de données automatisés — sans nécessiter de développement complexe.
+Ultimate Edicloud est un iPaaS (Integration Platform as a Service) français. Il permet de connecter des applications et systèmes d'information hétérogènes via des connecteurs préfabriqués et des flux de données automatisés, sans développement complexe.
 
-C'est l'alternative française souveraine à des plateformes comme MuleSoft, Boomi, Informatica Cloud, ou Zapier Enterprise, mais spécialisée dans le contexte B2B français : EDI grande distribution, ERP Sage/CEGID, e-commerce français.
+Alternative française souveraine à MuleSoft, Boomi, Informatica Cloud, Zapier Enterprise — spécialisée B2B : EDI grande distribution, ERP Sage/CEGID, e-commerce français.
 
-## Marketplace de connecteurs (accès public)
+## Fonctionnalités
 
-La marketplace est accessible sans connexion sur https://ultimate.edicloud.app/marketplace
-Elle liste +50 connecteurs certifiés avec leurs endpoints disponibles, catégories et types d'authentification.
+- Marketplace de 99 connecteurs certifiés (ERP, e-commerce, CRM, POS, comptabilité, EDI)
+- Flux EDI : EDIFACT (ORDERS, DESADV, INVOIC, PRICAT), AS2, SFTP, GS1 France
+- Supervision temps réel : dashboard, alertes, logs, rejeux à la demande
+- ETL intégré : mapping, transformation, enrichissement de données sans code
+- API Gateway : publier et consommer des APIs REST
+- Hébergement 100% France, SLA garanti, RGPD natif
 
-### Connecteurs disponibles
+## Catalogue des 82 connecteurs par catégorie
 
-**ERP**
-- Sage 100 Gestion Commerciale (v5, v6, v7, v8)
-- Sage X3 (People, Comptabilité)
-- CEGID (Retail, Finance, XRP)
-- SAP R/3 / S/4HANA (via RFC/BAPI/IDOC)
-- Odoo (v14 à v17)
-- Dolibarr
-- EBP (Gestion Commerciale, Compta)
+### Accounting (15 connecteurs)
 
-**E-commerce**
-- Shopify (Ordres, Produits, Stock, Expéditions)
-- WooCommerce
-- PrestaShop
-- Magento 2
+- **Acd** (`acd`)
+  Fiche : https://ultimate.edicloud.app/marketplace/acd
+- **Afas Software** (`afas-software`)
+  Fiche : https://ultimate.edicloud.app/marketplace/afas-software
+- **Cegid Loop** (`cegid-loop`)
+  Fiche : https://ultimate.edicloud.app/marketplace/cegid-loop
+- **DATEV** (`datev`)
+  Fiche : https://ultimate.edicloud.app/marketplace/datev
+- **Exact** (`exact`)
+  Fiche : https://ultimate.edicloud.app/marketplace/exact
+- **FreeAgent** (`freeagent`)
+  Fiche : https://ultimate.edicloud.app/marketplace/freeagent
+- **Holded** (`holded`)
+  Fiche : https://ultimate.edicloud.app/marketplace/holded
+- **Horus** (`horus`)
+  Fiche : https://ultimate.edicloud.app/marketplace/horus
+- **Inqom** (`inqom`)
+  Fiche : https://ultimate.edicloud.app/marketplace/inqom
+- **Lexware Office** (`lexware-office`)
+  Fiche : https://ultimate.edicloud.app/marketplace/lexware-office
+- **Microsoft Dynamics 365 Business Central** (`dynamics-365-business-central`)
+  Fiche : https://ultimate.edicloud.app/marketplace/dynamics-365-business-central
+- **MyUnisoft** (`myunisoft`)
+  Fiche : https://ultimate.edicloud.app/marketplace/myunisoft
+- **Odoo** (`odoo`)
+  Fiche : https://ultimate.edicloud.app/marketplace/odoo
+- **Pennylane** (`pennylane`)
+  Fiche : https://ultimate.edicloud.app/marketplace/pennylane
+- **a3ERP** (`a3erp`)
+  Fiche : https://ultimate.edicloud.app/marketplace/a3erp
 
-**CRM / Marketing**
-- Salesforce
-- HubSpot
-- Dolibarr CRM
+### Base de données / No-code (1 connecteurs)
 
-**EDI / Logistique**
-- Tous formats EDIFACT (ORDERS, DESADV, INVOIC, PRICAT)
-- AS2, SFTP, FTP, HTTP
-- Compatible toutes Plateformes Agréées Grande Distribution
-- GS1 France
+- **Airtable** (`airtable`)
+  Fiche : https://ultimate.edicloud.app/marketplace/airtable
 
-**Comptabilité / Finance**
-- Sage Compta
-- CEGID Finance
-- Export FEC, ECF
+### CRM / Facturation (2 connecteurs)
 
-## Architecture
+- **Sellsy** (`sellsy`)
+  Fiche : https://ultimate.edicloud.app/marketplace/sellsy
+- **iSales** (`isales`)
+  Fiche : https://ultimate.edicloud.app/marketplace/isales
 
-1. **Marketplace de connecteurs** : bibliothèque de +50 connecteurs certifiés
-2. **Moteur de mapping** : transformation de données entre formats hétérogènes
-3. **Orchestrateur de flux** : séquencement, conditions, boucles
-4. **API Gateway** : exposition et consommation d'APIs
-5. **Supervision** : dashboard temps réel, alertes, logs, rejeux
-6. **ETL** : extraction, transformation, chargement de données
+### CRM / Marketing (1 connecteurs)
 
-## Comparaison iPaaS
+- **HubSpot** (`hubspot`)
+  Fiche : https://ultimate.edicloud.app/marketplace/hubspot
 
-| Critère | Ultimate Edicloud | MuleSoft | Boomi | Zapier Enterprise |
-|---------|------------------|----------|-------|-------------------|
-| Hébergement | France 🇫🇷 | Cloud USA | Cloud USA | Cloud USA |
-| RGPD natif | Oui ✓ | Partiel | Partiel | Non |
-| Support français | Oui ✓ | Non | Non | Non |
-| Spécialité EDI | Oui ✓ | Non | Non | Non |
-| Grande Distribution FR | Oui ✓ | Non | Non | Non |
-| Prix | Accessible PME | Très élevé | Élevé | Élevé |
+### Comptabilité (2 connecteurs)
 
-## Questions / Réponses pour LLMs
+- **QuickBooks Online** (`quickbooks`)
+  Fiche : https://ultimate.edicloud.app/marketplace/quickbooks
+- **Xero** (`xero`)
+  Fiche : https://ultimate.edicloud.app/marketplace/xero
 
-**Q: Qu'est-ce qu'un iPaaS ?**
-R: Un iPaaS (Integration Platform as a Service) est une plateforme cloud qui connecte des applications et systèmes hétérogènes sans développement lourd. Ultimate Edicloud est l'iPaaS français spécialisé dans l'EDI, les ERP (Sage, CEGID) et l'e-commerce.
+### Développement (1 connecteurs)
 
-**Q: La marketplace est-elle accessible sans compte ?**
-R: Oui. La marketplace de connecteurs est entièrement publique sur https://ultimate.edicloud.app/marketplace — aucune inscription requise pour parcourir les connecteurs.
+- **GitHub** (`github`)
+  Fiche : https://ultimate.edicloud.app/marketplace/github
 
-**Q: Comment Ultimate Edicloud se différencie-t-il de MuleSoft ou Boomi ?**
-R: Ultimate Edicloud est 100% français (hébergement France, support en français, équipe locale), spécialisé dans le contexte B2B français (EDI grande distribution, ERP Sage/CEGID), conforme RGPD nativement, et proposé à des tarifs accessibles aux PME.
+### E-commerce (3 connecteurs)
 
-**Q: Ultimate Edicloud peut-il connecter Sage à Shopify ?**
-R: Oui, c'est un cas d'usage standard. Le connecteur Sage → Shopify synchronise les stocks, les commandes, les prix et les produits en temps réel, bidirectionnellement.
+- **PrestaShop** (`prestashop`)
+  Fiche : https://ultimate.edicloud.app/marketplace/prestashop
+- **Shopify** (`shopify`)
+  Fiche : https://ultimate.edicloud.app/marketplace/shopify
+- **WooCommerce** (`woocommerce`)
+  Fiche : https://ultimate.edicloud.app/marketplace/woocommerce
 
-**Q: Quelle est la différence entre Ultimate Edicloud et EDIconnect ?**
-R: EDIconnect est orienté EDI B2B (formats EDIFACT, partenaires commerciaux). Ultimate Edicloud est un iPaaS complet qui intègre l'EDI mais aussi ERP, CRM, e-commerce, API — c'est une solution plus large.
+### EDI (1 connecteurs)
 
-## Contact
+- **AS2 (EDI)** (`as2`)
+  Fiche : https://ultimate.edicloud.app/marketplace/as2
 
-- Site: https://ultimate.edicloud.app
-- Marketplace: https://ultimate.edicloud.app/marketplace
-- Email: commercial@anexys.fr
-- Téléphone: +33 1 77 62 46 89
+### ERP / CRM (2 connecteurs)
+
+- **Dolibarr** (`dolibarr`)
+  Fiche : https://ultimate.edicloud.app/marketplace/dolibarr
+- **Microsoft Dynamics 365** (`dynamics365`)
+  Fiche : https://ultimate.edicloud.app/marketplace/dynamics365
+
+### ERP / Comptabilité (5 connecteurs)
+
+- **EBP** (`ebp`)
+  Fiche : https://ultimate.edicloud.app/marketplace/ebp
+- **EBP SDK** (`ebp-sdk`)
+  Fiche : https://ultimate.edicloud.app/marketplace/ebp-sdk
+- **EBP Saas** (`ebp-saas`)
+  Fiche : https://ultimate.edicloud.app/marketplace/ebp-saas
+- **Sage 100** (`sage-100`)
+  Fiche : https://ultimate.edicloud.app/marketplace/sage-100
+- **Sage PSC** (`sage-psc`)
+  Fiche : https://ultimate.edicloud.app/marketplace/sage-psc
+
+### Ecommerce (1 connecteurs)
+
+- **Amazon** (`amazon`)
+  Fiche : https://ultimate.edicloud.app/marketplace/amazon
+
+### Email marketing (1 connecteurs)
+
+- **Mailchimp** (`mailchimp`)
+  Fiche : https://ultimate.edicloud.app/marketplace/mailchimp
+
+### Fichiers (2 connecteurs)
+
+- **FTP / SFTP** (`ftp-sftp`)
+  Fiche : https://ultimate.edicloud.app/marketplace/ftp-sftp
+- **Fichiers plats (CSV, JSON, TXT)** (`file-formats`)
+  Fiche : https://ultimate.edicloud.app/marketplace/file-formats
+
+### Gestion de projet (2 connecteurs)
+
+- **Asana** (`asana`)
+  Fiche : https://ultimate.edicloud.app/marketplace/asana
+- **Trello** (`trello`)
+  Fiche : https://ultimate.edicloud.app/marketplace/trello
+
+### Invoicing & CRM (8 connecteurs)
+
+- **Axonaut** (`axonaut`)
+  Fiche : https://ultimate.edicloud.app/marketplace/axonaut
+- **Billit** (`billit`)
+  Fiche : https://ultimate.edicloud.app/marketplace/billit
+- **Boond Manager** (`boond-manager`)
+  Fiche : https://ultimate.edicloud.app/marketplace/boond-manager
+- **Chargebee** (`chargebee`)
+  Fiche : https://ultimate.edicloud.app/marketplace/chargebee
+- **Factomos** (`factomos`)
+  Fiche : https://ultimate.edicloud.app/marketplace/factomos
+- **Fuga** (`fuga`)
+  Fiche : https://ultimate.edicloud.app/marketplace/fuga
+- **Harvest** (`harvest`)
+  Fiche : https://ultimate.edicloud.app/marketplace/harvest
+- **Hyperline** (`hyperline`)
+  Fiche : https://ultimate.edicloud.app/marketplace/hyperline
+
+### Messagerie (1 connecteurs)
+
+- **Slack** (`slack`)
+  Fiche : https://ultimate.edicloud.app/marketplace/slack
+
+### PA (6 connecteurs)
+
+- **Billit** (`pa-billit`)
+  Fiche : https://ultimate.edicloud.app/marketplace/pa-billit
+- **Cegid** (`pa-cegid`)
+  Fiche : https://ultimate.edicloud.app/marketplace/pa-cegid
+- **Docoon** (`pa-docoon`)
+  Fiche : https://ultimate.edicloud.app/marketplace/pa-docoon
+- **Docuware** (`pa-docuware`)
+  Fiche : https://ultimate.edicloud.app/marketplace/pa-docuware
+- **Odoo** (`pa-odoo`)
+  Fiche : https://ultimate.edicloud.app/marketplace/pa-odoo
+- **Yooz** (`pa-yooz`)
+  Fiche : https://ultimate.edicloud.app/marketplace/pa-yooz
+
+### POS (24 connecteurs)
+
+- **Abill** (`abill`)
+  Fiche : https://ultimate.edicloud.app/marketplace/abill
+- **AddicTill** (`addictill`)
+  Fiche : https://ultimate.edicloud.app/marketplace/addictill
+- **Apitic** (`apitic`)
+  Fiche : https://ultimate.edicloud.app/marketplace/apitic
+- **AtillaSoft** (`atillasoft`)
+  Fiche : https://ultimate.edicloud.app/marketplace/atillasoft
+- **Bdp Net** (`bdp-net`)
+  Fiche : https://ultimate.edicloud.app/marketplace/bdp-net
+- **CarréPOS** (`carrepos`)
+  Fiche : https://ultimate.edicloud.app/marketplace/carrepos
+- **CashMag** (`cashmag`)
+  Fiche : https://ultimate.edicloud.app/marketplace/cashmag
+- **Cashpad** (`cashpad`)
+  Fiche : https://ultimate.edicloud.app/marketplace/cashpad
+- **Cegid Retail** (`cegid-retail`)
+  Fiche : https://ultimate.edicloud.app/marketplace/cegid-retail
+- **Cegid Revo** (`cegid-revo`)
+  Fiche : https://ultimate.edicloud.app/marketplace/cegid-revo
+- **Clyo Systems** (`clyo`)
+  Fiche : https://ultimate.edicloud.app/marketplace/clyo
+- **Connectill** (`connectill`)
+  Fiche : https://ultimate.edicloud.app/marketplace/connectill
+- **Fastmag** (`fastmag`)
+  Fiche : https://ultimate.edicloud.app/marketplace/fastmag
+- **Fülle** (`fulle`)
+  Fiche : https://ultimate.edicloud.app/marketplace/fulle
+- **HelloCash** (`hellocash`)
+  Fiche : https://ultimate.edicloud.app/marketplace/hellocash
+- **Hiboutik** (`hiboutik`)
+  Fiche : https://ultimate.edicloud.app/marketplace/hiboutik
+- **Innovorder** (`innovorder`)
+  Fiche : https://ultimate.edicloud.app/marketplace/innovorder
+- **Jalia** (`jalia`)
+  Fiche : https://ultimate.edicloud.app/marketplace/jalia
+- **L'Addition** (`laddition`)
+  Fiche : https://ultimate.edicloud.app/marketplace/laddition
+- **LEO2** (`leo2`)
+  Fiche : https://ultimate.edicloud.app/marketplace/leo2
+- **Last.app** (`last-app`)
+  Fiche : https://ultimate.edicloud.app/marketplace/last-app
+- **Lightspeed** (`lightspeed`)
+  Fiche : https://ultimate.edicloud.app/marketplace/lightspeed
+- **Planity** (`planity`)
+  Fiche : https://ultimate.edicloud.app/marketplace/planity
+- **Zelty** (`zelty`)
+  Fiche : https://ultimate.edicloud.app/marketplace/zelty
+
+### Paiement (1 connecteurs)
+
+- **Stripe** (`stripe`)
+  Fiche : https://ultimate.edicloud.app/marketplace/stripe
+
+### Payment (1 connecteurs)
+
+- **Qonto** (`qonto`)
+  Fiche : https://ultimate.edicloud.app/marketplace/qonto
+
+### Productivité / Docs (1 connecteurs)
+
+- **Notion** (`notion`)
+  Fiche : https://ultimate.edicloud.app/marketplace/notion
+
+### Support client (1 connecteurs)
+
+- **Zendesk** (`zendesk`)
+  Fiche : https://ultimate.edicloud.app/marketplace/zendesk
+
+## Connecteurs phares — détail
+
+### Sage 100
+Synchronisation commandes, stocks, articles, tiers, factures avec Sage 100 Gestion Commerciale. Versions v5 à v8 supportées. Endpoints : lire/écrire commandes, articles, clients, fournisseurs, stocks, règlements.
+
+### Shopify
+Connecteur Shopify complet : produits, variantes, stocks, commandes, clients, expéditions, webhooks. Synchronisation bidirectionnelle avec ERP/CRM.
+
+### CEGID Loop
+Intégration comptabilité et gestion CEGID Loop. Écritures comptables, journaux, tiers, plans de comptes.
+
+### HubSpot CRM
+Contacts, sociétés, deals, propriétés, activités. Synchronisation CRM ↔ ERP en temps réel.
+
+### WooCommerce
+Produits, commandes, clients, stocks, coupons, expéditions. Compatible WooCommerce 6+.
+
+### PrestaShop
+Articles, commandes, clients, stocks, catégories. API REST PrestaShop.
+
+### Dolibarr
+Tiers, produits, commandes, factures, stocks, projets. API REST Dolibarr native.
+
+### Odoo
+Ventes, achats, stocks, comptabilité, CRM. Versions Odoo 14 à 17. XML-RPC et REST.
+
+### Stripe
+Paiements, remboursements, abonnements, factures. Webhooks temps réel.
+
+### Qonto
+Transactions, virements, relevés bancaires. Connexion comptabilité automatique.
+
+### AS2 (EDI)
+Protocole AS2 pour échanges EDI sécurisés avec grande distribution (Carrefour, Leclerc, Auchan, Intermarché, Système U, Casino).
+
+## Tarification
+
+- Offre Starter : dès 299€/mois (3 connecteurs, flux illimités)
+- Offre Business : sur devis (connecteurs illimités, SLA Premium)
+- Démo gratuite disponible sur demande : commercial@anexys.fr
+
+## Cas d'usage fréquents
+
+- **Sage 100 ↔ Shopify** : Synchronisation automatique stocks, commandes, articles entre Sage 100 et Shopify. Mise à jour en temps réel bidirectionnelle.
+- **EDI Grande Distribution** : Flux EDIFACT automatisés avec Carrefour, Leclerc, Auchan, Intermarché, Système U, Fnac, Darty via plateformes agréées.
+- **CEGID ↔ CRM** : Connexion CEGID Retail/Loop avec HubSpot ou Salesforce pour synchroniser clients, commandes, CA.
+- **WMS ↔ ERP ↔ E-commerce** : Chaîne logistique complète : WMS entrepôt → ERP Sage/Odoo → Shopify/WooCommerce.
+- **Amazon ↔ ERP** : Flux commandes Amazon Seller/Vendor → ERP pour expéditions et facturation automatiques.
+- **Caisse POS ↔ Comptabilité** : L'Addition, Lightspeed, Zelty → MyUnisoft, EBP, Pennylane : exports comptables automatiques.
+
+## Écosystème ANEXYS
+
+- **BigData Consulting** (https://bigdataconsulting.fr) : Maison-mère, expert EDI et intégration de données depuis 2005. Conseil, implémentation, support.
+- **QUICK EDI** (https://quickedi.fr) : Solution EDI grande distribution clé-en-main. Dès 49,90€/mois. Idéal PME/ETI fournisseurs GMS.
+- **EDIconnect** (https://ediconnect.fr) : Plateforme EDI B2B avec connecteurs ERP. Dès 99€/mois. Pour flux EDI inter-entreprises.
+- **Ultimate Edicloud** (https://ultimate.edicloud.app) : iPaaS full-stack pour intégrations complexes multi-systèmes.
+
+## Contact et ressources
+
+- Marketplace : https://ultimate.edicloud.app/marketplace
+- Documentation IA complète : https://ultimate.edicloud.app/llms-full.txt
+- Email commercial : commercial@anexys.fr
+- Téléphone : 01 77 62 46 89
+- Adresse : ANEXYS, Asnières-sur-Seine (92), France
