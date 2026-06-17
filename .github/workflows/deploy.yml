@@ -19,8 +19,7 @@ jobs:
             cd /opt/bdc-ipaas
             git pull origin main
 
-            # Copier les fichiers SEO/AI dans le répertoire nginx host
-            # Le nginx host (1.22.1) sert depuis le dist/ du dernier build Vite
+            # Copier les fichiers SEO/AI dans le répertoire dist/ frontend
             NGINX_ROOT=""
             for dir in \
               /opt/bdc-ipaas/apps/frontend/dist \
@@ -40,8 +39,13 @@ jobs:
 
             cd docker
             docker compose -f docker-compose.prod.yml build --no-cache api frontend
-            # Forcer la recréation du container nginx (nouveau volume SEO)
-            docker compose -f docker-compose.prod.yml rm -sf nginx
+
+            # Forcer la recréation du container nginx via docker stop/rm directs
+            # (docker compose rm -sf nginx n'arrête pas le container)
+            docker stop anexys-nginx 2>/dev/null || true
+            docker rm -f anexys-nginx 2>/dev/null || true
+            echo "🗑️  anexys-nginx removed"
+
             docker compose -f docker-compose.prod.yml up -d
             echo "Deploy done: $(date)"
             docker ps --format 'table {{.Names}}\t{{.Status}}' | head -10
