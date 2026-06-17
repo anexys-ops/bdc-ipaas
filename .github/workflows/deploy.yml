@@ -19,33 +19,11 @@ jobs:
             cd /opt/bdc-ipaas
             git pull origin main
 
-            # Copier les fichiers SEO/AI dans le répertoire dist/ frontend
-            NGINX_ROOT=""
-            for dir in \
-              /opt/bdc-ipaas/apps/frontend/dist \
-              /var/www/ultimate.edicloud.app \
-              /var/www/html \
-              /var/www/bdc-ipaas/html; do
-              if [ -f "$dir/index.html" ]; then NGINX_ROOT="$dir"; break; fi
-            done
-            if [ -n "$NGINX_ROOT" ]; then
-              cp apps/frontend/public/llms.txt "$NGINX_ROOT/" && echo "✅ llms.txt → $NGINX_ROOT"
-              cp apps/frontend/public/llms-full.txt "$NGINX_ROOT/" && echo "✅ llms-full.txt → $NGINX_ROOT"
-              cp apps/frontend/public/robots.txt "$NGINX_ROOT/" && echo "✅ robots.txt → $NGINX_ROOT"
-              cp apps/frontend/public/sitemap.xml "$NGINX_ROOT/" && echo "✅ sitemap.xml → $NGINX_ROOT"
-            else
-              echo "⚠️  Nginx host root not found — checked: dist, /var/www/..."
-            fi
-
             cd docker
             docker compose -f docker-compose.prod.yml build --no-cache api frontend
 
-            # Forcer la recréation du container nginx via docker stop/rm directs
-            # (docker compose rm -sf nginx n'arrête pas le container)
-            docker stop anexys-nginx 2>/dev/null || true
-            docker rm -f anexys-nginx 2>/dev/null || true
-            echo "🗑️  anexys-nginx removed"
+            # Forcer la recréation de api, frontend ET nginx avec les nouvelles images/volumes
+            docker compose -f docker-compose.prod.yml up -d --force-recreate api frontend nginx
 
-            docker compose -f docker-compose.prod.yml up -d
             echo "Deploy done: $(date)"
             docker ps --format 'table {{.Names}}\t{{.Status}}' | head -10
