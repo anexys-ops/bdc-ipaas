@@ -19,18 +19,23 @@ jobs:
             cd /opt/bdc-ipaas
             git pull origin main
 
-            # Copier les fichiers SEO/AI dans le répertoire nginx host (si applicable)
+            # Copier les fichiers SEO/AI dans le répertoire nginx host
+            # Le nginx host (1.22.1) sert depuis le dist/ du dernier build Vite
             NGINX_ROOT=""
-            for dir in /var/www/ultimate.edicloud.app /var/www/html /var/www/bdc-ipaas/html; do
+            for dir in \
+              /opt/bdc-ipaas/apps/frontend/dist \
+              /var/www/ultimate.edicloud.app \
+              /var/www/html \
+              /var/www/bdc-ipaas/html; do
               if [ -f "$dir/index.html" ]; then NGINX_ROOT="$dir"; break; fi
             done
             if [ -n "$NGINX_ROOT" ]; then
-              cp apps/frontend/public/llms.txt "$NGINX_ROOT/" 2>/dev/null && echo "✅ llms.txt → $NGINX_ROOT"
-              cp apps/frontend/public/llms-full.txt "$NGINX_ROOT/" 2>/dev/null && echo "✅ llms-full.txt → $NGINX_ROOT"
-              cp apps/frontend/public/robots.txt "$NGINX_ROOT/" 2>/dev/null && echo "✅ robots.txt → $NGINX_ROOT"
-              cp apps/frontend/public/sitemap.xml "$NGINX_ROOT/" 2>/dev/null && echo "✅ sitemap.xml → $NGINX_ROOT"
+              cp apps/frontend/public/llms.txt "$NGINX_ROOT/" && echo "✅ llms.txt → $NGINX_ROOT"
+              cp apps/frontend/public/llms-full.txt "$NGINX_ROOT/" && echo "✅ llms-full.txt → $NGINX_ROOT"
+              cp apps/frontend/public/robots.txt "$NGINX_ROOT/" && echo "✅ robots.txt → $NGINX_ROOT"
+              cp apps/frontend/public/sitemap.xml "$NGINX_ROOT/" && echo "✅ sitemap.xml → $NGINX_ROOT"
             else
-              echo "ℹ️  Nginx host root not found (Docker-only mode)"
+              echo "⚠️  Nginx host root not found — checked: dist, /var/www/..."
             fi
 
             cd docker
