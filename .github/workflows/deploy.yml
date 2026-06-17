@@ -15,15 +15,22 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 20m
           script: |
             cd /opt/bdc-ipaas
             git pull origin main
 
             cd docker
-            docker compose -f docker-compose.prod.yml build --no-cache api frontend
 
-            # Forcer la recréation de api, frontend ET nginx avec les nouvelles images/volumes
-            docker compose -f docker-compose.prod.yml up -d --force-recreate api frontend nginx
+            # Rebuild uniquement le frontend (inclut llms.txt depuis public/)
+            docker compose -f docker-compose.prod.yml build --no-cache frontend
+
+            # Recréer uniquement le frontend sans toucher aux autres services
+            docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps frontend
+
+            # Rebuild et recréer l'api si nécessaire
+            docker compose -f docker-compose.prod.yml build --no-cache api
+            docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps api
 
             echo "Deploy done: $(date)"
             docker ps --format 'table {{.Names}}\t{{.Status}}' | head -10
