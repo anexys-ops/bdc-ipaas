@@ -1,15 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Loader2, Package, Check, FileText } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Package, Check, FileText, Lock } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
 import { SchemaFieldsList } from '../../components/connector/SchemaFieldsList';
 import { marketplaceApi } from '../../api/marketplace';
 import { resolveMarketplaceLogoUrl } from '../../lib/connector-logos';
 import { SoftwareLogoImg } from '../../components/marketplace/SoftwareLogoImg';
 import { AgentDownloadCard, isAgentConnector } from '../../components/connector/AgentDownloadCard';
+import { useAuthStore } from '../../stores/auth.store';
 
 export function ConnectorDetailPage() {
   const { type } = useParams<{ type: string }>();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const { data: connector, isLoading, error } = useQuery({
     queryKey: ['marketplace', type],
@@ -104,13 +106,22 @@ export function ConnectorDetailPage() {
                   <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                 </a>
               )}
-              <Link
-                to={`/connectors/new?type=${encodeURIComponent(connector.id)}&from=marketplace`}
-              >
-                <Button>
-                  Configurer ce connecteur
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  to={`/connectors/new?type=${encodeURIComponent(connector.id)}&from=marketplace`}
+                >
+                  <Button>
+                    Configurer ce connecteur
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/login">
+                  <Button variant="outline" className="gap-2">
+                    <Lock className="w-4 h-4" />
+                    Se connecter pour configurer
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
