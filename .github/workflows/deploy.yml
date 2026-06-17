@@ -18,8 +18,24 @@ jobs:
           script: |
             cd /opt/bdc-ipaas
             git pull origin main
+
+            # Copier les fichiers SEO/AI dans le répertoire nginx host (si applicable)
+            NGINX_ROOT=""
+            for dir in /var/www/ultimate.edicloud.app /var/www/html /var/www/bdc-ipaas/html; do
+              if [ -f "$dir/index.html" ]; then NGINX_ROOT="$dir"; break; fi
+            done
+            if [ -n "$NGINX_ROOT" ]; then
+              cp apps/frontend/public/llms.txt "$NGINX_ROOT/" 2>/dev/null && echo "✅ llms.txt → $NGINX_ROOT"
+              cp apps/frontend/public/llms-full.txt "$NGINX_ROOT/" 2>/dev/null && echo "✅ llms-full.txt → $NGINX_ROOT"
+              cp apps/frontend/public/robots.txt "$NGINX_ROOT/" 2>/dev/null && echo "✅ robots.txt → $NGINX_ROOT"
+              cp apps/frontend/public/sitemap.xml "$NGINX_ROOT/" 2>/dev/null && echo "✅ sitemap.xml → $NGINX_ROOT"
+            else
+              echo "ℹ️  Nginx host root not found (Docker-only mode)"
+            fi
+
             cd docker
             docker compose -f docker-compose.prod.yml build --no-cache api frontend
+            docker compose -f docker-compose.prod.yml up -d --force-recreate nginx
             docker compose -f docker-compose.prod.yml up -d
             echo "Deploy done: $(date)"
             docker ps --format 'table {{.Names}}\t{{.Status}}' | head -10
