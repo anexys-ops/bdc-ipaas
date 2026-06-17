@@ -1,84 +1,21 @@
-name: Deploy SEO Pages
-
+name: SEO Deploy Test
 on:
   push:
-    paths:
-      - 'seo-pages/**'
+    paths: ['seo-pages/nginx/**']
   workflow_dispatch:
-
 jobs:
-  deploy-seo:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy SEO pages via SSH
+      - name: Test SSH connection
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 300s
+          command_timeout: 60s
           script: |
-            set -e
-            cd /opt/bdc-ipaas && git pull origin main
-
-            DOMAINS="ebp-dolibarr.ediconnect.fr sage-dolibarr.ediconnect.fr cegid-dolibarr.ediconnect.fr odoo-dolibarr.ediconnect.fr sap-dolibarr.ediconnect.fr quickbooks-dolibarr.ediconnect.fr ebp-odoo.ediconnect.fr sage-odoo.ediconnect.fr cegid-odoo.ediconnect.fr prestashop-dolibarr.shopconnect.fr woocommerce-dolibarr.shopconnect.fr shopify-dolibarr.shopconnect.fr magento-dolibarr.shopconnect.fr prestashop-odoo.shopconnect.fr woocommerce-odoo.shopconnect.fr shopify-odoo.shopconnect.fr dolibarr.taskit.fr odoo.taskit.fr ebp.taskit.fr sage.taskit.fr"
-
-            for domain in $DOMAINS; do
-              mkdir -p /var/www/connecteurs/$domain
-              cp /opt/bdc-ipaas/seo-pages/${domain}.html /var/www/connecteurs/$domain/index.html 2>/dev/null || true
-            done
-
-            cp /opt/bdc-ipaas/seo-pages/connecteur-ebp-dolibarr.html /var/www/connecteurs/ebp-dolibarr.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-sage-dolibarr.html /var/www/connecteurs/sage-dolibarr.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-cegid-dolibarr.html /var/www/connecteurs/cegid-dolibarr.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-odoo-dolibarr.html /var/www/connecteurs/odoo-dolibarr.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-sap-dolibarr.html /var/www/connecteurs/sap-dolibarr.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-quickbooks-dolibarr.html /var/www/connecteurs/quickbooks-dolibarr.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-ebp-odoo.html /var/www/connecteurs/ebp-odoo.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-sage-odoo.html /var/www/connecteurs/sage-odoo.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-cegid-odoo.html /var/www/connecteurs/cegid-odoo.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-prestashop-dolibarr.html /var/www/connecteurs/prestashop-dolibarr.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-woocommerce-dolibarr.html /var/www/connecteurs/woocommerce-dolibarr.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-shopify-dolibarr.html /var/www/connecteurs/shopify-dolibarr.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-magento-dolibarr.html /var/www/connecteurs/magento-dolibarr.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-prestashop-odoo.html /var/www/connecteurs/prestashop-odoo.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-woocommerce-odoo.html /var/www/connecteurs/woocommerce-odoo.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-shopify-odoo.html /var/www/connecteurs/shopify-odoo.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/taskit-dolibarr.html /var/www/connecteurs/dolibarr.taskit.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/taskit-odoo.html /var/www/connecteurs/odoo.taskit.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/taskit-ebp.html /var/www/connecteurs/ebp.taskit.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/taskit-sage.html /var/www/connecteurs/sage.taskit.fr/index.html
-
-            for domain in $DOMAINS; do
-              cp /opt/bdc-ipaas/seo-pages/nginx/$domain /etc/nginx/sites-available/$domain
-              ln -sf /etc/nginx/sites-available/$domain /etc/nginx/sites-enabled/$domain
-            done
-
-            nginx -t && systemctl reload nginx
-
-            certbot certonly --nginx --non-interactive --agree-tos \
-              -m commercial@anexys.fr \
-              -d ebp-dolibarr.ediconnect.fr \
-              -d sage-dolibarr.ediconnect.fr \
-              -d cegid-dolibarr.ediconnect.fr \
-              -d odoo-dolibarr.ediconnect.fr \
-              -d sap-dolibarr.ediconnect.fr \
-              -d quickbooks-dolibarr.ediconnect.fr \
-              -d ebp-odoo.ediconnect.fr \
-              -d sage-odoo.ediconnect.fr \
-              -d cegid-odoo.ediconnect.fr \
-              -d prestashop-dolibarr.shopconnect.fr \
-              -d woocommerce-dolibarr.shopconnect.fr \
-              -d shopify-dolibarr.shopconnect.fr \
-              -d magento-dolibarr.shopconnect.fr \
-              -d prestashop-odoo.shopconnect.fr \
-              -d woocommerce-odoo.shopconnect.fr \
-              -d shopify-odoo.shopconnect.fr \
-              -d dolibarr.taskit.fr \
-              -d odoo.taskit.fr \
-              -d ebp.taskit.fr \
-              -d sage.taskit.fr \
-              2>/dev/null && nginx -t && systemctl reload nginx || echo "certbot pending - HTTP serving now"
-
-            echo "=== DONE ===" && for domain in $DOMAINS; do echo "  http://$domain"; done
+            echo "SSH connected to $(hostname)"
+            echo "nginx version: $(nginx -v 2>&1)"
+            ls /opt/bdc-ipaas/ | head -5
