@@ -1,0 +1,30 @@
+name: SEO Diagnose Docker
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Diagnose Docker nginx setup
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 120s
+          script: |
+            echo "=== Docker containers ==="
+            docker ps --format "{{.Names}}\t{{.Image}}\t{{.Ports}}"
+            echo "=== Docker compose nginx section ==="
+            grep -A 30 -i nginx /opt/bdc-ipaas/docker/docker-compose.prod.yml || true
+            echo "=== Nginx container inspect (volumes) ==="
+            NGINX=$(docker ps --format "{{.Names}}" | grep -i nginx | head -1)
+            echo "Nginx container: $NGINX"
+            docker inspect "$NGINX" --format '{{json .Mounts}}' 2>/dev/null | python3 -c "import json,sys; m=json.load(sys.stdin); [print(i['Source'],'->',i['Destination']) for i in m]" || true
+            echo "=== Nginx conf.d / sites inside container ==="
+            docker exec "$NGINX" sh -c 'ls /etc/nginx/conf.d/ 2>/dev/null; ls /etc/nginx/sites-enabled/ 2>/dev/null; cat /etc/nginx/nginx.conf 2>/dev/null | head -20' || true
+            echo "=== Nginx host volume path ==="
+            docker inspect "$NGINX" --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{println}}{{end}}' || true
