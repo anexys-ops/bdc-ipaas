@@ -1,0 +1,135 @@
+name: Deploy SEO Pages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-seo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy SEO vhosts via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 300s
+          script: |
+            set -e
+            echo "=== Pulling latest bdc-ipaas ==="
+            cd /opt/bdc-ipaas
+            git pull origin main
+            
+            echo "=== Setting up SEO pages ==="
+            mkdir -p /var/www/connecteurs
+            
+            declare -A PAGES=(
+              ["ebp-dolibarr.ediconnect.fr"]="seo-pages/connecteur-ebp-dolibarr.html"
+              ["sage-dolibarr.ediconnect.fr"]="seo-pages/connecteur-sage-dolibarr.html"
+              ["cegid-dolibarr.ediconnect.fr"]="seo-pages/connecteur-cegid-dolibarr.html"
+              ["odoo-dolibarr.ediconnect.fr"]="seo-pages/connecteur-odoo-dolibarr.html"
+              ["sap-dolibarr.ediconnect.fr"]="seo-pages/connecteur-sap-dolibarr.html"
+              ["quickbooks-dolibarr.ediconnect.fr"]="seo-pages/connecteur-quickbooks-dolibarr.html"
+              ["ebp-odoo.ediconnect.fr"]="seo-pages/connecteur-ebp-odoo.html"
+              ["sage-odoo.ediconnect.fr"]="seo-pages/connecteur-sage-odoo.html"
+              ["cegid-odoo.ediconnect.fr"]="seo-pages/connecteur-cegid-odoo.html"
+              ["prestashop-dolibarr.shopconnect.fr"]="seo-pages/shopconnect-prestashop-dolibarr.html"
+              ["woocommerce-dolibarr.shopconnect.fr"]="seo-pages/shopconnect-woocommerce-dolibarr.html"
+              ["shopify-dolibarr.shopconnect.fr"]="seo-pages/shopconnect-shopify-dolibarr.html"
+              ["magento-dolibarr.shopconnect.fr"]="seo-pages/shopconnect-magento-dolibarr.html"
+              ["prestashop-odoo.shopconnect.fr"]="seo-pages/shopconnect-prestashop-odoo.html"
+              ["woocommerce-odoo.shopconnect.fr"]="seo-pages/shopconnect-woocommerce-odoo.html"
+              ["shopify-odoo.shopconnect.fr"]="seo-pages/shopconnect-shopify-odoo.html"
+              ["dolibarr.taskit.fr"]="seo-pages/taskit-dolibarr.html"
+              ["odoo.taskit.fr"]="seo-pages/taskit-odoo.html"
+              ["ebp.taskit.fr"]="seo-pages/taskit-ebp.html"
+              ["sage.taskit.fr"]="seo-pages/taskit-sage.html"
+            )
+            
+            for domain in "${!PAGES[@]}"; do
+              src="${PAGES[$domain]}"
+              dir="/var/www/connecteurs/$domain"
+              mkdir -p "$dir"
+              cp "/opt/bdc-ipaas/$src" "$dir/index.html"
+              echo "  ✅ $domain"
+            done
+            
+            echo "=== Creating nginx vhosts ==="
+            for domain in "${!PAGES[@]}"; do
+              conf="/etc/nginx/sites-available/$domain"
+              cat > "$conf" << NGINXEOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $domain;
+    root /var/www/connecteurs/$domain;
+    index index.html;
+    charset utf-8;
+
+    location / {
+        try_files \$uri \$uri/ =404;
+    }
+    
+    location ~* \.(html|css|js|ico|png|jpg|svg)$ {
+        expires 1d;
+        add_header Cache-Control "public";
+    }
+}
+NGINXEOF
+              ln -sf "$conf" "/etc/nginx/sites-enabled/$domain" 2>/dev/null || true
+              echo "  ✅ nginx vhost: $domain"
+            done
+            
+            echo "=== Testing nginx config ==="
+            nginx -t
+            
+            echo "=== Reloading nginx ==="
+            systemctl reload nginx || service nginx reload
+            
+            echo "=== Requesting SSL certificates ==="
+            DOMAINS_ARGS=""
+            for domain in "${!PAGES[@]}"; do
+              DOMAINS_ARGS="$DOMAINS_ARGS -d $domain"
+            done
+            certbot certonly --nginx --non-interactive --agree-tos               -m commercial@anexys.fr               $DOMAINS_ARGS               --expand 2>/dev/null || certbot certonly --nginx               --non-interactive --agree-tos               -m commercial@anexys.fr               $DOMAINS_ARGS               --expand --force-renewal 2>/dev/null || echo "⚠️  certbot failed - HTTP only for now"
+            
+            echo "=== Adding HTTPS redirects ==="
+            for domain in "${!PAGES[@]}"; do
+              if [ -f "/etc/letsencrypt/live/$domain/fullchain.pem" ] || [ -d "/etc/letsencrypt/live" ]; then
+                CERTDIR=$(ls -d /etc/letsencrypt/live/${domain}* 2>/dev/null | head -1)
+                if [ -n "$CERTDIR" ]; then
+                  conf="/etc/nginx/sites-available/$domain"
+                  cat > "$conf" << SSLEOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $domain;
+    return 301 https://\$host\$request_uri;
+}
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name $domain;
+    root /var/www/connecteurs/$domain;
+    index index.html;
+    charset utf-8;
+    ssl_certificate $CERTDIR/fullchain.pem;
+    ssl_certificate_key $CERTDIR/privkey.pem;
+    ssl_stapling off;
+    ssl_stapling_verify off;
+    location / {
+        try_files \$uri \$uri/ =404;
+    }
+}
+SSLEOF
+                fi
+              fi
+            done
+            
+            nginx -t && (systemctl reload nginx || service nginx reload)
+            echo "=== Deploy complete! ==="
+            echo "Pages deployed:"
+            for domain in "${!PAGES[@]}"; do
+              echo "  https://$domain"
+            done
