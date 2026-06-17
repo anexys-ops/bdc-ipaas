@@ -1,50 +1,85 @@
 # Ultimate Edicloud
 
-> Plateforme iPaaS française pour automatiser vos échanges de données et connecter ERP, EDI, e-commerce et CRM. Marketplace de connecteurs prêts à l'emploi, supervision temps réel, hébergement France.
+> Plateforme iPaaS française pour automatiser vos échanges de données et connecter ERP, EDI, e-commerce et CRM. Marketplace de 99 connecteurs prêts à l'emploi, supervision temps réel, hébergement France.
 
-Ultimate Edicloud est la solution d'intégration de données (iPaaS) développée par ANEXYS. Elle permet aux entreprises de connecter leurs systèmes d'information sans développement complexe : Sage, CEGID, Shopify, WooCommerce, Odoo, ainsi que tous les flux EDI EDIFACT. Marketplace de connecteurs prêts à l'emploi, supervision temps réel, hébergement souverain en France.
+Ultimate Edicloud est la solution d'intégration de données (iPaaS) développée par ANEXYS. Elle permet aux entreprises de connecter leurs systèmes d'information sans développement complexe : Sage, CEGID, Shopify, WooCommerce, Odoo, EBP, Dolibarr, HubSpot, ainsi que tous les flux EDI EDIFACT/AS2. Marketplace de 99 connecteurs prêts à l'emploi, supervision temps réel, hébergement souverain en France.
 
 ## Fonctionnalités principales
 
-- **Marketplace de connecteurs** : +50 connecteurs prêts à l'emploi (ERP, e-commerce, CRM, EDI)
+- **Marketplace de 99 connecteurs** : ERP, e-commerce, CRM, EDI, POS, comptabilité, paiement
 - **Flux EDI** : EDIFACT, AS2, SFTP, XML, GS1 — compatible toutes grandes enseignes
-- **Connecteurs ERP** : Sage 100, Sage X3, CEGID, SAP, Odoo, Dolibarr, EBP
-- **E-commerce** : Shopify, WooCommerce, PrestaShop, Magento
 - **Supervision temps réel** : dashboard, alertes, logs, rejeux
-- **ETL intégré** : transformation et mapping de données
-- **API Gateway** : exposer et consommer des APIs sans code
-- **Hébergement France** : souveraineté numérique, RGPD, SLA garanti
+- **ETL intégré** : transformation et mapping de données sans code
+- **API Gateway** : exposer et consommer des APIs
+- **Hébergement France** : souveraineté numérique, RGPD natif, SLA garanti
 
-## Cas d'usage
+## Connecteurs ERP (20)
 
-- Synchroniser les stocks et commandes entre Sage et Shopify
-- Automatiser les flux EDI avec la grande distribution (Carrefour, Leclerc, Auchan)
-- Connecter CEGID à un CRM Salesforce ou HubSpot
-- Intégrer un WMS (entrepôt) avec un ERP et un e-commerce
-- Piloter tous les flux de données depuis un seul dashboard
+Sage 100, Sage X3 (Sage 200 ES), Sage PSC, CEGID Loop, CEGID Retail, CEGID Revo, EBP, EBP Saas, EBP SDK, Dolibarr, Odoo, Microsoft Dynamics 365, Microsoft Dynamics 365 Business Central, a3ERP, Afas Software, DATEV, Exact, Holded, Lexware Office, MyUnisoft
+
+## Connecteurs E-commerce (4)
+
+Shopify, WooCommerce, PrestaShop, Amazon
+
+## Connecteurs CRM / Marketing / Facturation (14)
+
+HubSpot, Salesforce, Sellsy, iSales, Axonaut, Boond Manager, Chargebee, Factomos, Fuga, Harvest, Hyperline, Billit, Pipedrive, Mailchimp
+
+## Connecteurs Comptabilité (10)
+
+QuickBooks Online, Xero, MyUnisoft, Pennylane, Inqom, Horus, Acd, FreeAgent, Cegid Loop, DATEV
+
+## Connecteurs Point de Vente / POS (25)
+
+Lightspeed, Fastmag, Cegid Retail, Cegid Revo, L'Addition, Hiboutik, HelloCash, Zelty, Clyo Systems, Innovorder, AddicTill, Cashpad, CashMag, Connectill, CarréPOS, AtillaSoft, Bdp Net, Jalia, LEO2, Last.app, Fülle, Abill, Planity, Apitic, Innovorder
+
+## Connecteurs Paiement / Finance (3)
+
+Stripe, Qonto, GoCardless
+
+## Connecteurs Productivité / Collaboration (6)
+
+Asana, Trello, Monday, Notion, Slack, GitHub, Airtable
+
+## Connecteurs Support client (2)
+
+Zendesk, Freshdesk
+
+## Connecteurs EDI / Fichiers / PA (8)
+
+AS2, FTP/SFTP, Fichiers plats (CSV/JSON/TXT), PA Billit, PA Cegid, PA Docoon, PA Docuware, PA Odoo, PA Pennylane, PA Sage, PA Yooz
+
+## Cas d'usage typiques
+
+- Synchroniser stocks et commandes Sage 100 ↔ Shopify en temps réel
+- Automatiser les flux EDI grande distribution (Carrefour, Leclerc, Auchan, Intermarché)
+- Connecter CEGID à HubSpot ou Salesforce
+- Intégrer caisse L'Addition ou Lightspeed avec MyUnisoft ou EBP
+- Synchroniser Amazon et WooCommerce avec Odoo ou Dolibarr
+- Piloter tous les flux depuis un dashboard centralisé
 
 ## Marketplace publique
 
-La marketplace de connecteurs est accessible sans inscription sur https://ultimate.edicloud.app/marketplace
-Parcourez +50 connecteurs, filtrez par catégorie (ERP, e-commerce, EDI, CRM) et consultez le nombre d'endpoints disponibles.
+Accessible sans inscription : https://ultimate.edicloud.app/marketplace
+99 connecteurs filtrables par catégorie. Chaque fiche expose endpoints sources, destinations et type d'authentification.
 
 ## Différenciants
 
 - iPaaS 100% français (développement, hébergement, support en France)
-- Marketplace de connecteurs — pas de développement custom nécessaire
+- 99 connecteurs prêts à l'emploi — aucun développement custom nécessaire
 - Supervision centralisée de tous les flux en temps réel
-- Conforme RGPD, hébergé en datacenter souverain France
-- Support expert ANEXYS/BigData Consulting (depuis 2005)
+- RGPD natif, hébergé en datacenter souverain France
+- Support expert ANEXYS / BigData Consulting (spécialiste EDI depuis 2005)
 
-## Écosystème BDC / ANEXYS
+## Écosystème ANEXYS
 
-- [BigData Consulting](https://bigdataconsulting.fr): Maison-mère, expert EDI depuis 2005
-- [QUICK EDI](https://quickedi.fr): EDI grande distribution clé-en-main dès 49,90€/mois
-- [EDIconnect](https://ediconnect.fr): Plateforme EDI B2B connecteurs ERP, dès 99€/mois
+- [BigData Consulting](https://bigdataconsulting.fr) : Maison-mère, expert EDI depuis 2005
+- [QUICK EDI](https://quickedi.fr) : EDI grande distribution clé-en-main dès 49,90€/mois
+- [EDIconnect](https://ediconnect.fr) : Plateforme EDI B2B connecteurs ERP, dès 99€/mois
 
 ## Contact
 
-- Site: https://ultimate.edicloud.app
-- Marketplace: https://ultimate.edicloud.app/marketplace
-- Email: commercial@anexys.fr
-- Téléphone: 01 77 62 46 89
+- Site : https://ultimate.edicloud.app
+- Marketplace : https://ultimate.edicloud.app/marketplace
+- Email : commercial@anexys.fr
+- Téléphone : 01 77 62 46 89
