@@ -40,7 +40,8 @@ jobs:
 
             cd docker
             docker compose -f docker-compose.prod.yml build --no-cache api frontend
-            docker compose -f docker-compose.prod.yml up -d --force-recreate nginx
+            # Forcer la recréation du container nginx (nouveau volume SEO)
+            docker compose -f docker-compose.prod.yml rm -sf nginx
             docker compose -f docker-compose.prod.yml up -d
             echo "Deploy done: $(date)"
             docker ps --format 'table {{.Names}}\t{{.Status}}' | head -10
