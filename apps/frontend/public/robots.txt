@@ -1,28 +1,47 @@
-# Ultimate Edicloud — robots.txt
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# --- AI Crawlers ---
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: xAI-Bot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
 User-agent: *
 Allow: /
-Allow: /marketplace
-Allow: /marketplace/
-Allow: /tarifs
-Allow: /avis
-Allow: /signup-trial
-Allow: /reserver-demo
-
-# Protect private app routes
-Disallow: /dashboard
-Disallow: /flux
-Disallow: /planifier
-Disallow: /monitoring
-Disallow: /hub
-Disallow: /connectors
-Disallow: /settings
-Disallow: /backoffice
-Disallow: /gateway
-
-# Protect API
-Disallow: /api/
-
-# Crawl delay for bots
-Crawl-delay: 1
 
 Sitemap: https://ultimate.edicloud.app/sitemap.xml
