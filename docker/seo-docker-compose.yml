@@ -1,0 +1,23 @@
+version: '3.8'
+
+# SEO landing pages — nginx serving 20 static subdomains
+# Start: docker compose -f seo-docker-compose.yml up -d
+# Reload: docker exec seo-nginx nginx -s reload
+
+services:
+  seo-nginx:
+    image: nginx:alpine
+    container_name: seo-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # HTML files (one subdir per domain)
+      - ../seo-pages:/var/www/connecteurs:ro
+      # Active vhost configs (managed by deploy workflow)
+      - ./nginx/seo-active-conf:/etc/nginx/conf.d:ro
+      # Let's Encrypt certs
+      - ./certbot/conf:/etc/letsencrypt:ro
+      # Certbot webroot challenge
+      - ./certbot/www:/var/www/certbot:ro
+    restart: unless-stopped
