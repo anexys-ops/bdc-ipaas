@@ -1,0 +1,29 @@
+name: Deploy CT127 SEO vhosts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-ct127:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Diagnostic CT127
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 192.168.1.127
+          port: 22
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          proxy_host: ${{ secrets.SSH_HOST }}
+          proxy_port: ${{ secrets.SSH_PORT }}
+          proxy_username: ${{ secrets.SSH_USER }}
+          proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 60s
+          script: |
+            echo "=== CT127 OS ===" && cat /etc/os-release | head -5
+            echo "=== hostname ===" && hostname -f
+            echo "=== IP ===" && ip a | grep -E "inet " | head -5
+            echo "=== nginx ===" && which nginx 2>/dev/null || echo "nginx not installed"
+            echo "=== disk ===" && df -h /
+            echo "=== internet ===" && curl -s --max-time 5 https://get.acme.sh -o /dev/null && echo "OK" || echo "no internet"
