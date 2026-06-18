@@ -1,0 +1,23 @@
+name: Debug rack57 SSH
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: rack-57 echo test
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 30s
+          script: |
+            echo HELLO_RACK57
+            hostname
+            ls /opt/bdc-ipaas/docker/certbot/conf/live/ | head -5
+            docker exec seo-nginx nginx -v
+            echo DONE
