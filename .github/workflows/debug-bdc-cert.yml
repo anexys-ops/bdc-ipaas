@@ -18,13 +18,17 @@ jobs:
           command_timeout: 120s
           script_stop: false
           script: |
-            echo "=== ALL CONTAINERS with :443 ==="
-            docker ps --format "{{.Names}}\t{{.Ports}}" | grep 443
-            echo "=== iptables DNAT :443 ==="
-            iptables -t nat -L -n | grep -A2 -B2 ":443" 2>&1 | head -40
-            echo "=== seo-nginx container inspect network ==="
-            docker inspect seo-nginx --format "{{range $k,$v := .NetworkSettings.Ports}}{{$k}} -> {{$v}}{{end}}" 2>&1
-            echo "=== openssl from rack-57 external IP ==="
-            echo | openssl s_client -connect 86.104.252.66:443 -servername sage.bigdataconsulting.fr 2>/dev/null | openssl x509 -noout -subject 2>&1
-            echo | openssl s_client -connect 86.104.252.66:443 -servername gate.edicloud.app 2>/dev/null | openssl x509 -noout -subject 2>&1
-            echo DONE6
+            echo "=== CT100 proxy type ==="
+            pct exec 100 -- which nginx 2>&1
+            pct exec 100 -- which haproxy 2>&1
+            pct exec 100 -- which caddy 2>&1
+            pct exec 100 -- ps aux 2>&1 | head -20
+            echo "=== CT100 nginx sites ==="
+            pct exec 100 -- ls /etc/nginx/sites-enabled/ 2>&1
+            pct exec 100 -- ls /etc/nginx/conf.d/ 2>&1
+            echo "=== CT100 nginx config for gate.edicloud ==="
+            pct exec 100 -- grep -r "gate.edicloud" /etc/nginx/ 2>&1 | head -5
+            pct exec 100 -- grep -r "server_name" /etc/nginx/sites-enabled/ 2>&1 | head -30
+            echo "=== CT100 port 443 ==="
+            pct exec 100 -- ss -tlnp 2>&1 | grep :443
+            echo DONE7
