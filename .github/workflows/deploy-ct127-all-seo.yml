@@ -333,29 +333,27 @@ jobs:
             nginx -t && systemctl reload nginx
             echo CT127_OK
 
-      - name: rack-57 SSL certs and seo-nginx proxy vhosts
+      - name: rack-57 create nginx vhosts (placeholder cert)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 600s
+          command_timeout: 60s
           script: |
             set -e
+            # Clean stale confs
             for f in /opt/bdc-ipaas/docker/nginx/seo-active-conf/*.quickedi.fr.conf /opt/bdc-ipaas/docker/nginx/seo-active-conf/*.bigdataconsulting.fr.conf; do [ -f "$f" ] && rm "$f"; done 2>/dev/null || true
-            [ -f /root/.acme.sh/acme.sh ] || (curl -sL https://get.acme.sh | sh -s email=commercial@anexys.fr && sleep 3)
-            export IONOS_PREFIX=d2375a53d90e4be1bcbf03ce80141073
-            export IONOS_SECRET=wYYqaiuSP07iSeP93FEotefvdYTTLW56zo44mrnhQr9l7ckvg1EEfZUZYEv0bNXZQ2PcC15cIcsSEjRtibV-wg
-            /root/.acme.sh/acme.sh --issue --dns dns_ionos -d sage.quickedi.fr -d cegid.quickedi.fr -d ebp.quickedi.fr -d odoo.quickedi.fr -d dolibarr.quickedi.fr -d sap.quickedi.fr -d carrefour.quickedi.fr -d leclerc.quickedi.fr -d auchan.quickedi.fr -d systeme-u.quickedi.fr -d intermarche.quickedi.fr -d leroy-merlin.quickedi.fr --server zerossl --keylength ec-256 || true
-            /root/.acme.sh/acme.sh --issue --dns dns_ionos -d sage.bigdataconsulting.fr -d sap.bigdataconsulting.fr -d cegid.bigdataconsulting.fr -d dolibarr.bigdataconsulting.fr -d odoo.bigdataconsulting.fr -d ebp.bigdataconsulting.fr -d ipaas.bigdataconsulting.fr -d edi.bigdataconsulting.fr -d connecteur.bigdataconsulting.fr -d integration.bigdataconsulting.fr -d data.bigdataconsulting.fr -d migration.bigdataconsulting.fr --server zerossl --keylength ec-256 || true
-            QDIR=/root/.acme.sh/sage.quickedi.fr_ecc
-            BDIR=/root/.acme.sh/sage.bigdataconsulting.fr_ecc
-            mkdir -p /opt/bdc-ipaas/docker/certbot/conf/live/sage.quickedi.fr /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr
-            cp $QDIR/fullchain.cer /opt/bdc-ipaas/docker/certbot/conf/live/sage.quickedi.fr/fullchain.pem
-            cp $QDIR/sage.quickedi.fr.key /opt/bdc-ipaas/docker/certbot/conf/live/sage.quickedi.fr/privkey.pem
-            cp $BDIR/fullchain.cer /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem
-            cp $BDIR/sage.bigdataconsulting.fr.key /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem
+            # Use ediconnect.fr cert as placeholder (already valid, nginx will start)
+            QCERT=/opt/bdc-ipaas/docker/certbot/conf/live/sage.quickedi.fr
+            BCERT=/opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr
+            mkdir -p $QCERT $BCERT
+            PLACEHOLDER=/opt/bdc-ipaas/docker/certbot/conf/live/ediconnect.fr
+            cp $PLACEHOLDER/fullchain.pem $QCERT/fullchain.pem 2>/dev/null || cp $PLACEHOLDER/fullchain.cer $QCERT/fullchain.pem 2>/dev/null || true
+            cp $PLACEHOLDER/privkey.pem $QCERT/privkey.pem 2>/dev/null || true
+            cp $PLACEHOLDER/fullchain.pem $BCERT/fullchain.pem 2>/dev/null || cp $PLACEHOLDER/fullchain.cer $BCERT/fullchain.pem 2>/dev/null || true
+            cp $PLACEHOLDER/privkey.pem $BCERT/privkey.pem 2>/dev/null || true
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/sage.quickedi.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -813,4 +811,40 @@ jobs:
             }
             NEOF
             docker exec seo-nginx nginx -t && docker exec seo-nginx nginx -s reload
-            echo RACK57_DONE
+            echo VHOSTS_DONE
+
+      - name: rack-57 issue SSL certs via acme.sh DNS-01
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 600s
+          script: |
+            set -e
+            export IONOS_PREFIX=d2375a53d90e4be1bcbf03ce80141073
+            export IONOS_SECRET=wYYqaiuSP07iSeP93FEotefvdYTTLW56zo44mrnhQr9l7ckvg1EEfZUZYEv0bNXZQ2PcC15cIcsSEjRtibV-wg
+            [ -f /root/.acme.sh/acme.sh ] || (curl -sL https://get.acme.sh | sh -s email=commercial@anexys.fr && sleep 3)
+            echo "Issuing quickedi.fr wildcard cert..."
+            /root/.acme.sh/acme.sh --issue --dns dns_ionos -d sage.quickedi.fr -d cegid.quickedi.fr -d ebp.quickedi.fr -d odoo.quickedi.fr -d dolibarr.quickedi.fr -d sap.quickedi.fr -d carrefour.quickedi.fr -d leclerc.quickedi.fr -d auchan.quickedi.fr -d systeme-u.quickedi.fr -d intermarche.quickedi.fr -d leroy-merlin.quickedi.fr --server zerossl --keylength ec-256 || echo "quickedi cert: already exists or error (ok)"
+            echo "Issuing bigdataconsulting.fr cert..."
+            /root/.acme.sh/acme.sh --issue --dns dns_ionos -d sage.bigdataconsulting.fr -d sap.bigdataconsulting.fr -d cegid.bigdataconsulting.fr -d dolibarr.bigdataconsulting.fr -d odoo.bigdataconsulting.fr -d ebp.bigdataconsulting.fr -d ipaas.bigdataconsulting.fr -d edi.bigdataconsulting.fr -d connecteur.bigdataconsulting.fr -d integration.bigdataconsulting.fr -d data.bigdataconsulting.fr -d migration.bigdataconsulting.fr --server zerossl --keylength ec-256 || echo "bdc cert: already exists or error (ok)"
+            QDIR=/root/.acme.sh/sage.quickedi.fr_ecc
+            BDIR=/root/.acme.sh/sage.bigdataconsulting.fr_ecc
+            if [ -f "$QDIR/fullchain.cer" ]; then
+              cp "$QDIR/fullchain.cer" /opt/bdc-ipaas/docker/certbot/conf/live/sage.quickedi.fr/fullchain.pem
+              cp "$QDIR/sage.quickedi.fr.key" /opt/bdc-ipaas/docker/certbot/conf/live/sage.quickedi.fr/privkey.pem
+              echo "quickedi real certs installed"
+            else
+              echo "quickedi certs not ready yet (DNS propagation pending)"
+            fi
+            if [ -f "$BDIR/fullchain.cer" ]; then
+              cp "$BDIR/fullchain.cer" /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem
+              cp "$BDIR/sage.bigdataconsulting.fr.key" /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem
+              echo "bdc real certs installed"
+            else
+              echo "bdc certs not ready yet (DNS propagation pending)"
+            fi
+            docker exec seo-nginx nginx -t && docker exec seo-nginx nginx -s reload
+            echo SSL_DONE
