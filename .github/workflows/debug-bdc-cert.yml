@@ -1,0 +1,33 @@
+name: Debug BDC certs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Debug rack-57
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 60s
+          script_stop: false
+          script: |
+            echo "=== cert dir ==="
+            ls -la /opt/bdc-ipaas/docker/certbot/conf/live/ 2>&1
+            echo "=== sage cert check ==="
+            ls -la /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/ 2>&1 || echo "MISSING"
+            echo "=== cert subject ==="
+            openssl x509 -noout -subject -ext subjectAltName -in /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem 2>&1 || echo "CANT READ CERT"
+            echo "=== seo-active-conf BDC files ==="
+            ls /opt/bdc-ipaas/docker/nginx/seo-active-conf/*.bigdataconsulting.fr.conf 2>&1 || echo "NO BDC CONF FILES"
+            echo "=== nginx include dirs ==="
+            docker exec seo-nginx nginx -T 2>&1 | grep -E "include|seo-active" | head -20
+            echo "=== acme.sh list ==="
+            ~/.acme.sh/acme.sh --list 2>&1 | head -20
+            echo DEBUG_DONE
