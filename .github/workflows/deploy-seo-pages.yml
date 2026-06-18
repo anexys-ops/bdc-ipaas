@@ -19,7 +19,7 @@ jobs:
             set -e
             cd /opt/bdc-ipaas && git pull origin main
 
-            echo "=== Create HTML directories ==="
+            echo "=== Create HTML directories ===" 
             mkdir -p /opt/bdc-ipaas/seo-pages/ebp-dolibarr.ediconnect.fr
             mkdir -p /opt/bdc-ipaas/seo-pages/sage-dolibarr.ediconnect.fr
             mkdir -p /opt/bdc-ipaas/seo-pages/cegid-dolibarr.ediconnect.fr
@@ -41,7 +41,7 @@ jobs:
             mkdir -p /opt/bdc-ipaas/seo-pages/ebp.taskit.fr
             mkdir -p /opt/bdc-ipaas/seo-pages/sage.taskit.fr
 
-            echo "=== Copy HTML files ==="
+            echo "=== Copy HTML files ===" 
             cp /opt/bdc-ipaas/seo-pages/connecteur-ebp-dolibarr.html /opt/bdc-ipaas/seo-pages/ebp-dolibarr.ediconnect.fr/index.html
             cp /opt/bdc-ipaas/seo-pages/connecteur-sage-dolibarr.html /opt/bdc-ipaas/seo-pages/sage-dolibarr.ediconnect.fr/index.html
             cp /opt/bdc-ipaas/seo-pages/connecteur-cegid-dolibarr.html /opt/bdc-ipaas/seo-pages/cegid-dolibarr.ediconnect.fr/index.html
@@ -63,20 +63,28 @@ jobs:
             cp /opt/bdc-ipaas/seo-pages/taskit-ebp.html /opt/bdc-ipaas/seo-pages/ebp.taskit.fr/index.html
             cp /opt/bdc-ipaas/seo-pages/taskit-sage.html /opt/bdc-ipaas/seo-pages/sage.taskit.fr/index.html
 
-            echo "=== Deploy HTTP nginx configs ==="
+            echo "=== Free port 80 if occupied ===" 
+            docker rm -f seo-nginx 2>/dev/null || true
+            PORTUSER=
+            if [ -n \ ]; then
+              echo "Stopping container on port 80: "
+              docker stop \ || true
+            fi
+
+            echo "=== Deploy HTTP nginx configs ===" 
             mkdir -p /opt/bdc-ipaas/docker/nginx/seo-active-conf
             mkdir -p /opt/bdc-ipaas/docker/certbot/conf
             mkdir -p /opt/bdc-ipaas/docker/certbot/www
             cp /opt/bdc-ipaas/docker/nginx/seo-conf.d-http/*.conf /opt/bdc-ipaas/docker/nginx/seo-active-conf/
 
-            echo "=== Start SEO nginx (HTTP) ==="
+            echo "=== Start SEO nginx (HTTP) ===" 
             cd /opt/bdc-ipaas/docker
-            docker compose -f seo-docker-compose.yml up -d
-            sleep 3
+            docker compose -f seo-docker-compose.yml up -d --remove-orphans
+            sleep 4
             docker exec seo-nginx nginx -t
-            echo "Nginx HTTP running"
+            echo "Nginx HTTP running on port 80"
 
-            echo "=== Certbot: get SSL certs ==="
+            echo "=== Certbot: SSL for ediconnect.fr ===" 
             docker run --rm \
               -v /opt/bdc-ipaas/docker/certbot/conf:/etc/letsencrypt \
               -v /opt/bdc-ipaas/docker/certbot/www:/var/www/certbot \
@@ -91,8 +99,9 @@ jobs:
               -d quickbooks-dolibarr.ediconnect.fr \
               -d ebp-odoo.ediconnect.fr \
               -d sage-odoo.ediconnect.fr \
-              -d cegid-odoo.ediconnect.fr 2>&1 || echo "certbot ediconnect: WARN (may already exist)"
+              -d cegid-odoo.ediconnect.fr 2>&1 || echo "certbot ediconnect WARN"
 
+            echo "=== Certbot: SSL for shopconnect.fr ===" 
             docker run --rm \
               -v /opt/bdc-ipaas/docker/certbot/conf:/etc/letsencrypt \
               -v /opt/bdc-ipaas/docker/certbot/www:/var/www/certbot \
@@ -105,8 +114,9 @@ jobs:
               -d magento-dolibarr.shopconnect.fr \
               -d prestashop-odoo.shopconnect.fr \
               -d woocommerce-odoo.shopconnect.fr \
-              -d shopify-odoo.shopconnect.fr 2>&1 || echo "certbot shopconnect: WARN"
+              -d shopify-odoo.shopconnect.fr 2>&1 || echo "certbot shopconnect WARN"
 
+            echo "=== Certbot: SSL for taskit.fr ===" 
             docker run --rm \
               -v /opt/bdc-ipaas/docker/certbot/conf:/etc/letsencrypt \
               -v /opt/bdc-ipaas/docker/certbot/www:/var/www/certbot \
@@ -116,11 +126,11 @@ jobs:
               -d dolibarr.taskit.fr \
               -d odoo.taskit.fr \
               -d ebp.taskit.fr \
-              -d sage.taskit.fr 2>&1 || echo "certbot taskit: WARN"
+              -d sage.taskit.fr 2>&1 || echo "certbot taskit WARN"
 
-            echo "=== Enable HTTPS configs ==="
+            echo "=== Enable HTTPS configs ===" 
             cp /opt/bdc-ipaas/docker/nginx/seo-conf.d-ssl/*.conf /opt/bdc-ipaas/docker/nginx/seo-active-conf/
-            docker exec seo-nginx nginx -t && docker exec seo-nginx nginx -s reload
+            docker exec seo-nginx nginx -t && docker exec seo-nginx nginx -s reload || echo "HTTPS reload failed - check certs"
 
             echo "=== DONE ===" && date
             docker ps | grep seo-nginx
