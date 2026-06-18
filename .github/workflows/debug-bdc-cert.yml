@@ -18,10 +18,15 @@ jobs:
           command_timeout: 60s
           script_stop: false
           script: |
-            echo "=== sage conf content ==="
-            cat /opt/bdc-ipaas/docker/nginx/seo-active-conf/sage.bigdataconsulting.fr.conf
-            echo "=== cert inside container ==="
-            docker exec seo-nginx ls -la /etc/letsencrypt/live/sage.bigdataconsulting.fr/ 2>&1 || echo "PATH NOT FOUND INSIDE CONTAINER"
-            echo "=== docker mounts ==="
-            docker inspect seo-nginx --format "{{range .Mounts}}{{.Source}} -> {{.Destination}}\n{{end}}" 2>&1
-            echo DONE3
+            echo "=== host port 443 ==="
+            ss -tlnp | grep :443 || netstat -tlnp | grep :443 2>/dev/null
+            echo "=== host nginx ==="
+            which nginx 2>/dev/null && nginx -t 2>&1 || echo "no host nginx"
+            echo "=== seo-nginx ports ==="
+            docker inspect seo-nginx --format "{{range .NetworkSettings.Ports}}{{.}} {{end}}" 2>&1
+            docker port seo-nginx 2>&1
+            echo "=== sage.quickedi.fr conf ==="
+            docker exec seo-nginx cat /etc/nginx/conf.d/sage.quickedi.fr.conf 2>&1
+            echo "=== nginx errors ==="
+            docker exec seo-nginx cat /var/log/nginx/error.log 2>&1 | tail -20
+            echo DONE4
