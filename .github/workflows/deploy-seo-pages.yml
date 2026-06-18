@@ -6,6 +6,7 @@ on:
 jobs:
   deploy-seo:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Deploy SEO pages + SSL via DNS-01
         uses: appleboy/ssh-action@v1.0.3
@@ -14,7 +15,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 300s
+          command_timeout: 600s
           script: |
             set -e
             cd /opt/bdc-ipaas
