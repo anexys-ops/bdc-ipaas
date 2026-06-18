@@ -1,0 +1,463 @@
+name: Deploy QuickEDI SEO pages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-quickedi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: SCP quickedi HTML files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "seo-pages/quickedi/"
+          target: "/opt/bdc-ipaas/seo-pages/"
+          strip_components: 1
+
+      - name: Setup nginx vhosts + SSL
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 600s
+          script: |
+            set -e
+            
+            echo "=== Create dirs in seo-nginx mount ==="
+            mkdir -p /opt/bdc-ipaas/seo-pages/quickedi
+            
+            echo "=== Copy HTML files from runner (via SCP - files already on server from scp step) ==="
+            # Files are copied by SCP step before this SSH step
+            ls /opt/bdc-ipaas/seo-pages/quickedi/
+            
+            echo "=== Create nginx HTTP vhosts ==="
+            mkdir -p /opt/bdc-ipaas/docker/nginx/seo-active-conf
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/sage.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name sage.quickedi.fr;
+                root /var/www/connecteurs/quickedi;
+                index sage.html;
+                location = / { try_files /sage.html =404; }
+                location / { try_files $uri $uri/ =404; }
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/cegid.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name cegid.quickedi.fr;
+                root /var/www/connecteurs/quickedi;
+                index cegid.html;
+                location = / { try_files /cegid.html =404; }
+                location / { try_files $uri $uri/ =404; }
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/ebp.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name ebp.quickedi.fr;
+                root /var/www/connecteurs/quickedi;
+                index ebp.html;
+                location = / { try_files /ebp.html =404; }
+                location / { try_files $uri $uri/ =404; }
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/odoo.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name odoo.quickedi.fr;
+                root /var/www/connecteurs/quickedi;
+                index odoo.html;
+                location = / { try_files /odoo.html =404; }
+                location / { try_files $uri $uri/ =404; }
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/dolibarr.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name dolibarr.quickedi.fr;
+                root /var/www/connecteurs/quickedi;
+                index dolibarr.html;
+                location = / { try_files /dolibarr.html =404; }
+                location / { try_files $uri $uri/ =404; }
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/sap.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name sap.quickedi.fr;
+                root /var/www/connecteurs/quickedi;
+                index sap.html;
+                location = / { try_files /sap.html =404; }
+                location / { try_files $uri $uri/ =404; }
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/carrefour.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name carrefour.quickedi.fr;
+                root /var/www/connecteurs/quickedi;
+                index carrefour.html;
+                location = / { try_files /carrefour.html =404; }
+                location / { try_files $uri $uri/ =404; }
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/leclerc.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name leclerc.quickedi.fr;
+                root /var/www/connecteurs/quickedi;
+                index leclerc.html;
+                location = / { try_files /leclerc.html =404; }
+                location / { try_files $uri $uri/ =404; }
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/auchan.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name auchan.quickedi.fr;
+                root /var/www/connecteurs/quickedi;
+                index auchan.html;
+                location = / { try_files /auchan.html =404; }
+                location / { try_files $uri $uri/ =404; }
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/systeme-u.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name systeme-u.quickedi.fr;
+                root /var/www/connecteurs/quickedi;
+                index systeme-u.html;
+                location = / { try_files /systeme-u.html =404; }
+                location / { try_files $uri $uri/ =404; }
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/intermarche.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name intermarche.quickedi.fr;
+                root /var/www/connecteurs/quickedi;
+                index intermarche.html;
+                location = / { try_files /intermarche.html =404; }
+                location / { try_files $uri $uri/ =404; }
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/leroy-merlin.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name leroy-merlin.quickedi.fr;
+                root /var/www/connecteurs/quickedi;
+                index leroy-merlin.html;
+                location = / { try_files /leroy-merlin.html =404; }
+                location / { try_files $uri $uri/ =404; }
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+            }
+            NGINX
+            
+            echo "=== Reload nginx HTTP ==="
+            docker exec seo-nginx nginx -t && docker exec seo-nginx nginx -s reload
+            sleep 2
+            
+            echo "=== Install acme.sh ==="
+            [ -f /root/.acme.sh/acme.sh ] || (curl -sL https://get.acme.sh | sh -s email=commercial@anexys.fr && sleep 2)
+            
+            export IONOS_PREFIX=d2375a53d90e4be1bcbf03ce80141073
+            export IONOS_SECRET=wYYqaiuSP07iSeP93FEotefvdYTTLW56zo44mrnhQr9l7ckvg1EEfZUZYEv0bNXZQ2PcC15cIcsSEjRtibV-wg
+            
+            echo "=== Issue SSL cert for quickedi.fr ==="
+            /root/.acme.sh/acme.sh --issue --dns dns_ionos \
+              -d sage.quickedi.fr -d cegid.quickedi.fr -d ebp.quickedi.fr \
+              -d odoo.quickedi.fr -d dolibarr.quickedi.fr -d sap.quickedi.fr \
+              -d carrefour.quickedi.fr -d leclerc.quickedi.fr -d auchan.quickedi.fr \
+              -d systeme-u.quickedi.fr -d intermarche.quickedi.fr -d leroy-merlin.quickedi.fr \
+              --server zerossl --keylength ec-256 \
+              || echo "Note: cert may already exist"
+            
+            echo "=== Copy certs into docker mount ==="
+            CERT_SRC="/root/.acme.sh/sage.quickedi.fr_ecc"
+            CERT_DST="/opt/bdc-ipaas/docker/certbot/conf/live/sage.quickedi.fr"
+            mkdir -p "$CERT_DST"
+            cp "$CERT_SRC/fullchain.cer" "$CERT_DST/fullchain.pem"
+            cp "$CERT_SRC/sage.quickedi.fr.key" "$CERT_DST/privkey.pem"
+            cp "$CERT_SRC/ca.cer" "$CERT_DST/chain.pem"
+            echo "Certs copied"
+            
+            echo "=== Switch to HTTPS vhosts ==="
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/sage.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name sage.quickedi.fr;
+                return 301 https://$host$request_uri;
+            }
+            server {
+                listen 443 ssl;
+                server_name sage.quickedi.fr;
+                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                root /var/www/connecteurs/quickedi;
+                index sage.html;
+                location = / { try_files /sage.html =404; }
+                location / { try_files $uri $uri/ =404; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/cegid.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name cegid.quickedi.fr;
+                return 301 https://$host$request_uri;
+            }
+            server {
+                listen 443 ssl;
+                server_name cegid.quickedi.fr;
+                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                root /var/www/connecteurs/quickedi;
+                index cegid.html;
+                location = / { try_files /cegid.html =404; }
+                location / { try_files $uri $uri/ =404; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/ebp.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name ebp.quickedi.fr;
+                return 301 https://$host$request_uri;
+            }
+            server {
+                listen 443 ssl;
+                server_name ebp.quickedi.fr;
+                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                root /var/www/connecteurs/quickedi;
+                index ebp.html;
+                location = / { try_files /ebp.html =404; }
+                location / { try_files $uri $uri/ =404; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/odoo.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name odoo.quickedi.fr;
+                return 301 https://$host$request_uri;
+            }
+            server {
+                listen 443 ssl;
+                server_name odoo.quickedi.fr;
+                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                root /var/www/connecteurs/quickedi;
+                index odoo.html;
+                location = / { try_files /odoo.html =404; }
+                location / { try_files $uri $uri/ =404; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/dolibarr.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name dolibarr.quickedi.fr;
+                return 301 https://$host$request_uri;
+            }
+            server {
+                listen 443 ssl;
+                server_name dolibarr.quickedi.fr;
+                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                root /var/www/connecteurs/quickedi;
+                index dolibarr.html;
+                location = / { try_files /dolibarr.html =404; }
+                location / { try_files $uri $uri/ =404; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/sap.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name sap.quickedi.fr;
+                return 301 https://$host$request_uri;
+            }
+            server {
+                listen 443 ssl;
+                server_name sap.quickedi.fr;
+                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                root /var/www/connecteurs/quickedi;
+                index sap.html;
+                location = / { try_files /sap.html =404; }
+                location / { try_files $uri $uri/ =404; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/carrefour.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name carrefour.quickedi.fr;
+                return 301 https://$host$request_uri;
+            }
+            server {
+                listen 443 ssl;
+                server_name carrefour.quickedi.fr;
+                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                root /var/www/connecteurs/quickedi;
+                index carrefour.html;
+                location = / { try_files /carrefour.html =404; }
+                location / { try_files $uri $uri/ =404; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/leclerc.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name leclerc.quickedi.fr;
+                return 301 https://$host$request_uri;
+            }
+            server {
+                listen 443 ssl;
+                server_name leclerc.quickedi.fr;
+                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                root /var/www/connecteurs/quickedi;
+                index leclerc.html;
+                location = / { try_files /leclerc.html =404; }
+                location / { try_files $uri $uri/ =404; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/auchan.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name auchan.quickedi.fr;
+                return 301 https://$host$request_uri;
+            }
+            server {
+                listen 443 ssl;
+                server_name auchan.quickedi.fr;
+                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                root /var/www/connecteurs/quickedi;
+                index auchan.html;
+                location = / { try_files /auchan.html =404; }
+                location / { try_files $uri $uri/ =404; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/systeme-u.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name systeme-u.quickedi.fr;
+                return 301 https://$host$request_uri;
+            }
+            server {
+                listen 443 ssl;
+                server_name systeme-u.quickedi.fr;
+                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                root /var/www/connecteurs/quickedi;
+                index systeme-u.html;
+                location = / { try_files /systeme-u.html =404; }
+                location / { try_files $uri $uri/ =404; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/intermarche.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name intermarche.quickedi.fr;
+                return 301 https://$host$request_uri;
+            }
+            server {
+                listen 443 ssl;
+                server_name intermarche.quickedi.fr;
+                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                root /var/www/connecteurs/quickedi;
+                index intermarche.html;
+                location = / { try_files /intermarche.html =404; }
+                location / { try_files $uri $uri/ =404; }
+            }
+            NGINX
+            
+            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/leroy-merlin.quickedi.fr.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name leroy-merlin.quickedi.fr;
+                return 301 https://$host$request_uri;
+            }
+            server {
+                listen 443 ssl;
+                server_name leroy-merlin.quickedi.fr;
+                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                root /var/www/connecteurs/quickedi;
+                index leroy-merlin.html;
+                location = / { try_files /leroy-merlin.html =404; }
+                location / { try_files $uri $uri/ =404; }
+            }
+            NGINX
+            
+            echo "=== Final nginx reload ==="
+            docker exec seo-nginx nginx -t && docker exec seo-nginx nginx -s reload
+            echo "=== quickedi.fr HTTPS deployment complete! ==="
+            
