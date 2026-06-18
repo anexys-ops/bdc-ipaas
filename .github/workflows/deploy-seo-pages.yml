@@ -17,94 +17,95 @@ jobs:
           command_timeout: 300s
           script: |
             set -e
-            cd /opt/bdc-ipaas && git pull origin main
+            cd /opt/bdc-ipaas
+            git fetch --prune origin
+            git reset --hard origin/main
 
-            echo "=== 1. Create HTML dirs & copy files ===" 
-            for d in ebp-dolibarr.ediconnect.fr sage-dolibarr.ediconnect.fr cegid-dolibarr.ediconnect.fr odoo-dolibarr.ediconnect.fr sap-dolibarr.ediconnect.fr quickbooks-dolibarr.ediconnect.fr ebp-odoo.ediconnect.fr sage-odoo.ediconnect.fr cegid-odoo.ediconnect.fr prestashop-dolibarr.shopconnect.fr woocommerce-dolibarr.shopconnect.fr shopify-dolibarr.shopconnect.fr magento-dolibarr.shopconnect.fr prestashop-odoo.shopconnect.fr woocommerce-odoo.shopconnect.fr shopify-odoo.shopconnect.fr dolibarr.taskit.fr odoo.taskit.fr ebp.taskit.fr sage.taskit.fr; do mkdir -p /opt/bdc-ipaas/seo-pages/; done
-            cp /opt/bdc-ipaas/seo-pages/connecteur-ebp-dolibarr.html /opt/bdc-ipaas/seo-pages/ebp-dolibarr.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-sage-dolibarr.html /opt/bdc-ipaas/seo-pages/sage-dolibarr.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-cegid-dolibarr.html /opt/bdc-ipaas/seo-pages/cegid-dolibarr.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-odoo-dolibarr.html /opt/bdc-ipaas/seo-pages/odoo-dolibarr.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-sap-dolibarr.html /opt/bdc-ipaas/seo-pages/sap-dolibarr.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-quickbooks-dolibarr.html /opt/bdc-ipaas/seo-pages/quickbooks-dolibarr.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-ebp-odoo.html /opt/bdc-ipaas/seo-pages/ebp-odoo.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-sage-odoo.html /opt/bdc-ipaas/seo-pages/sage-odoo.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/connecteur-cegid-odoo.html /opt/bdc-ipaas/seo-pages/cegid-odoo.ediconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-prestashop-dolibarr.html /opt/bdc-ipaas/seo-pages/prestashop-dolibarr.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-woocommerce-dolibarr.html /opt/bdc-ipaas/seo-pages/woocommerce-dolibarr.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-shopify-dolibarr.html /opt/bdc-ipaas/seo-pages/shopify-dolibarr.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-magento-dolibarr.html /opt/bdc-ipaas/seo-pages/magento-dolibarr.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-prestashop-odoo.html /opt/bdc-ipaas/seo-pages/prestashop-odoo.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-woocommerce-odoo.html /opt/bdc-ipaas/seo-pages/woocommerce-odoo.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/shopconnect-shopify-odoo.html /opt/bdc-ipaas/seo-pages/shopify-odoo.shopconnect.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/taskit-dolibarr.html /opt/bdc-ipaas/seo-pages/dolibarr.taskit.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/taskit-odoo.html /opt/bdc-ipaas/seo-pages/odoo.taskit.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/taskit-ebp.html /opt/bdc-ipaas/seo-pages/ebp.taskit.fr/index.html
-            cp /opt/bdc-ipaas/seo-pages/taskit-sage.html /opt/bdc-ipaas/seo-pages/sage.taskit.fr/index.html
+            echo "=== 1. HTML dirs ==="
+            for d in ebp-dolibarr.ediconnect.fr sage-dolibarr.ediconnect.fr cegid-dolibarr.ediconnect.fr odoo-dolibarr.ediconnect.fr sap-dolibarr.ediconnect.fr quickbooks-dolibarr.ediconnect.fr ebp-odoo.ediconnect.fr sage-odoo.ediconnect.fr cegid-odoo.ediconnect.fr prestashop-dolibarr.shopconnect.fr woocommerce-dolibarr.shopconnect.fr shopify-dolibarr.shopconnect.fr magento-dolibarr.shopconnect.fr prestashop-odoo.shopconnect.fr woocommerce-odoo.shopconnect.fr shopify-odoo.shopconnect.fr dolibarr.taskit.fr odoo.taskit.fr ebp.taskit.fr sage.taskit.fr; do mkdir -p /opt/bdc-ipaas/seo-pages/$d; done
+            cp seo-pages/connecteur-ebp-dolibarr.html seo-pages/ebp-dolibarr.ediconnect.fr/index.html
+            cp seo-pages/connecteur-sage-dolibarr.html seo-pages/sage-dolibarr.ediconnect.fr/index.html
+            cp seo-pages/connecteur-cegid-dolibarr.html seo-pages/cegid-dolibarr.ediconnect.fr/index.html
+            cp seo-pages/connecteur-odoo-dolibarr.html seo-pages/odoo-dolibarr.ediconnect.fr/index.html
+            cp seo-pages/connecteur-sap-dolibarr.html seo-pages/sap-dolibarr.ediconnect.fr/index.html
+            cp seo-pages/connecteur-quickbooks-dolibarr.html seo-pages/quickbooks-dolibarr.ediconnect.fr/index.html
+            cp seo-pages/connecteur-ebp-odoo.html seo-pages/ebp-odoo.ediconnect.fr/index.html
+            cp seo-pages/connecteur-sage-odoo.html seo-pages/sage-odoo.ediconnect.fr/index.html
+            cp seo-pages/connecteur-cegid-odoo.html seo-pages/cegid-odoo.ediconnect.fr/index.html
+            cp seo-pages/shopconnect-prestashop-dolibarr.html seo-pages/prestashop-dolibarr.shopconnect.fr/index.html
+            cp seo-pages/shopconnect-woocommerce-dolibarr.html seo-pages/woocommerce-dolibarr.shopconnect.fr/index.html
+            cp seo-pages/shopconnect-shopify-dolibarr.html seo-pages/shopify-dolibarr.shopconnect.fr/index.html
+            cp seo-pages/shopconnect-magento-dolibarr.html seo-pages/magento-dolibarr.shopconnect.fr/index.html
+            cp seo-pages/shopconnect-prestashop-odoo.html seo-pages/prestashop-odoo.shopconnect.fr/index.html
+            cp seo-pages/shopconnect-woocommerce-odoo.html seo-pages/woocommerce-odoo.shopconnect.fr/index.html
+            cp seo-pages/shopconnect-shopify-odoo.html seo-pages/shopify-odoo.shopconnect.fr/index.html
+            cp seo-pages/taskit-dolibarr.html seo-pages/dolibarr.taskit.fr/index.html
+            cp seo-pages/taskit-odoo.html seo-pages/odoo.taskit.fr/index.html
+            cp seo-pages/taskit-ebp.html seo-pages/ebp.taskit.fr/index.html
+            cp seo-pages/taskit-sage.html seo-pages/sage.taskit.fr/index.html
 
-            echo "=== 2. Start HTTP nginx ===" 
+            echo "=== 2. HTTP nginx ==="
             docker rm -f seo-nginx 2>/dev/null || true
-            mkdir -p /opt/bdc-ipaas/docker/nginx/seo-active-conf
-            cp /opt/bdc-ipaas/docker/nginx/seo-conf.d-http/*.conf /opt/bdc-ipaas/docker/nginx/seo-active-conf/
-            cd /opt/bdc-ipaas/docker
+            mkdir -p docker/nginx/seo-active-conf
+            cp docker/nginx/seo-conf.d-http/*.conf docker/nginx/seo-active-conf/
+            cd docker
             docker compose -f seo-docker-compose.yml up -d --remove-orphans
-            sleep 4
-            docker exec seo-nginx nginx -t
-            echo "HTTP nginx running"
+            sleep 5
+            docker exec seo-nginx nginx -t && echo "HTTP nginx OK"
 
-            echo "=== 3. Install acme.sh ===" 
+            echo "=== 3. acme.sh ==="
+            cd /opt/bdc-ipaas
             if [ ! -f ~/.acme.sh/acme.sh ]; then
               curl -s https://get.acme.sh | sh -s email=commercial@anexys.fr
             fi
-            export PATH=~/.acme.sh:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-            echo "=== 4. Issue certs via DNS-01 (IONOS) ===" 
-            mkdir -p /opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr
-            mkdir -p /opt/bdc-ipaas/docker/certbot/conf/live/prestashop-dolibarr.shopconnect.fr
-            mkdir -p /opt/bdc-ipaas/docker/certbot/conf/live/dolibarr.taskit.fr
+            echo "=== 4. certs DNS-01 ==="
+            mkdir -p docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr
+            mkdir -p docker/certbot/conf/live/prestashop-dolibarr.shopconnect.fr
+            mkdir -p docker/certbot/conf/live/dolibarr.taskit.fr
 
             IONOS_PREFIX=d02bccf386664f7ea091958b7f3f4db5 IONOS_SECRET=8Z1p784fYEMAh8AKBaUxNQ5Ctarh3sqhhDyAGqdpTYLR26EAB3GBHwHJqx442IsJzuWLCYYKOBD_1VI3PnkFng \
-            acme.sh --issue --dns dns_ionos --dnssleep 30 \
+            ~/.acme.sh/acme.sh --issue --dns dns_ionos --dnssleep 30 \
               -d ebp-dolibarr.ediconnect.fr -d sage-dolibarr.ediconnect.fr \
               -d cegid-dolibarr.ediconnect.fr -d odoo-dolibarr.ediconnect.fr \
               -d sap-dolibarr.ediconnect.fr -d quickbooks-dolibarr.ediconnect.fr \
               -d ebp-odoo.ediconnect.fr -d sage-odoo.ediconnect.fr -d cegid-odoo.ediconnect.fr \
-              2>&1 || echo "acme.sh ediconnect WARN"
+              2>&1 || echo "WARN ediconnect"
 
-            acme.sh --install-cert -d ebp-dolibarr.ediconnect.fr \
+            ~/.acme.sh/acme.sh --install-cert -d ebp-dolibarr.ediconnect.fr \
               --fullchain-file /opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/fullchain.pem \
               --key-file /opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/privkey.pem \
               2>&1 || true
 
             IONOS_PREFIX=d2375a53d90e4be1bcbf03ce80141073 IONOS_SECRET=wYYqaiuSP07iSeP93FEotefvdYTTLW56zo44mrnhQr9l7ckvg1EEfZUZYEv0bNXZQ2PcC15cIcsSEjRtibV-wg \
-            acme.sh --issue --dns dns_ionos --dnssleep 30 \
+            ~/.acme.sh/acme.sh --issue --dns dns_ionos --dnssleep 30 \
               -d prestashop-dolibarr.shopconnect.fr -d woocommerce-dolibarr.shopconnect.fr \
               -d shopify-dolibarr.shopconnect.fr -d magento-dolibarr.shopconnect.fr \
               -d prestashop-odoo.shopconnect.fr -d woocommerce-odoo.shopconnect.fr \
               -d shopify-odoo.shopconnect.fr \
-              2>&1 || echo "acme.sh shopconnect WARN"
+              2>&1 || echo "WARN shopconnect"
 
-            acme.sh --install-cert -d prestashop-dolibarr.shopconnect.fr \
+            ~/.acme.sh/acme.sh --install-cert -d prestashop-dolibarr.shopconnect.fr \
               --fullchain-file /opt/bdc-ipaas/docker/certbot/conf/live/prestashop-dolibarr.shopconnect.fr/fullchain.pem \
               --key-file /opt/bdc-ipaas/docker/certbot/conf/live/prestashop-dolibarr.shopconnect.fr/privkey.pem \
               2>&1 || true
 
             IONOS_PREFIX=d2375a53d90e4be1bcbf03ce80141073 IONOS_SECRET=wYYqaiuSP07iSeP93FEotefvdYTTLW56zo44mrnhQr9l7ckvg1EEfZUZYEv0bNXZQ2PcC15cIcsSEjRtibV-wg \
-            acme.sh --issue --dns dns_ionos --dnssleep 30 \
+            ~/.acme.sh/acme.sh --issue --dns dns_ionos --dnssleep 30 \
               -d dolibarr.taskit.fr -d odoo.taskit.fr -d ebp.taskit.fr -d sage.taskit.fr \
-              2>&1 || echo "acme.sh taskit WARN"
+              2>&1 || echo "WARN taskit"
 
-            acme.sh --install-cert -d dolibarr.taskit.fr \
+            ~/.acme.sh/acme.sh --install-cert -d dolibarr.taskit.fr \
               --fullchain-file /opt/bdc-ipaas/docker/certbot/conf/live/dolibarr.taskit.fr/fullchain.pem \
               --key-file /opt/bdc-ipaas/docker/certbot/conf/live/dolibarr.taskit.fr/privkey.pem \
               2>&1 || true
 
-            echo "=== 5. Enable HTTPS if certs exist ===" 
+            echo "=== 5. Enable HTTPS ==="
             if [ -f /opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/fullchain.pem ]; then
               cp /opt/bdc-ipaas/docker/nginx/seo-conf.d-ssl/*.conf /opt/bdc-ipaas/docker/nginx/seo-active-conf/
-              docker exec seo-nginx nginx -t && docker exec seo-nginx nginx -s reload && echo "HTTPS enabled" || echo "HTTPS failed"
+              docker exec seo-nginx nginx -t && docker exec seo-nginx nginx -s reload && echo "HTTPS enabled"
             else
-              echo "No certs found - staying on HTTP"
+              echo "No certs - HTTP only"
             fi
 
             echo "=== DONE ===" && date
