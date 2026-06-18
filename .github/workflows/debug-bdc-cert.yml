@@ -1,4 +1,4 @@
-name: Debug BDC certs
+name: Debug BDC nginx mounts
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Debug rack-57
+      - name: Debug
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -18,16 +18,10 @@ jobs:
           command_timeout: 60s
           script_stop: false
           script: |
-            echo "=== cert dir ==="
-            ls -la /opt/bdc-ipaas/docker/certbot/conf/live/ 2>&1
-            echo "=== sage cert check ==="
-            ls -la /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/ 2>&1 || echo "MISSING"
-            echo "=== cert subject ==="
-            openssl x509 -noout -subject -ext subjectAltName -in /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem 2>&1 || echo "CANT READ CERT"
-            echo "=== seo-active-conf BDC files ==="
-            ls /opt/bdc-ipaas/docker/nginx/seo-active-conf/*.bigdataconsulting.fr.conf 2>&1 || echo "NO BDC CONF FILES"
-            echo "=== nginx include dirs ==="
-            docker exec seo-nginx nginx -T 2>&1 | grep -E "include|seo-active" | head -20
-            echo "=== acme.sh list ==="
-            ~/.acme.sh/acme.sh --list 2>&1 | head -20
-            echo DEBUG_DONE
+            echo "=== docker inspect volumes ==="
+            docker inspect seo-nginx 2>&1 | python3 -c "import json,sys; d=json.load(sys.stdin); [print(m["Source"],"->",m["Destination"]) for m in d[0]["Mounts"]]"
+            echo "=== conf.d contents ==="
+            docker exec seo-nginx ls /etc/nginx/conf.d/ 2>&1
+            echo "=== nginx -T full includes ==="
+            docker exec seo-nginx nginx -T 2>&1 | grep -E "include|conf" | head -30
+            echo DONE2
