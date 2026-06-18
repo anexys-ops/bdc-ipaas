@@ -150,7 +150,9 @@ jobs:
             echo RACK57_STEP7
             docker exec seo-nginx nginx -t 2>&1
             true
-            docker exec seo-nginx nginx -s reload 2>&1
+            docker restart seo-nginx 2>&1
+            true
+            sleep 3
             true
             echo RACK57_DONE
             exit 0
