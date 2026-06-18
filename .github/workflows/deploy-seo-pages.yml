@@ -7,7 +7,7 @@ jobs:
   deploy-seo:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy 20 SEO landing pages
+      - name: Deploy 20 SEO landing pages + SSL
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -19,29 +19,10 @@ jobs:
             set -e
             cd /opt/bdc-ipaas && git pull origin main
 
-            echo "=== Create HTML directories ===" 
-            mkdir -p /opt/bdc-ipaas/seo-pages/ebp-dolibarr.ediconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/sage-dolibarr.ediconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/cegid-dolibarr.ediconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/odoo-dolibarr.ediconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/sap-dolibarr.ediconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/quickbooks-dolibarr.ediconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/ebp-odoo.ediconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/sage-odoo.ediconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/cegid-odoo.ediconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/prestashop-dolibarr.shopconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/woocommerce-dolibarr.shopconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/shopify-dolibarr.shopconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/magento-dolibarr.shopconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/prestashop-odoo.shopconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/woocommerce-odoo.shopconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/shopify-odoo.shopconnect.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/dolibarr.taskit.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/odoo.taskit.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/ebp.taskit.fr
-            mkdir -p /opt/bdc-ipaas/seo-pages/sage.taskit.fr
-
-            echo "=== Copy HTML files ===" 
+            echo "=== Create HTML dirs & copy files ===" 
+            for d in ebp-dolibarr.ediconnect.fr sage-dolibarr.ediconnect.fr cegid-dolibarr.ediconnect.fr odoo-dolibarr.ediconnect.fr sap-dolibarr.ediconnect.fr quickbooks-dolibarr.ediconnect.fr ebp-odoo.ediconnect.fr sage-odoo.ediconnect.fr cegid-odoo.ediconnect.fr prestashop-dolibarr.shopconnect.fr woocommerce-dolibarr.shopconnect.fr shopify-dolibarr.shopconnect.fr magento-dolibarr.shopconnect.fr prestashop-odoo.shopconnect.fr woocommerce-odoo.shopconnect.fr shopify-odoo.shopconnect.fr dolibarr.taskit.fr odoo.taskit.fr ebp.taskit.fr sage.taskit.fr; do
+              mkdir -p /opt/bdc-ipaas/seo-pages/
+            done
             cp /opt/bdc-ipaas/seo-pages/connecteur-ebp-dolibarr.html /opt/bdc-ipaas/seo-pages/ebp-dolibarr.ediconnect.fr/index.html
             cp /opt/bdc-ipaas/seo-pages/connecteur-sage-dolibarr.html /opt/bdc-ipaas/seo-pages/sage-dolibarr.ediconnect.fr/index.html
             cp /opt/bdc-ipaas/seo-pages/connecteur-cegid-dolibarr.html /opt/bdc-ipaas/seo-pages/cegid-dolibarr.ediconnect.fr/index.html
@@ -63,33 +44,24 @@ jobs:
             cp /opt/bdc-ipaas/seo-pages/taskit-ebp.html /opt/bdc-ipaas/seo-pages/ebp.taskit.fr/index.html
             cp /opt/bdc-ipaas/seo-pages/taskit-sage.html /opt/bdc-ipaas/seo-pages/sage.taskit.fr/index.html
 
-            echo "=== Free port 80 if occupied ===" 
+            echo "=== Ensure HTTP nginx is running ===" 
             docker rm -f seo-nginx 2>/dev/null || true
-            PORTUSER=
-            if [ -n \ ]; then
-              echo "Stopping container on port 80: "
-              docker stop \ || true
-            fi
-
-            echo "=== Deploy HTTP nginx configs ===" 
             mkdir -p /opt/bdc-ipaas/docker/nginx/seo-active-conf
             mkdir -p /opt/bdc-ipaas/docker/certbot/conf
-            mkdir -p /opt/bdc-ipaas/docker/certbot/www
             cp /opt/bdc-ipaas/docker/nginx/seo-conf.d-http/*.conf /opt/bdc-ipaas/docker/nginx/seo-active-conf/
-
-            echo "=== Start SEO nginx (HTTP) ===" 
             cd /opt/bdc-ipaas/docker
             docker compose -f seo-docker-compose.yml up -d --remove-orphans
             sleep 4
             docker exec seo-nginx nginx -t
-            echo "Nginx HTTP running on port 80"
+            echo "HTTP OK - pages live on port 80"
 
-            echo "=== Certbot: SSL for ediconnect.fr ===" 
-            docker run --rm \
+            echo "=== Certbot standalone: stop nginx, get certs, restart ===" 
+            docker stop seo-nginx
+
+            docker run --rm -p 80:80 \
               -v /opt/bdc-ipaas/docker/certbot/conf:/etc/letsencrypt \
-              -v /opt/bdc-ipaas/docker/certbot/www:/var/www/certbot \
-              certbot/certbot certonly --webroot \
-              -w /var/www/certbot --non-interactive --agree-tos \
+              certbot/certbot certonly --standalone \
+              --non-interactive --agree-tos \
               -m commercial@anexys.fr \
               -d ebp-dolibarr.ediconnect.fr \
               -d sage-dolibarr.ediconnect.fr \
@@ -101,12 +73,10 @@ jobs:
               -d sage-odoo.ediconnect.fr \
               -d cegid-odoo.ediconnect.fr 2>&1 || echo "certbot ediconnect WARN"
 
-            echo "=== Certbot: SSL for shopconnect.fr ===" 
-            docker run --rm \
+            docker run --rm -p 80:80 \
               -v /opt/bdc-ipaas/docker/certbot/conf:/etc/letsencrypt \
-              -v /opt/bdc-ipaas/docker/certbot/www:/var/www/certbot \
-              certbot/certbot certonly --webroot \
-              -w /var/www/certbot --non-interactive --agree-tos \
+              certbot/certbot certonly --standalone \
+              --non-interactive --agree-tos \
               -m commercial@anexys.fr \
               -d prestashop-dolibarr.shopconnect.fr \
               -d woocommerce-dolibarr.shopconnect.fr \
@@ -116,12 +86,10 @@ jobs:
               -d woocommerce-odoo.shopconnect.fr \
               -d shopify-odoo.shopconnect.fr 2>&1 || echo "certbot shopconnect WARN"
 
-            echo "=== Certbot: SSL for taskit.fr ===" 
-            docker run --rm \
+            docker run --rm -p 80:80 \
               -v /opt/bdc-ipaas/docker/certbot/conf:/etc/letsencrypt \
-              -v /opt/bdc-ipaas/docker/certbot/www:/var/www/certbot \
-              certbot/certbot certonly --webroot \
-              -w /var/www/certbot --non-interactive --agree-tos \
+              certbot/certbot certonly --standalone \
+              --non-interactive --agree-tos \
               -m commercial@anexys.fr \
               -d dolibarr.taskit.fr \
               -d odoo.taskit.fr \
@@ -130,7 +98,9 @@ jobs:
 
             echo "=== Enable HTTPS configs ===" 
             cp /opt/bdc-ipaas/docker/nginx/seo-conf.d-ssl/*.conf /opt/bdc-ipaas/docker/nginx/seo-active-conf/
-            docker exec seo-nginx nginx -t && docker exec seo-nginx nginx -s reload || echo "HTTPS reload failed - check certs"
+            docker start seo-nginx
+            sleep 4
+            docker exec seo-nginx nginx -t && docker exec seo-nginx nginx -s reload && echo "HTTPS enabled" || echo "HTTPS failed - HTTP still running"
 
             echo "=== DONE ===" && date
             docker ps | grep seo-nginx
