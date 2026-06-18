@@ -18,10 +18,10 @@ jobs:
           command_timeout: 60s
           script_stop: false
           script: |
-            echo "=== docker inspect volumes ==="
-            docker inspect seo-nginx 2>&1 | python3 -c "import json,sys; d=json.load(sys.stdin); [print(m["Source"],"->",m["Destination"]) for m in d[0]["Mounts"]]"
-            echo "=== conf.d contents ==="
-            docker exec seo-nginx ls /etc/nginx/conf.d/ 2>&1
-            echo "=== nginx -T full includes ==="
-            docker exec seo-nginx nginx -T 2>&1 | grep -E "include|conf" | head -30
-            echo DONE2
+            echo "=== sage conf content ==="
+            cat /opt/bdc-ipaas/docker/nginx/seo-active-conf/sage.bigdataconsulting.fr.conf
+            echo "=== cert inside container ==="
+            docker exec seo-nginx ls -la /etc/letsencrypt/live/sage.bigdataconsulting.fr/ 2>&1 || echo "PATH NOT FOUND INSIDE CONTAINER"
+            echo "=== docker mounts ==="
+            docker inspect seo-nginx --format "{{range .Mounts}}{{.Source}} -> {{.Destination}}\n{{end}}" 2>&1
+            echo DONE3
