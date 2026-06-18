@@ -101,44 +101,56 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           command_timeout: 600s
+          script_stop: false
           script: |
-            echo "=== STEP1 clean stale BDC vhosts ==="
-            for f in /opt/bdc-ipaas/docker/nginx/seo-active-conf/*.bigdataconsulting.fr.conf; do [ -f "$f" ] && rm "$f" && echo "Removed $f"; done 2>/dev/null || true
-            echo "=== STEP2 acme.sh check ==="
-            [ -f ~/.acme.sh/acme.sh ] || (curl -s https://get.acme.sh | sh -s email=commercial@anexys.fr) || true
-            echo "=== STEP3 issue BDC cert ==="
-            IONOS_PREFIX=d2375a53d90e4be1bcbf03ce80141073 IONOS_SECRET=wYYqaiuSP07iSeP93FEotefvdYTTLW56zo44mrnhQr9l7ckvg1EEfZUZYEv0bNXZQ2PcC15cIcsSEjRtibV-wg ~/.acme.sh/acme.sh --issue --dns dns_ionos --dnssleep 30 -d sage.bigdataconsulting.fr -d sap.bigdataconsulting.fr -d cegid.bigdataconsulting.fr -d dolibarr.bigdataconsulting.fr -d odoo.bigdataconsulting.fr -d ebp.bigdataconsulting.fr -d ipaas.bigdataconsulting.fr -d edi.bigdataconsulting.fr -d connecteur.bigdataconsulting.fr -d integration.bigdataconsulting.fr -d data.bigdataconsulting.fr -d migration.bigdataconsulting.fr 2>&1 || echo "WARN: cert already exists or failed - continuing"
-            echo "=== STEP4 install cert ==="
+            set +e
+            echo RACK57_START
+            rm -f /opt/bdc-ipaas/docker/nginx/seo-active-conf/*.bigdataconsulting.fr.conf 2>/dev/null
+            true
+            echo RACK57_STEP2
+            [ -f ~/.acme.sh/acme.sh ] || curl -s https://get.acme.sh | sh -s email=commercial@anexys.fr
+            true
+            echo RACK57_STEP3
+            IONOS_PREFIX=d2375a53d90e4be1bcbf03ce80141073 IONOS_SECRET=wYYqaiuSP07iSeP93FEotefvdYTTLW56zo44mrnhQr9l7ckvg1EEfZUZYEv0bNXZQ2PcC15cIcsSEjRtibV-wg ~/.acme.sh/acme.sh --issue --dns dns_ionos --dnssleep 30 -d sage.bigdataconsulting.fr -d sap.bigdataconsulting.fr -d cegid.bigdataconsulting.fr -d dolibarr.bigdataconsulting.fr -d odoo.bigdataconsulting.fr -d ebp.bigdataconsulting.fr -d ipaas.bigdataconsulting.fr -d edi.bigdataconsulting.fr -d connecteur.bigdataconsulting.fr -d integration.bigdataconsulting.fr -d data.bigdataconsulting.fr -d migration.bigdataconsulting.fr 2>&1
+            true
+            echo RACK57_STEP4
             mkdir -p /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr
-            ~/.acme.sh/acme.sh --install-cert -d sage.bigdataconsulting.fr --fullchain-file /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem --key-file /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem 2>&1 || echo "WARN: install-cert failed"
-            echo "=== STEP5 placeholder cert if needed ==="
-            [ -f /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem ] || cp /opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/fullchain.pem /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem 2>/dev/null || true
-            [ -f /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem ] || cp /opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/privkey.pem /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem 2>/dev/null || true
-            echo "=== STEP6 create nginx vhosts ==="
+            ~/.acme.sh/acme.sh --install-cert -d sage.bigdataconsulting.fr --fullchain-file /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem --key-file /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem 2>&1
+            true
+            echo RACK57_STEP5
+            [ -f /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem ] || cp /opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/fullchain.pem /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem 2>/dev/null
+            true
+            [ -f /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem ] || cp /opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/privkey.pem /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem 2>/dev/null
+            true
+            echo RACK57_STEP6
             echo 'c2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIHNhZ2UuYmlnZGF0YWNvbnN1bHRpbmcuZnI7CiAgICByZXR1cm4gMzAxIGh0dHBzOi8vJGhvc3QkcmVxdWVzdF91cmk7Cn0Kc2VydmVyIHsKICAgIGxpc3RlbiA0NDMgc3NsOwogICAgc2VydmVyX25hbWUgc2FnZS5iaWdkYXRhY29uc3VsdGluZy5mcjsKICAgIHNzbF9jZXJ0aWZpY2F0ZSAvZXRjL2xldHNlbmNyeXB0L2xpdmUvc2FnZS5iaWdkYXRhY29uc3VsdGluZy5mci9mdWxsY2hhaW4ucGVtOwogICAgc3NsX2NlcnRpZmljYXRlX2tleSAvZXRjL2xldHNlbmNyeXB0L2xpdmUvc2FnZS5iaWdkYXRhY29uc3VsdGluZy5mci9wcml2a2V5LnBlbTsKICAgIHNzbF9wcm90b2NvbHMgVExTdjEuMiBUTFN2MS4zOwogICAgbG9jYXRpb24gLyB7CiAgICAgICAgcHJveHlfcGFzcyBodHRwOi8vMTkyLjE2OC4xLjEyNzsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIEhvc3QgJGhvc3Q7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBYLVJlYWwtSVAgJHJlbW90ZV9hZGRyOwogICAgfQp9Cg==' | base64 -d > /opt/bdc-ipaas/docker/nginx/seo-active-conf/sage.bigdataconsulting.fr.conf
-            echo "Created sage.bigdataconsulting.fr.conf"
+            true
             echo 'c2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIHNhcC5iaWdkYXRhY29uc3VsdGluZy5mcjsKICAgIHJldHVybiAzMDEgaHR0cHM6Ly8kaG9zdCRyZXF1ZXN0X3VyaTsKfQpzZXJ2ZXIgewogICAgbGlzdGVuIDQ0MyBzc2w7CiAgICBzZXJ2ZXJfbmFtZSBzYXAuYmlnZGF0YWNvbnN1bHRpbmcuZnI7CiAgICBzc2xfY2VydGlmaWNhdGUgL2V0Yy9sZXRzZW5jcnlwdC9saXZlL3NhZ2UuYmlnZGF0YWNvbnN1bHRpbmcuZnIvZnVsbGNoYWluLnBlbTsKICAgIHNzbF9jZXJ0aWZpY2F0ZV9rZXkgL2V0Yy9sZXRzZW5jcnlwdC9saXZlL3NhZ2UuYmlnZGF0YWNvbnN1bHRpbmcuZnIvcHJpdmtleS5wZW07CiAgICBzc2xfcHJvdG9jb2xzIFRMU3YxLjIgVExTdjEuMzsKICAgIGxvY2F0aW9uIC8gewogICAgICAgIHByb3h5X3Bhc3MgaHR0cDovLzE5Mi4xNjguMS4xMjc7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBIb3N0ICRob3N0OwogICAgICAgIHByb3h5X3NldF9oZWFkZXIgWC1SZWFsLUlQICRyZW1vdGVfYWRkcjsKICAgIH0KfQo=' | base64 -d > /opt/bdc-ipaas/docker/nginx/seo-active-conf/sap.bigdataconsulting.fr.conf
-            echo "Created sap.bigdataconsulting.fr.conf"
+            true
             echo 'c2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIGNlZ2lkLmJpZ2RhdGFjb25zdWx0aW5nLmZyOwogICAgcmV0dXJuIDMwMSBodHRwczovLyRob3N0JHJlcXVlc3RfdXJpOwp9CnNlcnZlciB7CiAgICBsaXN0ZW4gNDQzIHNzbDsKICAgIHNlcnZlcl9uYW1lIGNlZ2lkLmJpZ2RhdGFjb25zdWx0aW5nLmZyOwogICAgc3NsX2NlcnRpZmljYXRlIC9ldGMvbGV0c2VuY3J5cHQvbGl2ZS9zYWdlLmJpZ2RhdGFjb25zdWx0aW5nLmZyL2Z1bGxjaGFpbi5wZW07CiAgICBzc2xfY2VydGlmaWNhdGVfa2V5IC9ldGMvbGV0c2VuY3J5cHQvbGl2ZS9zYWdlLmJpZ2RhdGFjb25zdWx0aW5nLmZyL3ByaXZrZXkucGVtOwogICAgc3NsX3Byb3RvY29scyBUTFN2MS4yIFRMU3YxLjM7CiAgICBsb2NhdGlvbiAvIHsKICAgICAgICBwcm94eV9wYXNzIGh0dHA6Ly8xOTIuMTY4LjEuMTI3OwogICAgICAgIHByb3h5X3NldF9oZWFkZXIgSG9zdCAkaG9zdDsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIFgtUmVhbC1JUCAkcmVtb3RlX2FkZHI7CiAgICB9Cn0K' | base64 -d > /opt/bdc-ipaas/docker/nginx/seo-active-conf/cegid.bigdataconsulting.fr.conf
-            echo "Created cegid.bigdataconsulting.fr.conf"
+            true
             echo 'c2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIGRvbGliYXJyLmJpZ2RhdGFjb25zdWx0aW5nLmZyOwogICAgcmV0dXJuIDMwMSBodHRwczovLyRob3N0JHJlcXVlc3RfdXJpOwp9CnNlcnZlciB7CiAgICBsaXN0ZW4gNDQzIHNzbDsKICAgIHNlcnZlcl9uYW1lIGRvbGliYXJyLmJpZ2RhdGFjb25zdWx0aW5nLmZyOwogICAgc3NsX2NlcnRpZmljYXRlIC9ldGMvbGV0c2VuY3J5cHQvbGl2ZS9zYWdlLmJpZ2RhdGFjb25zdWx0aW5nLmZyL2Z1bGxjaGFpbi5wZW07CiAgICBzc2xfY2VydGlmaWNhdGVfa2V5IC9ldGMvbGV0c2VuY3J5cHQvbGl2ZS9zYWdlLmJpZ2RhdGFjb25zdWx0aW5nLmZyL3ByaXZrZXkucGVtOwogICAgc3NsX3Byb3RvY29scyBUTFN2MS4yIFRMU3YxLjM7CiAgICBsb2NhdGlvbiAvIHsKICAgICAgICBwcm94eV9wYXNzIGh0dHA6Ly8xOTIuMTY4LjEuMTI3OwogICAgICAgIHByb3h5X3NldF9oZWFkZXIgSG9zdCAkaG9zdDsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIFgtUmVhbC1JUCAkcmVtb3RlX2FkZHI7CiAgICB9Cn0K' | base64 -d > /opt/bdc-ipaas/docker/nginx/seo-active-conf/dolibarr.bigdataconsulting.fr.conf
-            echo "Created dolibarr.bigdataconsulting.fr.conf"
+            true
             echo 'c2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIG9kb28uYmlnZGF0YWNvbnN1bHRpbmcuZnI7CiAgICByZXR1cm4gMzAxIGh0dHBzOi8vJGhvc3QkcmVxdWVzdF91cmk7Cn0Kc2VydmVyIHsKICAgIGxpc3RlbiA0NDMgc3NsOwogICAgc2VydmVyX25hbWUgb2Rvby5iaWdkYXRhY29uc3VsdGluZy5mcjsKICAgIHNzbF9jZXJ0aWZpY2F0ZSAvZXRjL2xldHNlbmNyeXB0L2xpdmUvc2FnZS5iaWdkYXRhY29uc3VsdGluZy5mci9mdWxsY2hhaW4ucGVtOwogICAgc3NsX2NlcnRpZmljYXRlX2tleSAvZXRjL2xldHNlbmNyeXB0L2xpdmUvc2FnZS5iaWdkYXRhY29uc3VsdGluZy5mci9wcml2a2V5LnBlbTsKICAgIHNzbF9wcm90b2NvbHMgVExTdjEuMiBUTFN2MS4zOwogICAgbG9jYXRpb24gLyB7CiAgICAgICAgcHJveHlfcGFzcyBodHRwOi8vMTkyLjE2OC4xLjEyNzsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIEhvc3QgJGhvc3Q7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBYLVJlYWwtSVAgJHJlbW90ZV9hZGRyOwogICAgfQp9Cg==' | base64 -d > /opt/bdc-ipaas/docker/nginx/seo-active-conf/odoo.bigdataconsulting.fr.conf
-            echo "Created odoo.bigdataconsulting.fr.conf"
+            true
             echo 'c2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIGVicC5iaWdkYXRhY29uc3VsdGluZy5mcjsKICAgIHJldHVybiAzMDEgaHR0cHM6Ly8kaG9zdCRyZXF1ZXN0X3VyaTsKfQpzZXJ2ZXIgewogICAgbGlzdGVuIDQ0MyBzc2w7CiAgICBzZXJ2ZXJfbmFtZSBlYnAuYmlnZGF0YWNvbnN1bHRpbmcuZnI7CiAgICBzc2xfY2VydGlmaWNhdGUgL2V0Yy9sZXRzZW5jcnlwdC9saXZlL3NhZ2UuYmlnZGF0YWNvbnN1bHRpbmcuZnIvZnVsbGNoYWluLnBlbTsKICAgIHNzbF9jZXJ0aWZpY2F0ZV9rZXkgL2V0Yy9sZXRzZW5jcnlwdC9saXZlL3NhZ2UuYmlnZGF0YWNvbnN1bHRpbmcuZnIvcHJpdmtleS5wZW07CiAgICBzc2xfcHJvdG9jb2xzIFRMU3YxLjIgVExTdjEuMzsKICAgIGxvY2F0aW9uIC8gewogICAgICAgIHByb3h5X3Bhc3MgaHR0cDovLzE5Mi4xNjguMS4xMjc7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBIb3N0ICRob3N0OwogICAgICAgIHByb3h5X3NldF9oZWFkZXIgWC1SZWFsLUlQICRyZW1vdGVfYWRkcjsKICAgIH0KfQo=' | base64 -d > /opt/bdc-ipaas/docker/nginx/seo-active-conf/ebp.bigdataconsulting.fr.conf
-            echo "Created ebp.bigdataconsulting.fr.conf"
+            true
             echo 'c2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIGlwYWFzLmJpZ2RhdGFjb25zdWx0aW5nLmZyOwogICAgcmV0dXJuIDMwMSBodHRwczovLyRob3N0JHJlcXVlc3RfdXJpOwp9CnNlcnZlciB7CiAgICBsaXN0ZW4gNDQzIHNzbDsKICAgIHNlcnZlcl9uYW1lIGlwYWFzLmJpZ2RhdGFjb25zdWx0aW5nLmZyOwogICAgc3NsX2NlcnRpZmljYXRlIC9ldGMvbGV0c2VuY3J5cHQvbGl2ZS9zYWdlLmJpZ2RhdGFjb25zdWx0aW5nLmZyL2Z1bGxjaGFpbi5wZW07CiAgICBzc2xfY2VydGlmaWNhdGVfa2V5IC9ldGMvbGV0c2VuY3J5cHQvbGl2ZS9zYWdlLmJpZ2RhdGFjb25zdWx0aW5nLmZyL3ByaXZrZXkucGVtOwogICAgc3NsX3Byb3RvY29scyBUTFN2MS4yIFRMU3YxLjM7CiAgICBsb2NhdGlvbiAvIHsKICAgICAgICBwcm94eV9wYXNzIGh0dHA6Ly8xOTIuMTY4LjEuMTI3OwogICAgICAgIHByb3h5X3NldF9oZWFkZXIgSG9zdCAkaG9zdDsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIFgtUmVhbC1JUCAkcmVtb3RlX2FkZHI7CiAgICB9Cn0K' | base64 -d > /opt/bdc-ipaas/docker/nginx/seo-active-conf/ipaas.bigdataconsulting.fr.conf
-            echo "Created ipaas.bigdataconsulting.fr.conf"
+            true
             echo 'c2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIGVkaS5iaWdkYXRhY29uc3VsdGluZy5mcjsKICAgIHJldHVybiAzMDEgaHR0cHM6Ly8kaG9zdCRyZXF1ZXN0X3VyaTsKfQpzZXJ2ZXIgewogICAgbGlzdGVuIDQ0MyBzc2w7CiAgICBzZXJ2ZXJfbmFtZSBlZGkuYmlnZGF0YWNvbnN1bHRpbmcuZnI7CiAgICBzc2xfY2VydGlmaWNhdGUgL2V0Yy9sZXRzZW5jcnlwdC9saXZlL3NhZ2UuYmlnZGF0YWNvbnN1bHRpbmcuZnIvZnVsbGNoYWluLnBlbTsKICAgIHNzbF9jZXJ0aWZpY2F0ZV9rZXkgL2V0Yy9sZXRzZW5jcnlwdC9saXZlL3NhZ2UuYmlnZGF0YWNvbnN1bHRpbmcuZnIvcHJpdmtleS5wZW07CiAgICBzc2xfcHJvdG9jb2xzIFRMU3YxLjIgVExTdjEuMzsKICAgIGxvY2F0aW9uIC8gewogICAgICAgIHByb3h5X3Bhc3MgaHR0cDovLzE5Mi4xNjguMS4xMjc7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBIb3N0ICRob3N0OwogICAgICAgIHByb3h5X3NldF9oZWFkZXIgWC1SZWFsLUlQICRyZW1vdGVfYWRkcjsKICAgIH0KfQo=' | base64 -d > /opt/bdc-ipaas/docker/nginx/seo-active-conf/edi.bigdataconsulting.fr.conf
-            echo "Created edi.bigdataconsulting.fr.conf"
+            true
             echo 'c2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIGNvbm5lY3RldXIuYmlnZGF0YWNvbnN1bHRpbmcuZnI7CiAgICByZXR1cm4gMzAxIGh0dHBzOi8vJGhvc3QkcmVxdWVzdF91cmk7Cn0Kc2VydmVyIHsKICAgIGxpc3RlbiA0NDMgc3NsOwogICAgc2VydmVyX25hbWUgY29ubmVjdGV1ci5iaWdkYXRhY29uc3VsdGluZy5mcjsKICAgIHNzbF9jZXJ0aWZpY2F0ZSAvZXRjL2xldHNlbmNyeXB0L2xpdmUvc2FnZS5iaWdkYXRhY29uc3VsdGluZy5mci9mdWxsY2hhaW4ucGVtOwogICAgc3NsX2NlcnRpZmljYXRlX2tleSAvZXRjL2xldHNlbmNyeXB0L2xpdmUvc2FnZS5iaWdkYXRhY29uc3VsdGluZy5mci9wcml2a2V5LnBlbTsKICAgIHNzbF9wcm90b2NvbHMgVExTdjEuMiBUTFN2MS4zOwogICAgbG9jYXRpb24gLyB7CiAgICAgICAgcHJveHlfcGFzcyBodHRwOi8vMTkyLjE2OC4xLjEyNzsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIEhvc3QgJGhvc3Q7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBYLVJlYWwtSVAgJHJlbW90ZV9hZGRyOwogICAgfQp9Cg==' | base64 -d > /opt/bdc-ipaas/docker/nginx/seo-active-conf/connecteur.bigdataconsulting.fr.conf
-            echo "Created connecteur.bigdataconsulting.fr.conf"
+            true
             echo 'c2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIGludGVncmF0aW9uLmJpZ2RhdGFjb25zdWx0aW5nLmZyOwogICAgcmV0dXJuIDMwMSBodHRwczovLyRob3N0JHJlcXVlc3RfdXJpOwp9CnNlcnZlciB7CiAgICBsaXN0ZW4gNDQzIHNzbDsKICAgIHNlcnZlcl9uYW1lIGludGVncmF0aW9uLmJpZ2RhdGFjb25zdWx0aW5nLmZyOwogICAgc3NsX2NlcnRpZmljYXRlIC9ldGMvbGV0c2VuY3J5cHQvbGl2ZS9zYWdlLmJpZ2RhdGFjb25zdWx0aW5nLmZyL2Z1bGxjaGFpbi5wZW07CiAgICBzc2xfY2VydGlmaWNhdGVfa2V5IC9ldGMvbGV0c2VuY3J5cHQvbGl2ZS9zYWdlLmJpZ2RhdGFjb25zdWx0aW5nLmZyL3ByaXZrZXkucGVtOwogICAgc3NsX3Byb3RvY29scyBUTFN2MS4yIFRMU3YxLjM7CiAgICBsb2NhdGlvbiAvIHsKICAgICAgICBwcm94eV9wYXNzIGh0dHA6Ly8xOTIuMTY4LjEuMTI3OwogICAgICAgIHByb3h5X3NldF9oZWFkZXIgSG9zdCAkaG9zdDsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIFgtUmVhbC1JUCAkcmVtb3RlX2FkZHI7CiAgICB9Cn0K' | base64 -d > /opt/bdc-ipaas/docker/nginx/seo-active-conf/integration.bigdataconsulting.fr.conf
-            echo "Created integration.bigdataconsulting.fr.conf"
+            true
             echo 'c2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIGRhdGEuYmlnZGF0YWNvbnN1bHRpbmcuZnI7CiAgICByZXR1cm4gMzAxIGh0dHBzOi8vJGhvc3QkcmVxdWVzdF91cmk7Cn0Kc2VydmVyIHsKICAgIGxpc3RlbiA0NDMgc3NsOwogICAgc2VydmVyX25hbWUgZGF0YS5iaWdkYXRhY29uc3VsdGluZy5mcjsKICAgIHNzbF9jZXJ0aWZpY2F0ZSAvZXRjL2xldHNlbmNyeXB0L2xpdmUvc2FnZS5iaWdkYXRhY29uc3VsdGluZy5mci9mdWxsY2hhaW4ucGVtOwogICAgc3NsX2NlcnRpZmljYXRlX2tleSAvZXRjL2xldHNlbmNyeXB0L2xpdmUvc2FnZS5iaWdkYXRhY29uc3VsdGluZy5mci9wcml2a2V5LnBlbTsKICAgIHNzbF9wcm90b2NvbHMgVExTdjEuMiBUTFN2MS4zOwogICAgbG9jYXRpb24gLyB7CiAgICAgICAgcHJveHlfcGFzcyBodHRwOi8vMTkyLjE2OC4xLjEyNzsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIEhvc3QgJGhvc3Q7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBYLVJlYWwtSVAgJHJlbW90ZV9hZGRyOwogICAgfQp9Cg==' | base64 -d > /opt/bdc-ipaas/docker/nginx/seo-active-conf/data.bigdataconsulting.fr.conf
-            echo "Created data.bigdataconsulting.fr.conf"
+            true
             echo 'c2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIG1pZ3JhdGlvbi5iaWdkYXRhY29uc3VsdGluZy5mcjsKICAgIHJldHVybiAzMDEgaHR0cHM6Ly8kaG9zdCRyZXF1ZXN0X3VyaTsKfQpzZXJ2ZXIgewogICAgbGlzdGVuIDQ0MyBzc2w7CiAgICBzZXJ2ZXJfbmFtZSBtaWdyYXRpb24uYmlnZGF0YWNvbnN1bHRpbmcuZnI7CiAgICBzc2xfY2VydGlmaWNhdGUgL2V0Yy9sZXRzZW5jcnlwdC9saXZlL3NhZ2UuYmlnZGF0YWNvbnN1bHRpbmcuZnIvZnVsbGNoYWluLnBlbTsKICAgIHNzbF9jZXJ0aWZpY2F0ZV9rZXkgL2V0Yy9sZXRzZW5jcnlwdC9saXZlL3NhZ2UuYmlnZGF0YWNvbnN1bHRpbmcuZnIvcHJpdmtleS5wZW07CiAgICBzc2xfcHJvdG9jb2xzIFRMU3YxLjIgVExTdjEuMzsKICAgIGxvY2F0aW9uIC8gewogICAgICAgIHByb3h5X3Bhc3MgaHR0cDovLzE5Mi4xNjguMS4xMjc7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBIb3N0ICRob3N0OwogICAgICAgIHByb3h5X3NldF9oZWFkZXIgWC1SZWFsLUlQICRyZW1vdGVfYWRkcjsKICAgIH0KfQo=' | base64 -d > /opt/bdc-ipaas/docker/nginx/seo-active-conf/migration.bigdataconsulting.fr.conf
-            echo "Created migration.bigdataconsulting.fr.conf"
-            echo "=== STEP7 nginx test + reload ==="
-            docker exec seo-nginx nginx -t 2>&1 && docker exec seo-nginx nginx -s reload 2>&1 || echo "WARN: nginx reload failed"
+            true
+            echo RACK57_STEP7
+            docker exec seo-nginx nginx -t 2>&1
+            true
+            docker exec seo-nginx nginx -s reload 2>&1
+            true
             echo RACK57_DONE
+            exit 0
