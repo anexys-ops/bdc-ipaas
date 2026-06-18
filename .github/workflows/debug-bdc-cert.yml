@@ -15,18 +15,20 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 60s
+          command_timeout: 120s
           script_stop: false
           script: |
-            echo "=== host port 443 ==="
-            ss -tlnp | grep :443 || netstat -tlnp | grep :443 2>/dev/null
-            echo "=== host nginx ==="
-            which nginx 2>/dev/null && nginx -t 2>&1 || echo "no host nginx"
-            echo "=== seo-nginx ports ==="
-            docker inspect seo-nginx --format "{{range .NetworkSettings.Ports}}{{.}} {{end}}" 2>&1
-            docker port seo-nginx 2>&1
-            echo "=== sage.quickedi.fr conf ==="
-            docker exec seo-nginx cat /etc/nginx/conf.d/sage.quickedi.fr.conf 2>&1
-            echo "=== nginx errors ==="
-            docker exec seo-nginx cat /var/log/nginx/error.log 2>&1 | tail -20
-            echo DONE4
+            echo "=== quickedi cert files ==="
+            docker exec seo-nginx ls -la /etc/letsencrypt/live/sage.quickedi.fr/ 2>&1
+            echo "=== bdc cert files ==="
+            docker exec seo-nginx ls -la /etc/letsencrypt/live/sage.bigdataconsulting.fr/ 2>&1
+            echo "=== seo-nginx recent logs ==="
+            docker logs seo-nginx 2>&1 | tail -30
+            echo "=== RESTARTING seo-nginx ==="
+            docker restart seo-nginx
+            echo "Restart done, sleeping 5s"
+            sleep 5
+            echo "=== Testing cert after restart ==="
+            echo | openssl s_client -connect 127.0.0.1:443 -servername sage.quickedi.fr 2>/dev/null | openssl x509 -noout -subject 2>&1
+            echo | openssl s_client -connect 127.0.0.1:443 -servername sage.bigdataconsulting.fr 2>/dev/null | openssl x509 -noout -subject 2>&1
+            echo DONE5
