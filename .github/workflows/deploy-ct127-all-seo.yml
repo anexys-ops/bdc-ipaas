@@ -61,7 +61,7 @@ jobs:
                 index index.html;
                 location / { try_files $uri $uri/ =404; }
             }
-            NEOF
+NEOF
             ln -sf /etc/nginx/sites-available/sage.bigdataconsulting.fr /etc/nginx/sites-enabled/sage.bigdataconsulting.fr
             [ -f /tmp/seo/bdc/sage.html ] && cp /tmp/seo/bdc/sage.html /var/www/sage.bigdataconsulting.fr/index.html || true
             cat > /etc/nginx/sites-available/sap.bigdataconsulting.fr <<'NEOF'
@@ -72,7 +72,7 @@ jobs:
                 index index.html;
                 location / { try_files $uri $uri/ =404; }
             }
-            NEOF
+NEOF
             ln -sf /etc/nginx/sites-available/sap.bigdataconsulting.fr /etc/nginx/sites-enabled/sap.bigdataconsulting.fr
             [ -f /tmp/seo/bdc/sap.html ] && cp /tmp/seo/bdc/sap.html /var/www/sap.bigdataconsulting.fr/index.html || true
             cat > /etc/nginx/sites-available/cegid.bigdataconsulting.fr <<'NEOF'
@@ -83,7 +83,7 @@ jobs:
                 index index.html;
                 location / { try_files $uri $uri/ =404; }
             }
-            NEOF
+NEOF
             ln -sf /etc/nginx/sites-available/cegid.bigdataconsulting.fr /etc/nginx/sites-enabled/cegid.bigdataconsulting.fr
             [ -f /tmp/seo/bdc/cegid.html ] && cp /tmp/seo/bdc/cegid.html /var/www/cegid.bigdataconsulting.fr/index.html || true
             cat > /etc/nginx/sites-available/dolibarr.bigdataconsulting.fr <<'NEOF'
@@ -94,7 +94,7 @@ jobs:
                 index index.html;
                 location / { try_files $uri $uri/ =404; }
             }
-            NEOF
+NEOF
             ln -sf /etc/nginx/sites-available/dolibarr.bigdataconsulting.fr /etc/nginx/sites-enabled/dolibarr.bigdataconsulting.fr
             [ -f /tmp/seo/bdc/dolibarr.html ] && cp /tmp/seo/bdc/dolibarr.html /var/www/dolibarr.bigdataconsulting.fr/index.html || true
             cat > /etc/nginx/sites-available/odoo.bigdataconsulting.fr <<'NEOF'
@@ -105,7 +105,7 @@ jobs:
                 index index.html;
                 location / { try_files $uri $uri/ =404; }
             }
-            NEOF
+NEOF
             ln -sf /etc/nginx/sites-available/odoo.bigdataconsulting.fr /etc/nginx/sites-enabled/odoo.bigdataconsulting.fr
             [ -f /tmp/seo/bdc/odoo.html ] && cp /tmp/seo/bdc/odoo.html /var/www/odoo.bigdataconsulting.fr/index.html || true
             cat > /etc/nginx/sites-available/ebp.bigdataconsulting.fr <<'NEOF'
@@ -116,7 +116,7 @@ jobs:
                 index index.html;
                 location / { try_files $uri $uri/ =404; }
             }
-            NEOF
+NEOF
             ln -sf /etc/nginx/sites-available/ebp.bigdataconsulting.fr /etc/nginx/sites-enabled/ebp.bigdataconsulting.fr
             [ -f /tmp/seo/bdc/ebp.html ] && cp /tmp/seo/bdc/ebp.html /var/www/ebp.bigdataconsulting.fr/index.html || true
             cat > /etc/nginx/sites-available/ipaas.bigdataconsulting.fr <<'NEOF'
@@ -127,7 +127,7 @@ jobs:
                 index index.html;
                 location / { try_files $uri $uri/ =404; }
             }
-            NEOF
+NEOF
             ln -sf /etc/nginx/sites-available/ipaas.bigdataconsulting.fr /etc/nginx/sites-enabled/ipaas.bigdataconsulting.fr
             [ -f /tmp/seo/bdc/ipaas.html ] && cp /tmp/seo/bdc/ipaas.html /var/www/ipaas.bigdataconsulting.fr/index.html || true
             cat > /etc/nginx/sites-available/edi.bigdataconsulting.fr <<'NEOF'
@@ -138,7 +138,7 @@ jobs:
                 index index.html;
                 location / { try_files $uri $uri/ =404; }
             }
-            NEOF
+NEOF
             ln -sf /etc/nginx/sites-available/edi.bigdataconsulting.fr /etc/nginx/sites-enabled/edi.bigdataconsulting.fr
             [ -f /tmp/seo/bdc/edi.html ] && cp /tmp/seo/bdc/edi.html /var/www/edi.bigdataconsulting.fr/index.html || true
             cat > /etc/nginx/sites-available/connecteur.bigdataconsulting.fr <<'NEOF'
@@ -149,7 +149,7 @@ jobs:
                 index index.html;
                 location / { try_files $uri $uri/ =404; }
             }
-            NEOF
+NEOF
             ln -sf /etc/nginx/sites-available/connecteur.bigdataconsulting.fr /etc/nginx/sites-enabled/connecteur.bigdataconsulting.fr
             [ -f /tmp/seo/bdc/connecteur.html ] && cp /tmp/seo/bdc/connecteur.html /var/www/connecteur.bigdataconsulting.fr/index.html || true
             cat > /etc/nginx/sites-available/integration.bigdataconsulting.fr <<'NEOF'
@@ -160,7 +160,7 @@ jobs:
                 index index.html;
                 location / { try_files $uri $uri/ =404; }
             }
-            NEOF
+NEOF
             ln -sf /etc/nginx/sites-available/integration.bigdataconsulting.fr /etc/nginx/sites-enabled/integration.bigdataconsulting.fr
             [ -f /tmp/seo/bdc/integration.html ] && cp /tmp/seo/bdc/integration.html /var/www/integration.bigdataconsulting.fr/index.html || true
             cat > /etc/nginx/sites-available/data.bigdataconsulting.fr <<'NEOF'
@@ -171,7 +171,7 @@ jobs:
                 index index.html;
                 location / { try_files $uri $uri/ =404; }
             }
-            NEOF
+NEOF
             ln -sf /etc/nginx/sites-available/data.bigdataconsulting.fr /etc/nginx/sites-enabled/data.bigdataconsulting.fr
             [ -f /tmp/seo/bdc/data.html ] && cp /tmp/seo/bdc/data.html /var/www/data.bigdataconsulting.fr/index.html || true
             cat > /etc/nginx/sites-available/migration.bigdataconsulting.fr <<'NEOF'
@@ -182,7 +182,7 @@ jobs:
                 index index.html;
                 location / { try_files $uri $uri/ =404; }
             }
-            NEOF
+NEOF
             ln -sf /etc/nginx/sites-available/migration.bigdataconsulting.fr /etc/nginx/sites-enabled/migration.bigdataconsulting.fr
             [ -f /tmp/seo/bdc/migration.html ] && cp /tmp/seo/bdc/migration.html /var/www/migration.bigdataconsulting.fr/index.html || true
             rm -f /etc/nginx/sites-enabled/default
@@ -198,33 +198,20 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           command_timeout: 600s
           script: |
-            set -e
-            # Remove stale BDC vhosts
-            for f in /opt/bdc-ipaas/docker/nginx/seo-active-conf/*.bigdataconsulting.fr.conf; do [ -f "$f" ] && rm "$f"; done 2>/dev/null || true
-            # Install acme.sh if needed
-            [ -f ~/.acme.sh/acme.sh ] || (curl -s https://get.acme.sh | sh -s email=commercial@anexys.fr)
-            # Issue cert for all 12 BDC subdomains
-            IONOS_PREFIX=d2375a53d90e4be1bcbf03ce80141073 IONOS_SECRET=wYYqaiuSP07iSeP93FEotefvdYTTLW56zo44mrnhQr9l7ckvg1EEfZUZYEv0bNXZQ2PcC15cIcsSEjRtibV-wg \
-            ~/.acme.sh/acme.sh --issue --dns dns_ionos --dnssleep 30 \
-              -d sage.bigdataconsulting.fr -d sap.bigdataconsulting.fr -d cegid.bigdataconsulting.fr \
-              -d dolibarr.bigdataconsulting.fr -d odoo.bigdataconsulting.fr -d ebp.bigdataconsulting.fr \
-              -d ipaas.bigdataconsulting.fr -d edi.bigdataconsulting.fr -d connecteur.bigdataconsulting.fr \
-              -d integration.bigdataconsulting.fr -d data.bigdataconsulting.fr -d migration.bigdataconsulting.fr \
-              2>&1 || echo "WARN: BDC cert issue failed or already exists"
-            # Install cert to certbot conf dir
+            echo "=== STEP1 clean stale BDC vhosts ==="
+            for f in /opt/bdc-ipaas/docker/nginx/seo-active-conf/*.bigdataconsulting.fr.conf; do [ -f "$f" ] && rm "$f" && echo "Removed $f"; done 2>/dev/null || true
+            echo "=== STEP2 acme.sh check ==="
+            [ -f ~/.acme.sh/acme.sh ] || (curl -s https://get.acme.sh | sh -s email=commercial@anexys.fr) || true
+            echo "=== STEP3 issue BDC cert ==="
+            IONOS_PREFIX=d2375a53d90e4be1bcbf03ce80141073 IONOS_SECRET=wYYqaiuSP07iSeP93FEotefvdYTTLW56zo44mrnhQr9l7ckvg1EEfZUZYEv0bNXZQ2PcC15cIcsSEjRtibV-wg ~/.acme.sh/acme.sh --issue --dns dns_ionos --dnssleep 30 -d sage.bigdataconsulting.fr -d sap.bigdataconsulting.fr -d cegid.bigdataconsulting.fr -d dolibarr.bigdataconsulting.fr -d odoo.bigdataconsulting.fr -d ebp.bigdataconsulting.fr -d ipaas.bigdataconsulting.fr -d edi.bigdataconsulting.fr -d connecteur.bigdataconsulting.fr -d integration.bigdataconsulting.fr -d data.bigdataconsulting.fr -d migration.bigdataconsulting.fr 2>&1 || echo "WARN: cert issue failed or already exists - continuing"
+            echo "=== STEP4 install cert ==="
             mkdir -p /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr
-            ~/.acme.sh/acme.sh --install-cert -d sage.bigdataconsulting.fr \
-              --fullchain-file /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem \
-              --key-file /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem \
-              2>&1 || true
-            # Use existing ediconnect.fr cert as placeholder if BDC cert not ready yet
-            BDCFULL=/opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem
-            BDCKEY=/opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem
-            PLACEHOLDER_FULL=/opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/fullchain.pem
-            PLACEHOLDER_KEY=/opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/privkey.pem
-            [ -f "$BDCFULL" ] || cp "$PLACEHOLDER_FULL" "$BDCFULL" 2>/dev/null || true
-            [ -f "$BDCKEY" ] || cp "$PLACEHOLDER_KEY" "$BDCKEY" 2>/dev/null || true
-            # Create nginx vhosts for all 12 BDC domains
+            ~/.acme.sh/acme.sh --install-cert -d sage.bigdataconsulting.fr --fullchain-file /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem --key-file /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem 2>&1 || echo "WARN: install-cert failed"
+            echo "=== STEP5 placeholder cert if needed ==="
+            [ -f /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem ] || cp /opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/fullchain.pem /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem 2>/dev/null || true
+            [ -f /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem ] || cp /opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/privkey.pem /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem 2>/dev/null || true
+            echo "=== STEP6 create nginx vhosts ==="
+            echo "Creating sage.bigdataconsulting.fr.conf"
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/sage.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -243,7 +230,8 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                 }
             }
-            NEOF
+NEOF
+            echo "Creating sap.bigdataconsulting.fr.conf"
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/sap.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -262,7 +250,8 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                 }
             }
-            NEOF
+NEOF
+            echo "Creating cegid.bigdataconsulting.fr.conf"
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/cegid.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -281,7 +270,8 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                 }
             }
-            NEOF
+NEOF
+            echo "Creating dolibarr.bigdataconsulting.fr.conf"
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/dolibarr.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -300,7 +290,8 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                 }
             }
-            NEOF
+NEOF
+            echo "Creating odoo.bigdataconsulting.fr.conf"
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/odoo.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -319,7 +310,8 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                 }
             }
-            NEOF
+NEOF
+            echo "Creating ebp.bigdataconsulting.fr.conf"
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/ebp.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -338,7 +330,8 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                 }
             }
-            NEOF
+NEOF
+            echo "Creating ipaas.bigdataconsulting.fr.conf"
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/ipaas.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -357,7 +350,8 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                 }
             }
-            NEOF
+NEOF
+            echo "Creating edi.bigdataconsulting.fr.conf"
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/edi.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -376,7 +370,8 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                 }
             }
-            NEOF
+NEOF
+            echo "Creating connecteur.bigdataconsulting.fr.conf"
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/connecteur.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -395,7 +390,8 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                 }
             }
-            NEOF
+NEOF
+            echo "Creating integration.bigdataconsulting.fr.conf"
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/integration.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -414,7 +410,8 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                 }
             }
-            NEOF
+NEOF
+            echo "Creating data.bigdataconsulting.fr.conf"
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/data.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -433,7 +430,8 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                 }
             }
-            NEOF
+NEOF
+            echo "Creating migration.bigdataconsulting.fr.conf"
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/migration.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -452,6 +450,7 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                 }
             }
-            NEOF
-            docker exec seo-nginx nginx -t 2>&1 && docker exec seo-nginx nginx -s reload 2>&1
+NEOF
+            echo "=== STEP7 nginx test + reload ==="
+            docker exec seo-nginx nginx -t 2>&1 && docker exec seo-nginx nginx -s reload 2>&1 || echo "WARN: nginx reload failed"
             echo RACK57_DONE
