@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intégration EBP — Connectez EBP Gestion Commerciale à vos partenaires | Big Data Consulting</title>
+<meta name="description" content="Connecteurs EBP Gestion Commerciale, EBP Compta et EBP Bâtiment vers EDI, e-commerce et ERP tiers. BDC iPaaS — automatisez vos échanges inter-systèmes avec EBP.">
+<meta name="keywords" content="intégration EBP, connecteur EBP gestion commerciale, EBP EDI, EBP API, EBP e-commerce synchronisation">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+<link rel="canonical" href="https://ebp.bigdataconsulting.fr">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Intégration EBP — Connectez EBP Gestion Commerciale à vos partenaires | Big Data Consulting">
+<meta property="og:description" content="Connecteurs EBP Gestion Commerciale, EBP Compta et EBP Bâtiment vers EDI, e-commerce et ERP tiers. BDC iPaaS — automatisez vos échanges inter-systèmes avec EBP.">
+<meta property="og:url" content="https://ebp.bigdataconsulting.fr">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="Big Data Consulting">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Intégration EBP — Connectez EBP Gestion Commerciale à vos partenaires | Big Data Consulting">
+<meta name="twitter:description" content="Connecteurs EBP Gestion Commerciale, EBP Compta et EBP Bâtiment vers EDI, e-commerce et ERP tiers. BDC iPaaS — automatisez vos échanges inter-systèmes avec EBP.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Service", "name": "Int\u00e9gration EBP \u2014 Connectez EBP Gestion Commerciale \u00e0 vos partenaires", "description": "Connecteurs EBP Gestion Commerciale, EBP Compta et EBP B\u00e2timent vers EDI, e-commerce et ERP tiers. BDC iPaaS \u2014 automatisez vos \u00e9changes inter-syst\u00e8mes avec EBP.", "url": "https://ebp.bigdataconsulting.fr", "provider": {"@type": "Organization", "name": "Big Data Consulting", "url": "https://bigdataconsulting.fr", "email": "commercial@anexys.fr"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Comment connecter EBP Gestion Commerciale \u00e0 un EDI ?", "acceptedAnswer": {"@type": "Answer", "text": "BDC iPaaS lit les exp\u00e9ditions et factures de votre EBP pour g\u00e9n\u00e9rer automatiquement les DESADV et INVOIC EANCOM requis par vos clients grande distribution."}}, {"@type": "Question", "name": "EBP peut-il se synchroniser avec une boutique PrestaShop ?", "acceptedAnswer": {"@type": "Answer", "text": "Oui. Notre connecteur EBP\u2194PrestaShop synchronise articles, stocks, commandes et bons de livraison dans les deux sens, sans d\u00e9veloppement sp\u00e9cifique."}}, {"@type": "Question", "name": "EBP est-il compatible avec le middleware BDC iPaaS ?", "acceptedAnswer": {"@type": "Answer", "text": "Oui pour EBP Gestion Commerciale 2020 et sup\u00e9rieur. Connexion via l'API SOAP/REST d'EBP ou extraction fichiers structur\u00e9s."}}]}</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;background:#f8faff;line-height:1.6}
+header{background:linear-gradient(135deg,#0F62FE 0%,#0a2a7a 100%);color:#fff;padding:60px 20px 80px;text-align:center}
+.logo{font-size:1rem;font-weight:600;letter-spacing:3px;opacity:.8;margin-bottom:16px;text-transform:uppercase}
+h1{font-size:clamp(1.7rem,3.5vw,2.6rem);font-weight:800;line-height:1.2;max-width:800px;margin:0 auto 20px}
+.subtitle{font-size:1.1rem;opacity:.9;max-width:650px;margin:0 auto 32px}
+.cta-main{display:inline-block;background:#fff;color:#0F62FE;font-weight:700;padding:15px 38px;border-radius:50px;font-size:1.05rem;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.trust-badges{margin-top:24px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:.85rem;opacity:.85}
+.badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:5px 14px;border-radius:16px}
+main{max-width:900px;margin:0 auto;padding:50px 20px}
+.intro{font-size:1.05rem;color:#444;margin-bottom:40px;padding:25px;background:#fff;border-radius:12px;border-left:4px solid #0F62FE;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+h2{font-size:1.5rem;color:#1a1a2e;margin-bottom:24px;font-weight:700}
+.faq{background:#fff;border-radius:16px;padding:35px;box-shadow:0 2px 20px rgba(0,0,0,.06);margin-bottom:40px}
+.qa-item{margin-bottom:28px;padding-bottom:28px;border-bottom:1px solid #eef2f7}
+.qa-item:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.qa-q{font-size:1.05rem;font-weight:700;color:#0F62FE;margin-bottom:10px}
+.qa-a{color:#555;font-size:.98rem;line-height:1.7}
+.cta-section{background:linear-gradient(135deg,#0F62FE,#0a2a7a);color:#fff;border-radius:16px;padding:40px;text-align:center;margin-bottom:40px}
+.cta-section h2{color:#fff;margin-bottom:12px}
+.cta-section p{opacity:.9;margin-bottom:24px}
+.cta-white{display:inline-block;background:#fff;color:#0F62FE;font-weight:700;padding:14px 38px;border-radius:50px;text-decoration:none;font-size:1rem}
+footer{background:#1a1a2e;color:#888;padding:28px;text-align:center;font-size:.88rem}
+footer a{color:#0F62FE;text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">Big Data Consulting</div>
+<h1>Intégration EBP — Connectez EBP Gestion Commerciale à vos partenaires</h1>
+<p class="subtitle">Connecteurs EBP Gestion Commerciale, EBP Compta et EBP Bâtiment vers EDI, e-commerce et ERP tiers. BDC iPaaS — automatisez vos échanges inter-systèmes avec EBP....</p>
+<a href="https://bigdataconsulting.fr" class="cta-main">Demander un devis gratuit →</a>
+<div class="trust-badges">
+<span class="badge">🇫🇷 Expertise France</span>
+<span class="badge">✅ Hébergement souverain</span>
+<span class="badge">⚡ Déploiement 5 jours</span>
+<span class="badge">🔒 RGPD conforme</span>
+</div>
+</header>
+<main>
+<p class="intro"><strong>Big Data Consulting (BDC)</strong> est un intégrateur français spécialisé dans la connexion de systèmes d'information pour PME et ETI. Connecteurs EBP Gestion Commerciale, EBP Compta et EBP Bâtiment vers EDI, e-commerce et ERP tiers. BDC iPaaS — automatisez vos échanges inter-systèmes avec EBP.</p>
+<div class="faq">
+<h2>Questions fréquentes</h2>
+<div class="qa-item">
+<h3 class="qa-q">Comment connecter EBP Gestion Commerciale à un EDI ?</h3>
+<p class="qa-a">BDC iPaaS lit les expéditions et factures de votre EBP pour générer automatiquement les DESADV et INVOIC EANCOM requis par vos clients grande distribution.</p>
+</div><div class="qa-item">
+<h3 class="qa-q">EBP peut-il se synchroniser avec une boutique PrestaShop ?</h3>
+<p class="qa-a">Oui. Notre connecteur EBP↔PrestaShop synchronise articles, stocks, commandes et bons de livraison dans les deux sens, sans développement spécifique.</p>
+</div><div class="qa-item">
+<h3 class="qa-q">EBP est-il compatible avec le middleware BDC iPaaS ?</h3>
+<p class="qa-a">Oui pour EBP Gestion Commerciale 2020 et supérieur. Connexion via l'API SOAP/REST d'EBP ou extraction fichiers structurés.</p>
+</div>
+</div>
+<div class="cta-section">
+<h2>Votre projet d'intégration en 48h</h2>
+<p>Nos experts analysent votre besoin gratuitement et vous proposent un devis détaillé sous 48h.</p>
+<a href="https://bigdataconsulting.fr" class="cta-white">Contactez nos experts →</a>
+</div>
+</main>
+<footer>
+<p>Big Data Consulting — Expert intégration ERP & iPaaS | <a href="https://bigdataconsulting.fr">bigdataconsulting.fr</a> | <a href="mailto:commercial@anexys.fr">commercial@anexys.fr</a></p>
+<p style="margin-top:6px;font-size:.78rem">© 2026 ANEXYS — Big Data Consulting | Tous droits réservés</p>
+</footer>
+</body>
+</html>
