@@ -18,17 +18,13 @@ jobs:
           command_timeout: 120s
           script_stop: false
           script: |
-            echo "=== quickedi cert files ==="
-            docker exec seo-nginx ls -la /etc/letsencrypt/live/sage.quickedi.fr/ 2>&1
-            echo "=== bdc cert files ==="
-            docker exec seo-nginx ls -la /etc/letsencrypt/live/sage.bigdataconsulting.fr/ 2>&1
-            echo "=== seo-nginx recent logs ==="
-            docker logs seo-nginx 2>&1 | tail -30
-            echo "=== RESTARTING seo-nginx ==="
-            docker restart seo-nginx
-            echo "Restart done, sleeping 5s"
-            sleep 5
-            echo "=== Testing cert after restart ==="
-            echo | openssl s_client -connect 127.0.0.1:443 -servername sage.quickedi.fr 2>/dev/null | openssl x509 -noout -subject 2>&1
-            echo | openssl s_client -connect 127.0.0.1:443 -servername sage.bigdataconsulting.fr 2>/dev/null | openssl x509 -noout -subject 2>&1
-            echo DONE5
+            echo "=== ALL CONTAINERS with :443 ==="
+            docker ps --format "{{.Names}}\t{{.Ports}}" | grep 443
+            echo "=== iptables DNAT :443 ==="
+            iptables -t nat -L -n | grep -A2 -B2 ":443" 2>&1 | head -40
+            echo "=== seo-nginx container inspect network ==="
+            docker inspect seo-nginx --format "{{range $k,$v := .NetworkSettings.Ports}}{{$k}} -> {{$v}}{{end}}" 2>&1
+            echo "=== openssl from rack-57 external IP ==="
+            echo | openssl s_client -connect 86.104.252.66:443 -servername sage.bigdataconsulting.fr 2>/dev/null | openssl x509 -noout -subject 2>&1
+            echo | openssl s_client -connect 86.104.252.66:443 -servername gate.edicloud.app 2>/dev/null | openssl x509 -noout -subject 2>&1
+            echo DONE6
