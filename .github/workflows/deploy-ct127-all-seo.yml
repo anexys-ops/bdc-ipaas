@@ -1,4 +1,4 @@
-name: Deploy SEO subdomains quickedi + BDC on CT127
+name: Deploy BDC SEO subdomains on CT127
 
 on:
   workflow_dispatch:
@@ -6,11 +6,11 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
-      - name: Upload HTML to CT127
+      - name: SCP bdc HTML to CT127
         uses: appleboy/scp-action@v0.1.7
         with:
           host: 192.168.1.127
@@ -21,11 +21,11 @@ jobs:
           proxy_port: ${{ secrets.SSH_PORT }}
           proxy_username: ${{ secrets.SSH_USER }}
           proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "seo-pages/quickedi/,seo-pages/bdc/"
+          source: "seo-pages/bdc/"
           target: /tmp/seo/
           strip_components: 1
 
-      - name: CT127 nginx setup
+      - name: CT127 nginx vhosts for BDC
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 192.168.1.127
@@ -36,23 +36,11 @@ jobs:
           proxy_port: ${{ secrets.SSH_PORT }}
           proxy_username: ${{ secrets.SSH_USER }}
           proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 180s
+          command_timeout: 120s
           script: |
             set -e
             export DEBIAN_FRONTEND=noninteractive
             apt-get update -qq && apt-get install -y nginx
-            mkdir -p /var/www/sage.quickedi.fr
-            mkdir -p /var/www/cegid.quickedi.fr
-            mkdir -p /var/www/ebp.quickedi.fr
-            mkdir -p /var/www/odoo.quickedi.fr
-            mkdir -p /var/www/dolibarr.quickedi.fr
-            mkdir -p /var/www/sap.quickedi.fr
-            mkdir -p /var/www/carrefour.quickedi.fr
-            mkdir -p /var/www/leclerc.quickedi.fr
-            mkdir -p /var/www/auchan.quickedi.fr
-            mkdir -p /var/www/systeme-u.quickedi.fr
-            mkdir -p /var/www/intermarche.quickedi.fr
-            mkdir -p /var/www/leroy-merlin.quickedi.fr
             mkdir -p /var/www/sage.bigdataconsulting.fr
             mkdir -p /var/www/sap.bigdataconsulting.fr
             mkdir -p /var/www/cegid.bigdataconsulting.fr
@@ -65,138 +53,6 @@ jobs:
             mkdir -p /var/www/integration.bigdataconsulting.fr
             mkdir -p /var/www/data.bigdataconsulting.fr
             mkdir -p /var/www/migration.bigdataconsulting.fr
-            cat > /etc/nginx/sites-available/sage.quickedi.fr <<'NEOF'
-            server {
-                listen 80;
-                server_name sage.quickedi.fr;
-                root /var/www/sage.quickedi.fr;
-                index index.html;
-                location / { try_files $uri $uri/ =404; }
-            }
-            NEOF
-            ln -sf /etc/nginx/sites-available/sage.quickedi.fr /etc/nginx/sites-enabled/sage.quickedi.fr
-            [ -f /tmp/seo/quickedi/sage.html ] && cp /tmp/seo/quickedi/sage.html /var/www/sage.quickedi.fr/index.html || true
-            cat > /etc/nginx/sites-available/cegid.quickedi.fr <<'NEOF'
-            server {
-                listen 80;
-                server_name cegid.quickedi.fr;
-                root /var/www/cegid.quickedi.fr;
-                index index.html;
-                location / { try_files $uri $uri/ =404; }
-            }
-            NEOF
-            ln -sf /etc/nginx/sites-available/cegid.quickedi.fr /etc/nginx/sites-enabled/cegid.quickedi.fr
-            [ -f /tmp/seo/quickedi/cegid.html ] && cp /tmp/seo/quickedi/cegid.html /var/www/cegid.quickedi.fr/index.html || true
-            cat > /etc/nginx/sites-available/ebp.quickedi.fr <<'NEOF'
-            server {
-                listen 80;
-                server_name ebp.quickedi.fr;
-                root /var/www/ebp.quickedi.fr;
-                index index.html;
-                location / { try_files $uri $uri/ =404; }
-            }
-            NEOF
-            ln -sf /etc/nginx/sites-available/ebp.quickedi.fr /etc/nginx/sites-enabled/ebp.quickedi.fr
-            [ -f /tmp/seo/quickedi/ebp.html ] && cp /tmp/seo/quickedi/ebp.html /var/www/ebp.quickedi.fr/index.html || true
-            cat > /etc/nginx/sites-available/odoo.quickedi.fr <<'NEOF'
-            server {
-                listen 80;
-                server_name odoo.quickedi.fr;
-                root /var/www/odoo.quickedi.fr;
-                index index.html;
-                location / { try_files $uri $uri/ =404; }
-            }
-            NEOF
-            ln -sf /etc/nginx/sites-available/odoo.quickedi.fr /etc/nginx/sites-enabled/odoo.quickedi.fr
-            [ -f /tmp/seo/quickedi/odoo.html ] && cp /tmp/seo/quickedi/odoo.html /var/www/odoo.quickedi.fr/index.html || true
-            cat > /etc/nginx/sites-available/dolibarr.quickedi.fr <<'NEOF'
-            server {
-                listen 80;
-                server_name dolibarr.quickedi.fr;
-                root /var/www/dolibarr.quickedi.fr;
-                index index.html;
-                location / { try_files $uri $uri/ =404; }
-            }
-            NEOF
-            ln -sf /etc/nginx/sites-available/dolibarr.quickedi.fr /etc/nginx/sites-enabled/dolibarr.quickedi.fr
-            [ -f /tmp/seo/quickedi/dolibarr.html ] && cp /tmp/seo/quickedi/dolibarr.html /var/www/dolibarr.quickedi.fr/index.html || true
-            cat > /etc/nginx/sites-available/sap.quickedi.fr <<'NEOF'
-            server {
-                listen 80;
-                server_name sap.quickedi.fr;
-                root /var/www/sap.quickedi.fr;
-                index index.html;
-                location / { try_files $uri $uri/ =404; }
-            }
-            NEOF
-            ln -sf /etc/nginx/sites-available/sap.quickedi.fr /etc/nginx/sites-enabled/sap.quickedi.fr
-            [ -f /tmp/seo/quickedi/sap.html ] && cp /tmp/seo/quickedi/sap.html /var/www/sap.quickedi.fr/index.html || true
-            cat > /etc/nginx/sites-available/carrefour.quickedi.fr <<'NEOF'
-            server {
-                listen 80;
-                server_name carrefour.quickedi.fr;
-                root /var/www/carrefour.quickedi.fr;
-                index index.html;
-                location / { try_files $uri $uri/ =404; }
-            }
-            NEOF
-            ln -sf /etc/nginx/sites-available/carrefour.quickedi.fr /etc/nginx/sites-enabled/carrefour.quickedi.fr
-            [ -f /tmp/seo/quickedi/carrefour.html ] && cp /tmp/seo/quickedi/carrefour.html /var/www/carrefour.quickedi.fr/index.html || true
-            cat > /etc/nginx/sites-available/leclerc.quickedi.fr <<'NEOF'
-            server {
-                listen 80;
-                server_name leclerc.quickedi.fr;
-                root /var/www/leclerc.quickedi.fr;
-                index index.html;
-                location / { try_files $uri $uri/ =404; }
-            }
-            NEOF
-            ln -sf /etc/nginx/sites-available/leclerc.quickedi.fr /etc/nginx/sites-enabled/leclerc.quickedi.fr
-            [ -f /tmp/seo/quickedi/leclerc.html ] && cp /tmp/seo/quickedi/leclerc.html /var/www/leclerc.quickedi.fr/index.html || true
-            cat > /etc/nginx/sites-available/auchan.quickedi.fr <<'NEOF'
-            server {
-                listen 80;
-                server_name auchan.quickedi.fr;
-                root /var/www/auchan.quickedi.fr;
-                index index.html;
-                location / { try_files $uri $uri/ =404; }
-            }
-            NEOF
-            ln -sf /etc/nginx/sites-available/auchan.quickedi.fr /etc/nginx/sites-enabled/auchan.quickedi.fr
-            [ -f /tmp/seo/quickedi/auchan.html ] && cp /tmp/seo/quickedi/auchan.html /var/www/auchan.quickedi.fr/index.html || true
-            cat > /etc/nginx/sites-available/systeme-u.quickedi.fr <<'NEOF'
-            server {
-                listen 80;
-                server_name systeme-u.quickedi.fr;
-                root /var/www/systeme-u.quickedi.fr;
-                index index.html;
-                location / { try_files $uri $uri/ =404; }
-            }
-            NEOF
-            ln -sf /etc/nginx/sites-available/systeme-u.quickedi.fr /etc/nginx/sites-enabled/systeme-u.quickedi.fr
-            [ -f /tmp/seo/quickedi/systeme-u.html ] && cp /tmp/seo/quickedi/systeme-u.html /var/www/systeme-u.quickedi.fr/index.html || true
-            cat > /etc/nginx/sites-available/intermarche.quickedi.fr <<'NEOF'
-            server {
-                listen 80;
-                server_name intermarche.quickedi.fr;
-                root /var/www/intermarche.quickedi.fr;
-                index index.html;
-                location / { try_files $uri $uri/ =404; }
-            }
-            NEOF
-            ln -sf /etc/nginx/sites-available/intermarche.quickedi.fr /etc/nginx/sites-enabled/intermarche.quickedi.fr
-            [ -f /tmp/seo/quickedi/intermarche.html ] && cp /tmp/seo/quickedi/intermarche.html /var/www/intermarche.quickedi.fr/index.html || true
-            cat > /etc/nginx/sites-available/leroy-merlin.quickedi.fr <<'NEOF'
-            server {
-                listen 80;
-                server_name leroy-merlin.quickedi.fr;
-                root /var/www/leroy-merlin.quickedi.fr;
-                index index.html;
-                location / { try_files $uri $uri/ =404; }
-            }
-            NEOF
-            ln -sf /etc/nginx/sites-available/leroy-merlin.quickedi.fr /etc/nginx/sites-enabled/leroy-merlin.quickedi.fr
-            [ -f /tmp/seo/quickedi/leroy-merlin.html ] && cp /tmp/seo/quickedi/leroy-merlin.html /var/www/leroy-merlin.quickedi.fr/index.html || true
             cat > /etc/nginx/sites-available/sage.bigdataconsulting.fr <<'NEOF'
             server {
                 listen 80;
@@ -333,255 +189,42 @@ jobs:
             nginx -t && systemctl reload nginx
             echo CT127_OK
 
-      - name: rack-57 create nginx vhosts (placeholder cert)
+      - name: rack-57 SSL cert + proxy vhosts for BDC
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 60s
+          command_timeout: 600s
           script: |
             set -e
-            # Clean stale confs
-            for f in /opt/bdc-ipaas/docker/nginx/seo-active-conf/*.quickedi.fr.conf /opt/bdc-ipaas/docker/nginx/seo-active-conf/*.bigdataconsulting.fr.conf; do [ -f "$f" ] && rm "$f"; done 2>/dev/null || true
-            # Use ediconnect.fr cert as placeholder (already valid, nginx will start)
-            QCERT=/opt/bdc-ipaas/docker/certbot/conf/live/sage.quickedi.fr
-            BCERT=/opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr
-            mkdir -p $QCERT $BCERT
-            PLACEHOLDER=/opt/bdc-ipaas/docker/certbot/conf/live/ediconnect.fr
-            cp $PLACEHOLDER/fullchain.pem $QCERT/fullchain.pem 2>/dev/null || cp $PLACEHOLDER/fullchain.cer $QCERT/fullchain.pem 2>/dev/null || true
-            cp $PLACEHOLDER/privkey.pem $QCERT/privkey.pem 2>/dev/null || true
-            cp $PLACEHOLDER/fullchain.pem $BCERT/fullchain.pem 2>/dev/null || cp $PLACEHOLDER/fullchain.cer $BCERT/fullchain.pem 2>/dev/null || true
-            cp $PLACEHOLDER/privkey.pem $BCERT/privkey.pem 2>/dev/null || true
-            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/sage.quickedi.fr.conf <<'NEOF'
-            server {
-                listen 80;
-                server_name sage.quickedi.fr;
-                return 301 https://$host$request_uri;
-            }
-            server {
-                listen 443 ssl;
-                server_name sage.quickedi.fr;
-                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
-                ssl_protocols TLSv1.2 TLSv1.3;
-                location / {
-                    proxy_pass http://192.168.1.127;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            NEOF
-            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/cegid.quickedi.fr.conf <<'NEOF'
-            server {
-                listen 80;
-                server_name cegid.quickedi.fr;
-                return 301 https://$host$request_uri;
-            }
-            server {
-                listen 443 ssl;
-                server_name cegid.quickedi.fr;
-                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
-                ssl_protocols TLSv1.2 TLSv1.3;
-                location / {
-                    proxy_pass http://192.168.1.127;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            NEOF
-            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/ebp.quickedi.fr.conf <<'NEOF'
-            server {
-                listen 80;
-                server_name ebp.quickedi.fr;
-                return 301 https://$host$request_uri;
-            }
-            server {
-                listen 443 ssl;
-                server_name ebp.quickedi.fr;
-                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
-                ssl_protocols TLSv1.2 TLSv1.3;
-                location / {
-                    proxy_pass http://192.168.1.127;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            NEOF
-            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/odoo.quickedi.fr.conf <<'NEOF'
-            server {
-                listen 80;
-                server_name odoo.quickedi.fr;
-                return 301 https://$host$request_uri;
-            }
-            server {
-                listen 443 ssl;
-                server_name odoo.quickedi.fr;
-                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
-                ssl_protocols TLSv1.2 TLSv1.3;
-                location / {
-                    proxy_pass http://192.168.1.127;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            NEOF
-            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/dolibarr.quickedi.fr.conf <<'NEOF'
-            server {
-                listen 80;
-                server_name dolibarr.quickedi.fr;
-                return 301 https://$host$request_uri;
-            }
-            server {
-                listen 443 ssl;
-                server_name dolibarr.quickedi.fr;
-                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
-                ssl_protocols TLSv1.2 TLSv1.3;
-                location / {
-                    proxy_pass http://192.168.1.127;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            NEOF
-            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/sap.quickedi.fr.conf <<'NEOF'
-            server {
-                listen 80;
-                server_name sap.quickedi.fr;
-                return 301 https://$host$request_uri;
-            }
-            server {
-                listen 443 ssl;
-                server_name sap.quickedi.fr;
-                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
-                ssl_protocols TLSv1.2 TLSv1.3;
-                location / {
-                    proxy_pass http://192.168.1.127;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            NEOF
-            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/carrefour.quickedi.fr.conf <<'NEOF'
-            server {
-                listen 80;
-                server_name carrefour.quickedi.fr;
-                return 301 https://$host$request_uri;
-            }
-            server {
-                listen 443 ssl;
-                server_name carrefour.quickedi.fr;
-                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
-                ssl_protocols TLSv1.2 TLSv1.3;
-                location / {
-                    proxy_pass http://192.168.1.127;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            NEOF
-            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/leclerc.quickedi.fr.conf <<'NEOF'
-            server {
-                listen 80;
-                server_name leclerc.quickedi.fr;
-                return 301 https://$host$request_uri;
-            }
-            server {
-                listen 443 ssl;
-                server_name leclerc.quickedi.fr;
-                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
-                ssl_protocols TLSv1.2 TLSv1.3;
-                location / {
-                    proxy_pass http://192.168.1.127;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            NEOF
-            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/auchan.quickedi.fr.conf <<'NEOF'
-            server {
-                listen 80;
-                server_name auchan.quickedi.fr;
-                return 301 https://$host$request_uri;
-            }
-            server {
-                listen 443 ssl;
-                server_name auchan.quickedi.fr;
-                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
-                ssl_protocols TLSv1.2 TLSv1.3;
-                location / {
-                    proxy_pass http://192.168.1.127;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            NEOF
-            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/systeme-u.quickedi.fr.conf <<'NEOF'
-            server {
-                listen 80;
-                server_name systeme-u.quickedi.fr;
-                return 301 https://$host$request_uri;
-            }
-            server {
-                listen 443 ssl;
-                server_name systeme-u.quickedi.fr;
-                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
-                ssl_protocols TLSv1.2 TLSv1.3;
-                location / {
-                    proxy_pass http://192.168.1.127;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            NEOF
-            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/intermarche.quickedi.fr.conf <<'NEOF'
-            server {
-                listen 80;
-                server_name intermarche.quickedi.fr;
-                return 301 https://$host$request_uri;
-            }
-            server {
-                listen 443 ssl;
-                server_name intermarche.quickedi.fr;
-                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
-                ssl_protocols TLSv1.2 TLSv1.3;
-                location / {
-                    proxy_pass http://192.168.1.127;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            NEOF
-            cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/leroy-merlin.quickedi.fr.conf <<'NEOF'
-            server {
-                listen 80;
-                server_name leroy-merlin.quickedi.fr;
-                return 301 https://$host$request_uri;
-            }
-            server {
-                listen 443 ssl;
-                server_name leroy-merlin.quickedi.fr;
-                ssl_certificate /etc/letsencrypt/live/sage.quickedi.fr/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sage.quickedi.fr/privkey.pem;
-                ssl_protocols TLSv1.2 TLSv1.3;
-                location / {
-                    proxy_pass http://192.168.1.127;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            NEOF
+            # Remove stale BDC vhosts
+            for f in /opt/bdc-ipaas/docker/nginx/seo-active-conf/*.bigdataconsulting.fr.conf; do [ -f "$f" ] && rm "$f"; done 2>/dev/null || true
+            # Install acme.sh if needed
+            [ -f ~/.acme.sh/acme.sh ] || (curl -s https://get.acme.sh | sh -s email=commercial@anexys.fr)
+            # Issue cert for all 12 BDC subdomains
+            IONOS_PREFIX=d2375a53d90e4be1bcbf03ce80141073 IONOS_SECRET=wYYqaiuSP07iSeP93FEotefvdYTTLW56zo44mrnhQr9l7ckvg1EEfZUZYEv0bNXZQ2PcC15cIcsSEjRtibV-wg \
+            ~/.acme.sh/acme.sh --issue --dns dns_ionos --dnssleep 30 \
+              -d sage.bigdataconsulting.fr -d sap.bigdataconsulting.fr -d cegid.bigdataconsulting.fr \
+              -d dolibarr.bigdataconsulting.fr -d odoo.bigdataconsulting.fr -d ebp.bigdataconsulting.fr \
+              -d ipaas.bigdataconsulting.fr -d edi.bigdataconsulting.fr -d connecteur.bigdataconsulting.fr \
+              -d integration.bigdataconsulting.fr -d data.bigdataconsulting.fr -d migration.bigdataconsulting.fr \
+              2>&1 || echo "WARN: BDC cert issue failed or already exists"
+            # Install cert to certbot conf dir
+            mkdir -p /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr
+            ~/.acme.sh/acme.sh --install-cert -d sage.bigdataconsulting.fr \
+              --fullchain-file /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem \
+              --key-file /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem \
+              2>&1 || true
+            # Use existing ediconnect.fr cert as placeholder if BDC cert not ready yet
+            BDCFULL=/opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem
+            BDCKEY=/opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem
+            PLACEHOLDER_FULL=/opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/fullchain.pem
+            PLACEHOLDER_KEY=/opt/bdc-ipaas/docker/certbot/conf/live/ebp-dolibarr.ediconnect.fr/privkey.pem
+            [ -f "$BDCFULL" ] || cp "$PLACEHOLDER_FULL" "$BDCFULL" 2>/dev/null || true
+            [ -f "$BDCKEY" ] || cp "$PLACEHOLDER_KEY" "$BDCKEY" 2>/dev/null || true
+            # Create nginx vhosts for all 12 BDC domains
             cat > /opt/bdc-ipaas/docker/nginx/seo-active-conf/sage.bigdataconsulting.fr.conf <<'NEOF'
             server {
                 listen 80;
@@ -810,41 +453,5 @@ jobs:
                 }
             }
             NEOF
-            docker exec seo-nginx nginx -t && docker exec seo-nginx nginx -s reload
-            echo VHOSTS_DONE
-
-      - name: rack-57 issue SSL certs via acme.sh DNS-01
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 600s
-          script: |
-            set -e
-            export IONOS_PREFIX=d2375a53d90e4be1bcbf03ce80141073
-            export IONOS_SECRET=wYYqaiuSP07iSeP93FEotefvdYTTLW56zo44mrnhQr9l7ckvg1EEfZUZYEv0bNXZQ2PcC15cIcsSEjRtibV-wg
-            [ -f /root/.acme.sh/acme.sh ] || (curl -sL https://get.acme.sh | sh -s email=commercial@anexys.fr && sleep 3)
-            echo "Issuing quickedi.fr wildcard cert..."
-            /root/.acme.sh/acme.sh --issue --dns dns_ionos -d sage.quickedi.fr -d cegid.quickedi.fr -d ebp.quickedi.fr -d odoo.quickedi.fr -d dolibarr.quickedi.fr -d sap.quickedi.fr -d carrefour.quickedi.fr -d leclerc.quickedi.fr -d auchan.quickedi.fr -d systeme-u.quickedi.fr -d intermarche.quickedi.fr -d leroy-merlin.quickedi.fr --server zerossl --keylength ec-256 || echo "quickedi cert: already exists or error (ok)"
-            echo "Issuing bigdataconsulting.fr cert..."
-            /root/.acme.sh/acme.sh --issue --dns dns_ionos -d sage.bigdataconsulting.fr -d sap.bigdataconsulting.fr -d cegid.bigdataconsulting.fr -d dolibarr.bigdataconsulting.fr -d odoo.bigdataconsulting.fr -d ebp.bigdataconsulting.fr -d ipaas.bigdataconsulting.fr -d edi.bigdataconsulting.fr -d connecteur.bigdataconsulting.fr -d integration.bigdataconsulting.fr -d data.bigdataconsulting.fr -d migration.bigdataconsulting.fr --server zerossl --keylength ec-256 || echo "bdc cert: already exists or error (ok)"
-            QDIR=/root/.acme.sh/sage.quickedi.fr_ecc
-            BDIR=/root/.acme.sh/sage.bigdataconsulting.fr_ecc
-            if [ -f "$QDIR/fullchain.cer" ]; then
-              cp "$QDIR/fullchain.cer" /opt/bdc-ipaas/docker/certbot/conf/live/sage.quickedi.fr/fullchain.pem
-              cp "$QDIR/sage.quickedi.fr.key" /opt/bdc-ipaas/docker/certbot/conf/live/sage.quickedi.fr/privkey.pem
-              echo "quickedi real certs installed"
-            else
-              echo "quickedi certs not ready yet (DNS propagation pending)"
-            fi
-            if [ -f "$BDIR/fullchain.cer" ]; then
-              cp "$BDIR/fullchain.cer" /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/fullchain.pem
-              cp "$BDIR/sage.bigdataconsulting.fr.key" /opt/bdc-ipaas/docker/certbot/conf/live/sage.bigdataconsulting.fr/privkey.pem
-              echo "bdc real certs installed"
-            else
-              echo "bdc certs not ready yet (DNS propagation pending)"
-            fi
-            docker exec seo-nginx nginx -t && docker exec seo-nginx nginx -s reload
-            echo SSL_DONE
+            docker exec seo-nginx nginx -t 2>&1 && docker exec seo-nginx nginx -s reload 2>&1
+            echo RACK57_DONE
