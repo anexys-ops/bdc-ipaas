@@ -1,0 +1,105 @@
+name: Disk space diagnose (rack-57)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_ip:
+        description: "IP reported by the DISQUE alert (e.g. 192.168.1.130)"
+        required: true
+        default: "192.168.1.130"
+      cleanup:
+        description: "Run safe cleanup (docker prune, journal vacuum, apt clean) in addition to diagnostics"
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: SSH diagnose + optional cleanup
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 180s
+          script_stop: false
+          envs: TARGET_IP,DO_CLEANUP
+          script: |
+            TARGET_IP="${{ inputs.target_ip }}"
+            DO_CLEANUP="${{ inputs.cleanup }}"
+
+            run_report() {
+              echo "=== hostname / uptime ==="
+              hostname; uptime
+              echo "=== df -h ==="
+              df -h /
+              echo "=== top 15 dirs by size (/) ==="
+              du -x -h --max-depth=2 / 2>/dev/null | sort -rh | head -15
+              echo "=== docker system df ==="
+              docker system df 2>&1 || echo "no docker here"
+              echo "=== journal disk usage ==="
+              journalctl --disk-usage 2>&1 || echo "no journalctl"
+              echo "=== apt cache size ==="
+              du -sh /var/cache/apt 2>&1 || true
+            }
+
+            run_cleanup() {
+              echo "=== cleanup: docker system prune (images/containers/networks, no volumes) ==="
+              docker system prune -af 2>&1 || true
+              echo "=== cleanup: docker builder prune ==="
+              docker builder prune -af 2>&1 || true
+              echo "=== cleanup: journal vacuum to 3 days ==="
+              journalctl --vacuum-time=3d 2>&1 || true
+              echo "=== cleanup: apt-get clean ==="
+              apt-get clean 2>&1 || true
+              echo "=== df -h after cleanup ==="
+              df -h /
+            }
+
+            echo "### Checking if this host (rack-57 jump host) owns $TARGET_IP ###"
+            if ip addr show 2>/dev/null | grep -q "$TARGET_IP"; then
+              echo ">>> $TARGET_IP is THIS host <<<"
+              run_report
+              if [ "$DO_CLEANUP" = "true" ]; then run_cleanup; fi
+            elif command -v pct >/dev/null 2>&1; then
+              echo "### Not this host, scanning Proxmox containers for $TARGET_IP ###"
+              FOUND=""
+              for id in $(pct list 2>/dev/null | awk 'NR>1 {print $1}'); do
+                if pct exec "$id" -- ip addr show 2>/dev/null | grep -q "$TARGET_IP"; then
+                  echo ">>> $TARGET_IP is CT $id <<<"
+                  FOUND="$id"
+                  break
+                fi
+              done
+              if [ -n "$FOUND" ]; then
+                echo "=== hostname / uptime (CT $FOUND) ==="
+                pct exec "$FOUND" -- sh -c "hostname; uptime"
+                echo "=== df -h (CT $FOUND) ==="
+                pct exec "$FOUND" -- df -h /
+                echo "=== top 15 dirs by size (CT $FOUND) ==="
+                pct exec "$FOUND" -- sh -c "du -x -h --max-depth=2 / 2>/dev/null | sort -rh | head -15"
+                echo "=== docker system df (CT $FOUND) ==="
+                pct exec "$FOUND" -- docker system df 2>&1 || echo "no docker in CT $FOUND"
+                echo "=== journal disk usage (CT $FOUND) ==="
+                pct exec "$FOUND" -- journalctl --disk-usage 2>&1 || true
+                if [ "$DO_CLEANUP" = "true" ]; then
+                  echo "=== cleanup CT $FOUND ==="
+                  pct exec "$FOUND" -- docker system prune -af 2>&1 || true
+                  pct exec "$FOUND" -- docker builder prune -af 2>&1 || true
+                  pct exec "$FOUND" -- journalctl --vacuum-time=3d 2>&1 || true
+                  pct exec "$FOUND" -- apt-get clean 2>&1 || true
+                  echo "=== df -h after cleanup (CT $FOUND) ==="
+                  pct exec "$FOUND" -- df -h /
+                fi
+              else
+                echo "!!! Could not find $TARGET_IP among pct containers. Listing pct list for manual follow-up: !!!"
+                pct list 2>&1 || true
+              fi
+            else
+              echo "!!! Not this host, and no pct available (not a Proxmox host). Cannot locate $TARGET_IP from here. !!!"
+            fi
+            echo DONE
