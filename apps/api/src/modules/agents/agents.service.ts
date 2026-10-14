@@ -19,8 +19,10 @@ export class AgentsService {
   }
 
   async createAgentToken(tenantId: string, name: string, watchPaths: string[]): Promise<{ id: string; token: string }> {
-    const prisma = await this.getTenantClient(tenantId);
-    const token = crypto.randomBytes(32).toString('hex');
+    const tenant = await this.tenantsService.getTenantWithHash(tenantId);
+    const prisma = await this.tenantDbService.getClient(tenantId, tenant.dbConnectionHash);
+    // Format : <slugTenant>.<aléatoire> — le slug permet de retrouver la base tenant à la connexion.
+    const token = `${tenant.slug}.${crypto.randomBytes(32).toString('hex')}`;
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
     const agent = await prisma.agentToken.create({
@@ -57,5 +59,26 @@ export class AgentsService {
 
     await prisma.agentToken.update({ where: { id: agent.id }, data: { lastSeenAt: new Date() } });
     return { valid: true, agentId: agent.id };
+  }
+
+  /**
+   * Authentifie un jeton agent au format <slugTenant>.<aléatoire>.
+   * Retourne null si le format, le tenant ou le jeton est invalide.
+   */
+  async authenticateToken(token: string): Promise<{ tenantId: string; agentId: string } | null> {
+    const match = /^([a-z0-9-]{3,})\.([a-f0-9]{64})$/.exec(token);
+    if (!match) return null;
+
+    let tenant: { id: string; isActive: boolean };
+    try {
+      tenant = await this.tenantsService.findBySlug(match[1]);
+    } catch {
+      return null;
+    }
+    if (!tenant.isActive) return null;
+
+    const result = await this.validateToken(tenant.id, token);
+    if (!result.valid || !result.agentId) return null;
+    return { tenantId: tenant.id, agentId: result.agentId };
   }
 }

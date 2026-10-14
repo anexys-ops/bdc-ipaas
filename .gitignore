@@ -53,3 +53,6 @@ ssl/
 postgres_master_data/
 redis_data/
 grafana_data/
+
+# Accès et identifiants locaux (ne jamais versionner)
+ACCES.md

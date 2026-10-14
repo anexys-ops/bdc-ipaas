@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Delete, Body, Param, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AgentsService } from './agents.service';
+import { AgentsGateway } from './agents.gateway';
 import { JwtAuthGuard, RolesGuard } from '../../common/guards';
 import { CurrentTenant, Roles } from '../../common/decorators';
 import { IsString, IsArray } from 'class-validator';
@@ -16,7 +17,10 @@ class CreateAgentDto {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class AgentsController {
-  constructor(private readonly agentsService: AgentsService) {}
+  constructor(
+    private readonly agentsService: AgentsService,
+    private readonly agentsGateway: AgentsGateway,
+  ) {}
 
   @Post()
   @Roles('ADMIN', 'SUPER_ADMIN')
@@ -34,14 +38,16 @@ export class AgentsController {
   @Post(':id/revoke')
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiOperation({ summary: 'Révoquer un agent' })
-  revoke(@CurrentTenant() tenant: { id: string }, @Param('id', ParseUUIDPipe) id: string) {
-    return this.agentsService.revokeAgent(tenant.id, id);
+  async revoke(@CurrentTenant() tenant: { id: string }, @Param('id', ParseUUIDPipe) id: string) {
+    await this.agentsService.revokeAgent(tenant.id, id);
+    this.agentsGateway.disconnectAgent(tenant.id, id);
   }
 
   @Delete(':id')
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiOperation({ summary: 'Supprimer un agent' })
-  delete(@CurrentTenant() tenant: { id: string }, @Param('id', ParseUUIDPipe) id: string) {
-    return this.agentsService.deleteAgent(tenant.id, id);
+  async delete(@CurrentTenant() tenant: { id: string }, @Param('id', ParseUUIDPipe) id: string) {
+    await this.agentsService.deleteAgent(tenant.id, id);
+    this.agentsGateway.disconnectAgent(tenant.id, id);
   }
 }
