@@ -18,13 +18,19 @@ services:
 
   frontend:
     build:
-      context: ../apps/frontend
-      dockerfile: Dockerfile
+      # Image avec entrypoint qui génère /keycloak-env.js à partir des variables ci-dessous.
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
       args:
         VITE_API_URL: ${VITE_API_URL:-/api/v1}
         VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-}
         VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-}
         VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-}
+    # Lu à l'exécution par frontend-entrypoint.sh → /keycloak-env.js (SSO sans dépendre du build).
+    environment:
+      VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-https://auth.bigdataconsulting.fr}
+      VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-anexys}
+      VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-ipaas-app}
     container_name: anexys-frontend
     depends_on:
       - api
@@ -95,8 +101,8 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
       - FRONTEND_URL=${FRONTEND_URL:-https://ultimate.edicloud.app}
-      - KEYCLOAK_ISSUER=${KEYCLOAK_ISSUER:-}
-      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-}
+      - KEYCLOAK_ISSUER=${KEYCLOAK_ISSUER:-https://auth.bigdataconsulting.fr/realms/anexys}
+      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-ipaas-app}
       - GATE_REDIS_URL=${GATE_REDIS_URL:-redis://redis:6379}
     depends_on:
       postgres:

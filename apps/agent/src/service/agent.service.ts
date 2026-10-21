@@ -34,12 +34,15 @@ export class AgentService {
 
   private async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.socket = io(`${this.serverUrl}/agent`, { reconnection: true, reconnectionAttempts: this.maxReconnectAttempts });
+      this.socket = io(`${this.serverUrl}/agent`, {
+        auth: { token: this.token },
+        reconnection: true,
+        reconnectionAttempts: this.maxReconnectAttempts,
+      });
 
       this.socket.on('connect', () => {
         this.logger.info('Connecté au serveur');
         this.reconnectAttempts = 0;
-        this.authenticate();
         resolve();
       });
 
@@ -61,18 +64,18 @@ export class AgentService {
     });
   }
 
-  private authenticate(): void {
-    this.socket?.emit('auth', { type: 'auth', token: this.token });
-    this.logger.info('Authentification envoyée');
-  }
-
   private handleMessage(msg: { type: string; filename?: string; message?: string; executionId?: string }): void {
     switch (msg.type) {
       case 'auth_ok':
         this.logger.info('Authentification réussie');
         break;
       case 'auth_error':
+        // Le serveur ferme la connexion : inutile de continuer à surveiller les fichiers.
         this.logger.error(`Erreur d'authentification: ${msg.message}`);
+        void this.stop().finally(() => process.exit(1));
+        break;
+      case 'error':
+        this.logger.error(`Erreur serveur${msg.filename ? ` (${msg.filename})` : ''}: ${msg.message}`);
         break;
       case 'ack':
         this.logger.info(`Fichier traité: ${msg.filename}, execution: ${msg.executionId}`);
@@ -114,8 +117,8 @@ export class AgentService {
       this.logger.info(`Nouveau fichier détecté: ${filePath}`);
       const stats = fs.statSync(filePath);
       
-      // Limite de taille: 100MB
-      if (stats.size > 100 * 1024 * 1024) {
+      // Limite de taille: 50MB (alignée sur le serveur)
+      if (stats.size > 50 * 1024 * 1024) {
         this.logger.warn(`Fichier trop volumineux (${stats.size} bytes), ignoré`);
         return;
       }
