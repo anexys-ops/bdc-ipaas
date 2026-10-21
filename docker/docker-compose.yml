@@ -3,7 +3,7 @@ services:
     image: nginx:alpine
     container_name: anexys-nginx
     ports:
-      - "80:80"
+      - "8888:80"
       # Pas de listen 443 dans nginx.conf (TLS terminé en amont ou à ajouter avec certificats dans ./nginx/ssl).
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
