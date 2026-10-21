@@ -35,13 +35,11 @@ jobs:
               /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null | head -30 || true
 
             # ── Rebuild ────────────────────────────────────────────────────────
-            cd docker
-            # seo-nginx occupe le port 80 : anexys-nginx écoute sur 8888 (surcharge possible via HTTP_PORT)
-            export HTTP_PORT="${HTTP_PORT:-8888}"
-            # Sans --env-file, ${POSTGRES_PASSWORD}, ${VAULT_KEY}… sont interpolés à vide
-            # et écrasent les valeurs de env_file (DATABASE_URL sans mot de passe → API en échec).
-            test -f ../.env.production || { echo "❌ /opt/bdc-ipaas/.env.production introuvable"; exit 1; }
-            docker compose -f docker-compose.prod.yml --env-file ../.env.production build --no-cache frontend api
+            # La production tourne avec docker-compose.yml (racine, inclut docker/docker-compose.yml) :
+            # projet « bdc-ipaas », réseau anexys-network partagé avec postgres/redis/keycloak, .env racine.
+            # Ne pas utiliser docker/docker-compose.prod.yml : autre projet et autre réseau → API sans base (incident du 18/10).
+            test -f .env || { echo "❌ /opt/bdc-ipaas/.env introuvable"; exit 1; }
+            docker compose build --no-cache frontend api
             echo "✅ Build terminé"
 
             # ── Supprimer containers (bypass conflit de projet) ────────────────
@@ -51,8 +49,16 @@ jobs:
             echo "🗑️  Containers supprimés"
 
             # ── Recréer ────────────────────────────────────────────────────────
-            docker compose -f docker-compose.prod.yml --env-file ../.env.production up -d --no-deps nginx frontend api
+            docker compose up -d --no-deps nginx frontend api
             echo "✅ Containers relancés"
+
+            # ── Vérification ───────────────────────────────────────────────────
+            for i in $(seq 1 24); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8888/api/v1/marketplace || true)
+              [ "$code" = "200" ] && { echo "✅ API OK"; break; }
+              sleep 5
+            done
+            [ "$code" = "200" ] || { echo "❌ API KO (HTTP $code)"; docker logs --tail 40 anexys-api 2>&1 | grep -viE 'password|secret|token'; exit 1; }
 
             echo "=== docker ps ==="
             docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' | head -12
