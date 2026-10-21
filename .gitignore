@@ -56,6 +56,3 @@ grafana_data/
 
 # Accès et identifiants locaux (ne jamais versionner)
 ACCES.md
-
-# Certificats et clés TLS Let's Encrypt (ne jamais versionner)
-docker/certbot/
