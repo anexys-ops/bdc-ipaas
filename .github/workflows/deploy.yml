@@ -38,7 +38,10 @@ jobs:
             cd docker
             # seo-nginx occupe le port 80 : anexys-nginx écoute sur 8888 (surcharge possible via HTTP_PORT)
             export HTTP_PORT="${HTTP_PORT:-8888}"
-            docker compose -f docker-compose.prod.yml build --no-cache frontend api
+            # Sans --env-file, ${POSTGRES_PASSWORD}, ${VAULT_KEY}… sont interpolés à vide
+            # et écrasent les valeurs de env_file (DATABASE_URL sans mot de passe → API en échec).
+            test -f ../.env.production || { echo "❌ /opt/bdc-ipaas/.env.production introuvable"; exit 1; }
+            docker compose -f docker-compose.prod.yml --env-file ../.env.production build --no-cache frontend api
             echo "✅ Build terminé"
 
             # ── Supprimer containers (bypass conflit de projet) ────────────────
@@ -48,7 +51,7 @@ jobs:
             echo "🗑️  Containers supprimés"
 
             # ── Recréer ────────────────────────────────────────────────────────
-            docker compose -f docker-compose.prod.yml up -d --no-deps nginx frontend api
+            docker compose -f docker-compose.prod.yml --env-file ../.env.production up -d --no-deps nginx frontend api
             echo "✅ Containers relancés"
 
             echo "=== docker ps ==="
