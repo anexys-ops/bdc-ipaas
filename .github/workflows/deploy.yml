@@ -36,6 +36,8 @@ jobs:
 
             # ── Rebuild ────────────────────────────────────────────────────────
             cd docker
+            # seo-nginx occupe le port 80 : anexys-nginx écoute sur 8888 (surcharge possible via HTTP_PORT)
+            export HTTP_PORT="${HTTP_PORT:-8888}"
             docker compose -f docker-compose.prod.yml build --no-cache frontend api
             echo "✅ Build terminé"
 
