@@ -18,6 +18,7 @@ import { TenantDatabaseService } from '../tenants/tenant-database.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { FileIoService } from './file-io.service';
 import { BenthosService } from './benthos.service';
+import { TickflowReporterService } from './tickflow-reporter.service';
 
 export interface ExecutionResult {
   executionId: string;
@@ -46,6 +47,7 @@ export class EngineService {
     private readonly tenantsService: TenantsService,
     private readonly fileIoService: FileIoService,
     private readonly benthosService: BenthosService,
+    private readonly tickflowReporter: TickflowReporterService,
   ) {
     this.initQueue();
   }
@@ -184,6 +186,7 @@ export class EngineService {
       data: { status: 'RUNNING' },
     });
 
+    let reportedTriggerConfig: unknown = null;
     try {
       const flow = await prisma.flow.findUnique({
         where: { id: flowId },
@@ -201,6 +204,7 @@ export class EngineService {
         throw new Error('Flux non trouvé');
       }
       const baseTriggerConfig = flow.triggerConfig as Record<string, unknown>;
+      reportedTriggerConfig = flow.environment === 'PRODUCTION' ? baseTriggerConfig : null;
       const triggerConfig: Record<string, unknown> =
         webhookPayload !== undefined
           ? { ...baseTriggerConfig, webhookPayload }
@@ -273,7 +277,7 @@ export class EngineService {
         ? (recordsOut > 0 ? 'PARTIAL' : 'FAILED')
         : (isDryRun ? 'DRY_RUN_OK' : 'SUCCESS');
 
-      await prisma.flowExecution.update({
+      const finished = await prisma.flowExecution.update({
         where: { id: executionId },
         data: {
           status: finalStatus,
@@ -283,6 +287,7 @@ export class EngineService {
           finishedAt: new Date(),
         },
       });
+      await this.tickflowReporter.reportExecution(reportedTriggerConfig, finished);
 
       await this.logExecution(
         prisma,
@@ -295,7 +300,7 @@ export class EngineService {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
 
-      await prisma.flowExecution.update({
+      const failed = await prisma.flowExecution.update({
         where: { id: executionId },
         data: {
           status: 'FAILED',
@@ -303,6 +308,9 @@ export class EngineService {
           finishedAt: new Date(),
         },
       });
+      if (!isDryRun) {
+        await this.tickflowReporter.reportExecution(reportedTriggerConfig, failed);
+      }
 
       await this.logExecution(prisma, executionId, 'ERROR', `Erreur fatale: ${errorMessage}`);
 

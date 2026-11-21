@@ -4,6 +4,7 @@ import * as cronParser from 'cron-parser';
 import { PrismaService } from '../prisma/prisma.service';
 import { TenantDatabaseService } from '../modules/tenants/tenant-database.service';
 import { EngineService } from '../modules/engine/engine.service';
+import { TickflowReporterService } from '../modules/engine/tickflow-reporter.service';
 import { AppLoggerService } from '../common/logger/logger.service';
 import { TriggerType } from '../generated/tenant';
 
@@ -14,6 +15,7 @@ export class CronService {
     private readonly tenantDbService: TenantDatabaseService,
     private readonly engineService: EngineService,
     private readonly logger: AppLoggerService,
+    private readonly tickflowReporter: TickflowReporterService,
   ) {}
 
   /**
@@ -80,5 +82,41 @@ export class CronService {
     }
 
     this.logger.debug('Scan CRON flows terminé', 'CronService');
+  }
+
+  /**
+   * Toutes les 10 minutes : publie vers Tickflow l'état de chaque flux de production rattaché
+   * (triggerConfig.tickflow), déduit de sa dernière exécution terminée. Sert aussi de battement de cœur.
+   */
+  @Cron('*/10 * * * *')
+  async reportTickflowStatuses(): Promise<void> {
+    if (!this.tickflowReporter.enabled) return;
+    const tenants = await this.prisma.tenant.findMany({
+      where: { isActive: true },
+      select: { id: true, dbConnectionHash: true },
+    });
+    const items = [];
+    for (const tenant of tenants) {
+      try {
+        const client = await this.tenantDbService.getClient(tenant.id, tenant.dbConnectionHash);
+        const flows = await client.flow.findMany({
+          where: { isActive: true, environment: 'PRODUCTION' },
+          select: { id: true, triggerConfig: true },
+        });
+        for (const flow of flows) {
+          const mapping = TickflowReporterService.mappingOf(flow.triggerConfig);
+          if (!mapping) continue;
+          const last = await client.flowExecution.findFirst({
+            where: { flowId: flow.id, isDryRun: false, finishedAt: { not: null } },
+            orderBy: { startedAt: 'desc' },
+          });
+          items.push(this.tickflowReporter.statusItem(mapping, last));
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.error(`Erreur état Tickflow tenant ${tenant.id}: ${msg}`, undefined, 'CronService');
+      }
+    }
+    await this.tickflowReporter.reportStatuses(items);
   }
 }
