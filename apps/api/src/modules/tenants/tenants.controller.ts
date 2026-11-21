@@ -6,6 +6,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiResponse } from '@ne
 import { TenantsService } from './tenants.service';
 import { FlowsService } from '../flows/flows.service';
 import { EngineService } from '../engine/engine.service';
+import { TenantFlowWeatherService, TenantFlowWeather } from './tenant-flow-weather.service';
 import {
   CreateTenantDto, UpdateTenantDto, TenantResponseDto,
   TenantStatsDto, TenantConnectorDto, TenantUserDto,
@@ -24,6 +25,7 @@ export class TenantsController {
     private readonly tenantsService: TenantsService,
     private readonly flowsService: FlowsService,
     private readonly engineService: EngineService,
+    private readonly flowWeatherService: TenantFlowWeatherService,
   ) {}
 
   // ─── GESTION DES TENANTS (SUPER_ADMIN) ───────────────────────────────────
@@ -60,6 +62,13 @@ export class TenantsController {
   @ApiOperation({ summary: 'Statut de synchronisation des clés Redis gate pour ce tenant' })
   async getMeGatewayRedis(@CurrentTenant() tenant: { id: string }) {
     return this.tenantsService.getGatewayRedisSyncStatus(tenant.id);
+  }
+
+  @Get('me/flow-weather')
+  @Roles('ADMIN', 'OPERATOR', 'VIEWER', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Météo des flux du tenant (état, dernier flux, incidents, volumes) depuis le monitoring Tickflow' })
+  async getMeFlowWeather(@CurrentTenant() tenant: { id: string }): Promise<TenantFlowWeather> {
+    return this.flowWeatherService.getForTenant(tenant.id);
   }
 
   @Get('me/webhook-executions')

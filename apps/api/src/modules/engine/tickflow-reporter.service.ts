@@ -27,6 +27,33 @@ interface StatusItem {
   issues: { code: string; level: 'warning' | 'critical'; message: string; action?: string }[];
 }
 
+export interface TickflowFlowWeather {
+  flow_code: string;
+  name: string;
+  type: string;
+  source: { system: string; label?: string };
+  target: { system: string; label?: string };
+  project: string | null;
+  in_production_since: string | null;
+  tracked_since: string | null;
+  silent: boolean;
+  status: 'ok' | 'warning' | 'critical' | 'unknown' | 'maintenance';
+  last_run_at: string | null;
+  last_run_result: string | null;
+  last_failed_run_at: string | null;
+  last_issue: { level: string; message: string; opened_at: string; resolved_at: string | null; client_notified_at: string | null } | null;
+  open_issues: { level: string; message: string; opened_at: string; client_notified_at: string | null }[];
+  runs: { today: number; month: number; year: number };
+  documents: { today: number; month: number; year: number };
+}
+
+export interface TickflowClientWeather {
+  client_code: string;
+  name: string;
+  generated_at: string;
+  flows: TickflowFlowWeather[];
+}
+
 const RUN_RESULT: Record<string, string> = { SUCCESS: 'success', PARTIAL: 'partial', FAILED: 'failed' };
 
 /**
@@ -40,11 +67,20 @@ export class TickflowReporterService {
   private readonly url: string;
   private readonly token: string;
   private readonly serverCode: string;
+  private readonly tenantClients: Record<string, string | string[]>;
+  private readonly weatherCache = new Map<string, { at: number; value: TickflowClientWeather }>();
 
   constructor(configService: ConfigService) {
     this.url = (configService.get<string>('TICKFLOW_MONITORING_URL') ?? '').replace(/\/+$/, '');
     this.token = configService.get<string>('TICKFLOW_MONITORING_TOKEN') ?? '';
     this.serverCode = configService.get<string>('TICKFLOW_SERVER_CODE') ?? 'ultimate';
+    let tenantClients: Record<string, string | string[]> = {};
+    try {
+      tenantClients = JSON.parse(configService.get<string>('TICKFLOW_TENANT_CLIENTS') || '{}');
+    } catch {
+      this.logger.warn('TICKFLOW_TENANT_CLIENTS : JSON invalide, ignoré');
+    }
+    this.tenantClients = tenantClients;
   }
 
   get enabled(): boolean {
@@ -120,6 +156,46 @@ export class TickflowReporterService {
     if (!this.enabled) return;
     for (let i = 0; i < items.length; i += 100) {
       await this.post('/status/batch', { items: items.slice(i, i + 100) });
+    }
+  }
+
+  /**
+   * Codes clients Tickflow d'un tenant : ceux de ses flux rattachés (triggerConfig.tickflow), plus
+   * ceux de TICKFLOW_TENANT_CLIENTS ({"slug": "code" | ["code", …]}) pour les flux hébergés ailleurs (n8n, EDI).
+   */
+  clientCodesFor(tenantSlug: string, triggerConfigs: unknown[]): string[] {
+    const codes = new Set<string>();
+    for (const triggerConfig of triggerConfigs) {
+      const mapping = TickflowReporterService.mappingOf(triggerConfig);
+      if (mapping) codes.add(mapping.clientCode);
+    }
+    const extra = this.tenantClients[tenantSlug];
+    for (const code of Array.isArray(extra) ? extra : extra ? [extra] : []) {
+      if (typeof code === 'string' && /^[a-z0-9_-]{1,80}$/.test(code)) codes.add(code);
+    }
+    return [...codes];
+  }
+
+  /** Météo d'un client telle que Tickflow la publie pour un affichage client. Mise en cache 60 s ; null si indisponible. */
+  async getClientWeather(clientCode: string): Promise<TickflowClientWeather | null> {
+    if (!this.enabled) return null;
+    const cached = this.weatherCache.get(clientCode);
+    if (cached && cached.at > Date.now() - 60000) return cached.value;
+    try {
+      const response = await fetch(`${this.url}/clients/${encodeURIComponent(clientCode)}/weather`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!response.ok) {
+        this.logger.warn(`Tickflow météo ${clientCode} → HTTP ${response.status}`);
+        return cached?.value ?? null;
+      }
+      const value = (await response.json()) as TickflowClientWeather;
+      this.weatherCache.set(clientCode, { at: Date.now(), value });
+      return value;
+    } catch (error) {
+      this.logger.warn(`Tickflow météo injoignable : ${error instanceof Error ? error.message : String(error)}`);
+      return cached?.value ?? null;
     }
   }
 

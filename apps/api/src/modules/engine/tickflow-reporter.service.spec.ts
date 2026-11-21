@@ -77,4 +77,25 @@ describe('TickflowReporterService', () => {
     await service.reportStatuses(Array.from({ length: 150 }, () => service.statusItem(triggerConfig.tickflow, execution())));
     expect(bodies().map((c) => c.body.items.length)).toEqual([100, 50]);
   });
+
+  it('resolves tenant client codes from flows and configuration, and caches the client weather', async () => {
+    const service = new TickflowReporterService(
+      config({
+        TICKFLOW_MONITORING_URL: 'https://mon.test/api/v1',
+        TICKFLOW_MONITORING_TOKEN: 'secret',
+        TICKFLOW_TENANT_CLIENTS: '{"acme":["client-n8n","Bad Code"],"solo":"client-solo"}',
+      }),
+    );
+    expect(service.clientCodesFor('acme', [triggerConfig, {}, triggerConfig])).toEqual(['client-a', 'client-n8n']);
+    expect(service.clientCodesFor('solo', [])).toEqual(['client-solo']);
+    expect(service.clientCodesFor('other', [])).toEqual([]);
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ client_code: 'client-a', name: 'A', flows: [] }) });
+    expect((await service.getClientWeather('client-a'))?.name).toBe('A');
+    await service.getClientWeather('client-a');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe('https://mon.test/api/v1/clients/client-a/weather');
+    fetchMock.mockResolvedValue({ ok: false, status: 403, text: async () => '' });
+    expect(await service.getClientWeather('client-z')).toBeNull();
+    expect(await new TickflowReporterService(config({})).getClientWeather('client-a')).toBeNull();
+  });
 });

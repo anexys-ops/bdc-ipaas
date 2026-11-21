@@ -120,6 +120,36 @@ export interface WebhookExecutionRow {
   finishedAt: string | null;
 }
 
+export interface FlowWeatherIssue {
+  level: 'warning' | 'critical';
+  message: string;
+  opened_at: string;
+  client_notified_at: string | null;
+}
+
+export interface FlowWeatherFlow {
+  flow_code: string;
+  name: string;
+  type: string;
+  source: { system: string; label?: string };
+  target: { system: string; label?: string };
+  project: string | null;
+  in_production_since: string | null;
+  tracked_since: string | null;
+  silent: boolean;
+  status: 'ok' | 'warning' | 'critical' | 'unknown' | 'maintenance';
+  last_run_at: string | null;
+  last_run_result: string | null;
+  open_issues: FlowWeatherIssue[];
+  runs: { today: number; month: number; year: number };
+  documents: { today: number; month: number; year: number };
+}
+
+export interface TenantFlowWeather {
+  enabled: boolean;
+  clients: { client_code: string; name: string; generated_at: string; flows: FlowWeatherFlow[] }[];
+}
+
 export const tenantsApi = {
   // Listing & détail
   getAll: (withStats?: boolean) =>
@@ -159,6 +189,7 @@ export const tenantsApi = {
   // Compte courant
   getMyInfo: () => apiClient.get<Tenant>('/tenants/me/info'),
   getMyUsage: () => apiClient.get<TenantBillingInfo>('/tenants/me/usage'),
+  getMyFlowWeather: () => apiClient.get<TenantFlowWeather>('/tenants/me/flow-weather'),
 
   // Gateway webhook (BDC-95 / BDC-96)
   getMeGateway: () => apiClient.get<TenantMeGateway>('/tenants/me'),

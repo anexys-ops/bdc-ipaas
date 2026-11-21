@@ -21,6 +21,7 @@ import { connectorsApi } from '../../api/connectors';
 import { flowsApi } from '../../api/flows';
 import { engineApi } from '../../api/engine';
 import type { Flow } from '../../types';
+import { FlowWeatherCard } from './FlowWeatherCard';
 
 function getFlowsCount(flows: Flow[] | { total?: number; data?: Flow[]; flows?: Flow[] } | undefined): number {
   if (Array.isArray(flows)) return flows.length;
@@ -121,6 +122,8 @@ export function DashboardPage() {
             </div>
           </div>
         </div>
+
+        <FlowWeatherCard />
 
         {/* Benthos + Redis (supervision pipeline) */}
         {canSeePipelineInfra && (

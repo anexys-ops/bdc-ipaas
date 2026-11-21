@@ -36,3 +36,12 @@ TICKFLOW_SERVER_CODE=ultimate
 4. Redéployer l'API **et le worker** (le workflow de déploiement actuel ne reconstruit pas le worker).
 
 Sans URL ni jeton, ou sans bloc `tickflow`, rien n'est envoyé.
+
+## Affichage au client : « Météo de vos flux »
+
+Le tableau de bord Ultimate (`/dashboard`) affiche au client la météo de ses flux, lue dans la même base Tickflow que l'équipe BDC : état de chaque flux, dernier passage, incident en cours et si le client a été prévenu, documents traités du jour, du mois et de l'année.
+
+- API : `GET /api/v1/tenants/me/flow-weather` (tous les rôles du tenant), qui interroge `GET /clients/{code}/weather` côté Tickflow avec le jeton d'Ultimate. Réponse mise en cache 60 secondes.
+- Clients affichés pour un tenant : ceux de ses flux rattachés (`triggerConfig.tickflow.clientCode`), plus ceux de `TICKFLOW_TENANT_CLIENTS` pour les flux hébergés ailleurs (n8n, EDI), par exemple `{"toyo": "code-client-toyo"}`.
+- Le jeton Tickflow d'Ultimate doit couvrir ces clients. La vue ne contient ni code serveur, ni code d'incident, ni note interne.
+- Sans configuration, ou sans client rattaché, la carte n'apparaît pas.
