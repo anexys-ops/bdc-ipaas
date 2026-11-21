@@ -66,14 +66,14 @@ export class TickflowReporterService {
     const issues: StatusItem['issues'] = [];
     if (last?.status === 'FAILED') {
       issues.push({
-        code: 'ultimate_execution_failed',
+        code: 'x_execution_failed',
         level: 'critical',
         message: `Dernière exécution en échec : ${(last.errorMessage || 'voir les logs Ultimate').slice(0, 250)}`,
         action: `Ouvrir l'exécution ${last.id} dans Ultimate`,
       });
     } else if (last?.status === 'PARTIAL') {
       issues.push({
-        code: 'ultimate_execution_partial',
+        code: 'x_execution_partial',
         level: 'warning',
         message: `Dernière exécution partielle : ${last.recordsFailed} enregistrement(s) en erreur sur ${last.recordsIn}`,
         action: `Ouvrir l'exécution ${last.id} dans Ultimate`,

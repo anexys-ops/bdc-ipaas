@@ -10,8 +10,8 @@ Ultimate publie ses exécutions vers le monitoring Tickflow, qui affiche la mét
 | Dernière exécution | État Tickflow | Incident |
 |---|---|---|
 | `SUCCESS` | ok | aucun |
-| `PARTIAL` | warning | `ultimate_execution_partial` |
-| `FAILED` | critical | `ultimate_execution_failed` |
+| `PARTIAL` | warning | `x_execution_partial` |
+| `FAILED` | critical | `x_execution_failed` |
 | aucune | unknown | aucun |
 
 Les dry-runs et les flux `STAGING` ne sont jamais publiés. Seuls les compteurs, le message d'erreur (300 caractères) et l'identifiant d'exécution sortent d'Ultimate ; aucune donnée métier. Une panne de Tickflow ne fait jamais échouer une exécution.

@@ -58,9 +58,9 @@ describe('TickflowReporterService', () => {
     const [run, status] = bodies();
     expect(run.body).toMatchObject({ result: 'failed', counts: { errors: 1 }, items_in_error: [{ ref: 'execution exec-1', message: 'SFTP refusé' }] });
     expect(status.body.status).toBe('critical');
-    expect(status.body.issues[0]).toMatchObject({ code: 'ultimate_execution_failed', level: 'critical' });
+    expect(status.body.issues[0]).toMatchObject({ code: 'x_execution_failed', level: 'critical' });
     const partial = enabled().statusItem(triggerConfig.tickflow, execution({ status: 'PARTIAL', recordsFailed: 2 }));
-    expect(partial).toMatchObject({ status: 'warning', issues: [{ code: 'ultimate_execution_partial', level: 'warning' }] });
+    expect(partial).toMatchObject({ status: 'warning', issues: [{ code: 'x_execution_partial', level: 'warning' }] });
     expect(enabled().statusItem(triggerConfig.tickflow, null).status).toBe('unknown');
   });
 
